@@ -1,0 +1,1139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  STORE_MANAGER
+  CATALOG_MANAGER
+  FULFILMENT_STAFF
+  DRIVER
+  CUSTOMER
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+enum PricingMode {
+  UNIT
+  WEIGHT_ESTIMATED
+}
+
+enum ReturnPolicy {
+  STANDARD_14_DAY
+  PERISHABLE_EXEMPT
+  AGE_RESTRICTED_RESTRICTED
+  NON_RETURNABLE
+}
+
+enum HfssStatus {
+  NOT_IN_SCOPE
+  IN_SCOPE
+}
+
+enum RestrictionReason {
+  NONE
+  ALCOHOL
+  KNIFE
+  TOBACCO
+  VAPE
+  SOLVENT
+  ENERGY_DRINK
+  LOTTERY
+  RETAILER_POLICY
+}
+
+enum CartStatus {
+  ACTIVE
+  CONVERTED
+  ABANDONED
+  EXPIRED
+}
+
+enum SubstitutionPreference {
+  NO_SUB
+  SIMILAR
+  ANY
+}
+
+enum BasketType {
+  GROCERY
+  ALCOHOL
+  MIXED
+}
+
+enum OrderCategory {
+  GROCERY
+  ALCOHOL
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  AUTHORISED
+  CAPTURED
+  FAILED
+  CANCELLED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum FulfilmentStatus {
+  PENDING
+  CONFIRMED
+  PICKING
+  PICKED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  REFUSED
+  CANCELLED
+}
+
+enum RefundStatus {
+  NONE
+  PENDING
+  PARTIAL
+  FULL
+  FAILED
+}
+
+enum AgeVerificationStatus {
+  NOT_REQUIRED
+  PENDING
+  PASSED
+  FAILED
+  EXPIRED
+  MANUAL_REVIEW
+}
+
+enum DeliveryAgeCheckStatus {
+  NOT_REQUIRED
+  PENDING
+  PASSED
+  FAILED
+  REFUSED
+}
+
+enum VerificationOutcome {
+  PENDING
+  PASSED
+  FAILED
+  CANCELLED
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED
+  MULTIBUY
+  FREE_DELIVERY
+}
+
+enum PickListStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETE
+  CANCELLED
+}
+
+enum SubstitutionStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum WebhookStatus {
+  RECEIVED
+  QUEUED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  SENT
+  DEAD_LETTER
+}
+
+enum LicenseEdition {
+  STANDARD
+  PRO
+}
+
+enum CmsPageType {
+  TERMS
+  PRIVACY
+  COOKIE
+  RETURNS
+  ALCOHOL_POLICY
+  DELIVERY_POLICY
+}
+
+enum JurisdictionCode {
+  ENGLAND_WALES
+  SCOTLAND
+  NORTHERN_IRELAND
+}
+
+enum StorageType {
+  AMBIENT
+  CHILLED
+  FROZEN
+}
+
+enum AlcoholType {
+  BEER
+  WINE
+  SPIRITS
+  CIDER
+  OTHER
+}
+
+enum InventoryReason {
+  PURCHASE
+  SALE
+  RESERVATION
+  RELEASE
+  ADJUSTMENT
+  RETURN
+  WASTAGE
+  PICK_SHORTFALL
+}
+
+enum ImportStatus {
+  PENDING
+  VALIDATING
+  READY
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  slug      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TenantSettings {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @unique @db.Uuid
+  settings  Json
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model BrandingProfile {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @unique @db.Uuid
+  brandName         String
+  legalEntityName   String
+  companyNumber     String?
+  vatNumber         String?
+  registeredAddress Json
+  assets            Json
+  colours           Json
+  typography        Json
+  emailBranding     Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model CmsPage {
+  id        String      @id @default(uuid()) @db.Uuid
+  tenantId  String      @db.Uuid
+  type      CmsPageType
+  locale    String      @default("en-GB")
+  title     String
+  content   String
+  published Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([tenantId, type, locale])
+  @@index([tenantId])
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @db.Uuid
+  email        String
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         UserRole  @default(CUSTOMER)
+  active       Boolean   @default(true)
+  tombstonedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
+}
+
+model Address {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  label     String
+  line1     String
+  line2     String?
+  city      String
+  postcode  String
+  country   String   @default("GB")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, userId])
+  @@index([tenantId, postcode])
+}
+
+model Jurisdiction {
+  id        String           @id @default(uuid()) @db.Uuid
+  tenantId  String           @db.Uuid
+  code      JurisdictionCode
+  name      String
+  active    Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model JurisdictionRuleset {
+  id                             String   @id @default(uuid()) @db.Uuid
+  tenantId                       String   @db.Uuid
+  jurisdictionId                 String   @db.Uuid
+  permittedSaleStartMinutes      Int
+  permittedSaleEndMinutes        Int
+  prohibitedDeliveryStartMinutes Int?
+  prohibitedDeliveryEndMinutes   Int?
+  challengeAge                   Int
+  requiresDayBook                Boolean  @default(false)
+  requiresDriverManifest         Boolean  @default(false)
+  allowsDigitalProofOfAge        Boolean  @default(false)
+  hfssEnforced                   Boolean  @default(false)
+  version                        Int      @default(1)
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
+
+  @@unique([tenantId, jurisdictionId])
+  @@index([tenantId])
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  parentId  String?  @db.Uuid
+  slug      String
+  name      String
+  path      String
+  position  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, parentId])
+}
+
+model Brand {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  slug      String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model Product {
+  id                   String            @id @default(uuid()) @db.Uuid
+  tenantId             String            @db.Uuid
+  categoryId           String            @db.Uuid
+  brandId              String?           @db.Uuid
+  sku                  String
+  slug                 String
+  name                 String
+  description          String
+  status               ProductStatus     @default(DRAFT)
+  priceMinor           BigInt
+  currency             String            @default("GBP")
+  vatRateBps           Int
+  pricingMode          PricingMode       @default(UNIT)
+  pricePerKgMinor      BigInt?
+  estimatedWeightGrams Int?
+  weightToleranceBps   Int?
+  isAlcohol            Boolean           @default(false)
+  abv                  Decimal?          @db.Decimal(4, 2)
+  alcoholType          AlcoholType?
+  weightGrams          Int?
+  ageRestriction       Int               @default(0)
+  restrictionReason    RestrictionReason @default(NONE)
+  returnPolicy         ReturnPolicy
+  unitPriceDisplay     String
+  hfssStatus           HfssStatus        @default(NOT_IN_SCOPE)
+  hfssCategory         String?
+  dietaryTags          String[]
+  allergens            String[]
+  countryOfOrigin      String
+  storageType          StorageType
+  shelfLifeDays        Int?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@unique([tenantId, sku])
+  @@unique([tenantId, slug])
+  @@index([tenantId, categoryId, status])
+  @@index([tenantId, brandId])
+  @@index([tenantId, name])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  productId String   @db.Uuid
+  variantId String?  @db.Uuid
+  url       String
+  altText   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, productId, variantId, position])
+  @@index([tenantId, productId])
+}
+
+model Inventory {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @db.Uuid
+  productId         String   @db.Uuid
+  variantId         String?  @db.Uuid
+  warehouseId       String   @db.Uuid
+  onHand            Int
+  reserved          Int      @default(0)
+  stockAvailable    Int      @default(dbgenerated("GREATEST((\"onHand\" - \"reserved\"), 0)"))
+  lowStockThreshold Int      @default(5)
+  version           Int      @default(1)
+  updatedAt         DateTime @updatedAt
+
+  @@unique([tenantId, productId, warehouseId, variantId])
+  @@index([tenantId, productId, variantId])
+}
+
+model ProductVariant {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  productId   String   @db.Uuid
+  sku         String
+  name        String
+  priceMinor  BigInt
+  currency    String   @default("GBP")
+  packSize    String?
+  weightGrams Int?
+  abv         Decimal? @db.Decimal(4, 2)
+  flavour     String?
+  attributes  Json
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, sku])
+  @@index([tenantId, productId, active])
+}
+
+model AttributeSet {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  key         String
+  name        String
+  definitions Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+model ProductAttribute {
+  id             String @id @default(uuid()) @db.Uuid
+  tenantId       String @db.Uuid
+  productId      String @db.Uuid
+  attributeSetId String @db.Uuid
+  values         Json
+
+  @@unique([tenantId, productId, attributeSetId])
+  @@index([tenantId, attributeSetId])
+}
+
+model InventoryTransaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  tenantId    String          @db.Uuid
+  inventoryId String          @db.Uuid
+  reason      InventoryReason
+  quantity    Int
+  reference   String?
+  actorId     String?         @db.Uuid
+  createdAt   DateTime        @default(now())
+
+  @@index([tenantId, inventoryId, createdAt(sort: Desc)])
+  @@index([tenantId, reason, createdAt(sort: Desc)])
+}
+
+model ImportJob {
+  id              String       @id @default(uuid()) @db.Uuid
+  tenantId        String       @db.Uuid
+  type            String
+  status          ImportStatus @default(PENDING)
+  duplicatePolicy String
+  dryRun          Boolean
+  sourceFilename  String
+  totalRows       Int          @default(0)
+  validRows       Int          @default(0)
+  invalidRows     Int          @default(0)
+  result          Json?
+  createdById     String       @db.Uuid
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([tenantId, status, createdAt(sort: Desc)])
+}
+
+model ImportError {
+  id          String  @id @default(uuid()) @db.Uuid
+  tenantId    String  @db.Uuid
+  importJobId String  @db.Uuid
+  rowNumber   Int
+  field       String?
+  code        String
+  message     String
+  input       Json
+
+  @@index([tenantId, importJobId, rowNumber])
+}
+
+model Warehouse {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  code      String
+  name      String
+  address   Json
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model Cart {
+  id         String     @id @default(uuid()) @db.Uuid
+  tenantId   String     @db.Uuid
+  userId     String?    @db.Uuid
+  guestToken String?
+  status     CartStatus @default(ACTIVE)
+  currency   String     @default("GBP")
+  version    Int        @default(1)
+  expiresAt  DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([tenantId, userId, status])
+  @@index([tenantId, guestToken, status])
+}
+
+model CartItem {
+  id                     String                 @id @default(uuid()) @db.Uuid
+  tenantId               String                 @db.Uuid
+  cartId                 String                 @db.Uuid
+  productId              String                 @db.Uuid
+  quantity               Int
+  substitutionPreference SubstitutionPreference @default(SIMILAR)
+  acknowledgedPriceMinor BigInt
+  currency               String                 @default("GBP")
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@unique([tenantId, cartId, productId])
+  @@index([tenantId, cartId])
+}
+
+model AgeVerification {
+  id                String              @id @default(uuid()) @db.Uuid
+  tenantId          String              @db.Uuid
+  userId            String?             @db.Uuid
+  guestToken        String?
+  provider          String
+  providerSessionId String
+  outcome           VerificationOutcome
+  verifiedAgeOver   Int?
+  method            String?
+  providerReference String?
+  expiresAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([tenantId, provider, providerSessionId])
+  @@index([tenantId, userId, outcome])
+  @@index([tenantId, guestToken, outcome])
+}
+
+model DeliveryZone {
+  id                     String   @id @default(uuid()) @db.Uuid
+  tenantId               String   @db.Uuid
+  code                   String
+  name                   String
+  postcodePatterns       String[]
+  deliveryFeeMinor       BigInt
+  currency               String   @default("GBP")
+  alcoholDeliveryAllowed Boolean  @default(true)
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
+}
+
+model DeliverySlot {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  zoneId    String   @db.Uuid
+  startsAt  DateTime
+  endsAt    DateTime
+  capacity  Int
+  reserved  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, zoneId, startsAt, endsAt])
+  @@index([tenantId, zoneId, startsAt])
+}
+
+model Coupon {
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @db.Uuid
+  code              String
+  type              PromotionType
+  valueBps          Int?
+  valueMinor        BigInt?
+  currency          String        @default("GBP")
+  minimumSpendMinor BigInt?
+  startsAt          DateTime
+  endsAt            DateTime
+  maxUses           Int?
+  uses              Int           @default(0)
+  active            Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, active, startsAt, endsAt])
+}
+
+model Promotion {
+  id        String        @id @default(uuid()) @db.Uuid
+  tenantId  String        @db.Uuid
+  name      String
+  type      PromotionType
+  priority  Int           @default(0)
+  active    Boolean       @default(true)
+  startsAt  DateTime
+  endsAt    DateTime
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active, startsAt, endsAt])
+}
+
+model PromotionRule {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  promotionId String   @db.Uuid
+  conditions  Json
+  effect      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, promotionId])
+}
+
+model MultibuyGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  promotionId String   @db.Uuid
+  productIds  String[] @db.Uuid
+  buyQuantity Int
+  payQuantity Int
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, promotionId])
+}
+
+model Order {
+  id                     String                 @id @default(uuid()) @db.Uuid
+  tenantId               String                 @db.Uuid
+  userId                 String?                @db.Uuid
+  orderNumber            BigInt
+  idempotencyKey         String
+  basketType             BasketType
+  currency               String                 @default("GBP")
+  subtotalMinor          BigInt
+  discountMinor          BigInt
+  taxMinor               BigInt
+  deliveryFeeMinor       BigInt
+  totalMinor             BigInt
+  paymentStatus          PaymentStatus          @default(PENDING)
+  fulfilmentStatus       FulfilmentStatus       @default(PENDING)
+  refundStatus           RefundStatus           @default(NONE)
+  ageVerificationStatus  AgeVerificationStatus  @default(NOT_REQUIRED)
+  deliveryAgeCheckStatus DeliveryAgeCheckStatus @default(NOT_REQUIRED)
+  deliveryAddress        Json
+  deliverySlotId         String?                @db.Uuid
+  customerSnapshot       Json
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, paymentStatus, fulfilmentStatus])
+  @@index([tenantId, userId, createdAt(sort: Desc)])
+}
+
+model OrderItem {
+  id                     String                 @id @default(uuid()) @db.Uuid
+  tenantId               String                 @db.Uuid
+  orderId                String                 @db.Uuid
+  productId              String                 @db.Uuid
+  productName            String
+  sku                    String
+  quantity               Int
+  unitPriceMinor         BigInt
+  currency               String                 @default("GBP")
+  vatRateBps             Int
+  vatAmountMinor         BigInt
+  discountMinor          BigInt
+  lineTotalMinor         BigInt
+  orderCategory          OrderCategory
+  isAlcohol              Boolean
+  ageRestriction         Int
+  abv                    Decimal?               @db.Decimal(4, 2)
+  pricingMode            PricingMode
+  estimatedWeightGrams   Int?
+  actualWeightGrams      Int?
+  unitPriceDisplay       String
+  hfssStatus             HfssStatus
+  returnPolicy           ReturnPolicy
+  substitutionPreference SubstitutionPreference
+  createdAt              DateTime               @default(now())
+
+  @@index([tenantId, orderId])
+  @@index([tenantId, productId])
+}
+
+model Payment {
+  id                      String        @id @default(uuid()) @db.Uuid
+  tenantId                String        @db.Uuid
+  orderId                 String        @unique @db.Uuid
+  provider                String
+  providerPaymentIntentId String        @unique
+  status                  PaymentStatus
+  authorisedAmountMinor   BigInt
+  capturedAmountMinor     BigInt        @default(0)
+  refundedAmountMinor     BigInt        @default(0)
+  currency                String
+  manualCapture           Boolean
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([tenantId, status])
+}
+
+model Invoice {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  orderId       String   @unique @db.Uuid
+  invoiceNumber BigInt
+  subtotalMinor BigInt
+  taxMinor      BigInt
+  totalMinor    BigInt
+  currency      String
+  documentUrl   String?
+  issuedAt      DateTime @default(now())
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId, issuedAt])
+}
+
+model Refund {
+  id               String       @id @default(uuid()) @db.Uuid
+  tenantId         String       @db.Uuid
+  orderId          String       @db.Uuid
+  paymentId        String       @db.Uuid
+  providerRefundId String?      @unique
+  amountMinor      BigInt
+  currency         String
+  status           RefundStatus
+  reason           String
+  createdById      String?      @db.Uuid
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([tenantId, orderId])
+  @@index([tenantId, status])
+}
+
+model PickList {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @db.Uuid
+  orderId      String         @unique @db.Uuid
+  assignedToId String?        @db.Uuid
+  status       PickListStatus @default(OPEN)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([tenantId, status])
+}
+
+model PickListItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  pickListId  String    @db.Uuid
+  orderItemId String    @unique @db.Uuid
+  requested   Int
+  picked      Int       @default(0)
+  completedAt DateTime?
+
+  @@index([tenantId, pickListId])
+}
+
+model Substitution {
+  id                  String             @id @default(uuid()) @db.Uuid
+  tenantId            String             @db.Uuid
+  orderItemId         String             @db.Uuid
+  substituteProductId String             @db.Uuid
+  status              SubstitutionStatus @default(PROPOSED)
+  proposedPriceMinor  BigInt
+  currency            String
+  expiresAt           DateTime
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([tenantId, orderItemId, status])
+}
+
+model WeightCapture {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  orderItemId  String   @unique @db.Uuid
+  grams        Int
+  capturedById String   @db.Uuid
+  capturedAt   DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model WebhookEvent {
+  id              String        @id @default(uuid()) @db.Uuid
+  tenantId        String?       @db.Uuid
+  provider        String
+  providerEventId String
+  signatureValid  Boolean
+  payload         Json
+  status          WebhookStatus @default(RECEIVED)
+  attempts        Int           @default(0)
+  lastError       String?
+  receivedAt      DateTime      @default(now())
+  processedAt     DateTime?
+
+  @@unique([provider, providerEventId])
+  @@index([tenantId, status, receivedAt])
+}
+
+model OutboxMessage {
+  id          String       @id @default(uuid()) @db.Uuid
+  tenantId    String       @db.Uuid
+  topic       String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  attempts    Int          @default(0)
+  availableAt DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  sentAt      DateTime?
+
+  @@index([tenantId, status, availableAt])
+}
+
+model IdempotencyKey {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  scope       String
+  key         String
+  requestHash String
+  response    Json?
+  statusCode  Int?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, scope, key])
+  @@index([tenantId, expiresAt])
+}
+
+model LicenseRecord {
+  id          String         @id @default(uuid()) @db.Uuid
+  tenantId    String         @unique @db.Uuid
+  licenseId   String         @unique
+  edition     LicenseEdition
+  seats       Int
+  expiresAt   DateTime
+  features    String[]
+  tokenHash   String
+  validatedAt DateTime
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model FeatureFlagOverride {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  key       String
+  enabled   Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+model AlcoholDayBookEntry {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  orderId          String   @db.Uuid
+  orderItemId      String   @unique @db.Uuid
+  dispatchDate     DateTime @db.Date
+  productName      String
+  quantity         Int
+  lineTotalMinor   BigInt
+  currency         String
+  recipientName    String
+  recipientAddress Json
+  immutableHash    String
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId, dispatchDate])
+}
+
+model DriverManifest {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  driverId      String   @db.Uuid
+  deliveryDate  DateTime @db.Date
+  orderIds      String[] @db.Uuid
+  pdfUrl        String?
+  csvUrl        String?
+  immutableHash String
+  createdAt     DateTime @default(now())
+
+  @@unique([tenantId, driverId, deliveryDate])
+  @@index([tenantId, deliveryDate])
+}
+
+model PriceCapEvent {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @db.Uuid
+  orderId               String   @db.Uuid
+  authorisedAmountMinor BigInt
+  recomputedAmountMinor BigInt
+  capturedAmountMinor   BigInt
+  currency              String
+  createdAt             DateTime @default(now())
+
+  @@index([tenantId, orderId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  actorId   String?  @db.Uuid
+  actorType String
+  action    String
+  entity    String
+  entityId  String
+  before    Json?
+  after     Json?
+  requestId String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, entity, entityId, createdAt(sort: Desc)])
+  @@index([tenantId, action, createdAt(sort: Desc)])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  endpoint  String
+  keys      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, endpoint])
+  @@index([tenantId, userId])
+}
+
+model NotificationPreference {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @db.Uuid
+  userId             String    @db.Uuid
+  transactionalEmail Boolean   @default(true)
+  transactionalSms   Boolean   @default(true)
+  marketingEmail     Boolean   @default(false)
+  marketingSms       Boolean   @default(false)
+  consentVersion     String?
+  consentedAt        DateTime?
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([tenantId, userId])
+}
+
+model Influencer {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  code          String
+  displayName   String
+  commissionBps Int
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
+}
+
+model AffiliateAttribution {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @db.Uuid
+  influencerId    String   @db.Uuid
+  orderId         String   @unique @db.Uuid
+  revenueMinor    BigInt
+  commissionMinor BigInt
+  currency        String   @default("GBP")
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, influencerId, createdAt])
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  key         String
+  name        String
+  description String
+  system      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model RolePermission {
+  id           String @id @default(uuid()) @db.Uuid
+  tenantId     String @db.Uuid
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  @@unique([tenantId, roleId, permissionId])
+  @@index([tenantId, roleId])
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  roleId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, userId, roleId])
+  @@index([tenantId, userId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @db.Uuid
+  userId    String    @db.Uuid
+  familyId  String    @db.Uuid
+  tokenHash String    @unique
+  parentId  String?   @db.Uuid
+  expiresAt DateTime
+  usedAt    DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tenantId, userId, familyId])
+  @@index([tenantId, expiresAt])
+}
+
+model AuthToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @db.Uuid
+  userId    String    @db.Uuid
+  kind      String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tenantId, userId, kind])
+  @@index([tenantId, expiresAt])
+}
+
+model OtpChallenge {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @db.Uuid
+  phone      String
+  codeHash   String
+  attempts   Int       @default(0)
+  lockedAt   DateTime?
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([tenantId, phone, createdAt(sort: Desc)])
+}

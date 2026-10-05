@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+coverage
+.env
+.turbo
+.pnpm-store
+.pnpm-cache
+.pnpm-state
+.corepack
+.cache
+.pnpm-bin
+*.log
+*.tsbuildinfo

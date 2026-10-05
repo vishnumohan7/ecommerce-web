@@ -1,0 +1,33 @@
+export type InjectionToken = symbol;
+export interface ProviderContract { health(): Promise<{ ok: boolean }>; }
+export const providerNames = ['Payment','Wallet','AgeVerification','AddressLookup','Email','Sms','Push','WhatsApp','Storage','Image','Search','CacheQueue','Dispatch','Geo','ErrorMonitoring','Telemetry','Analytics','Flag','Pdf','Accounting','AbuseProtection','Secrets','ReviewSyndication','SupportWidget'] as const;
+export type ProviderName = (typeof providerNames)[number];
+export const TOKENS: Readonly<Record<ProviderName, InjectionToken>> = Object.freeze(Object.fromEntries(providerNames.map((name) => [name, Symbol.for(`port.${name}`)])) as Record<ProviderName, InjectionToken>);
+export type PaymentProvider = ProviderContract;
+export type WalletProvider = ProviderContract;
+export type AgeVerificationProvider = ProviderContract;
+export type AddressLookupProvider = ProviderContract;
+export type EmailProvider = ProviderContract;
+export type SmsProvider = ProviderContract;
+export type PushProvider = ProviderContract;
+export type WhatsAppProvider = ProviderContract;
+export type StorageProvider = ProviderContract;
+export type ImageProvider = ProviderContract;
+export type SearchProvider = ProviderContract;
+export type CacheQueueProvider = ProviderContract;
+export type DispatchProvider = ProviderContract;
+export type GeoProvider = ProviderContract;
+export type ErrorMonitoringProvider = ProviderContract;
+export type TelemetryProvider = ProviderContract;
+export type AnalyticsProvider = ProviderContract;
+export type FlagProvider = ProviderContract;
+export type PdfProvider = ProviderContract;
+export type AccountingProvider = ProviderContract;
+export type AbuseProtectionProvider = ProviderContract;
+export type SecretsProvider = ProviderContract;
+export type ReviewSyndicationProvider = ProviderContract;
+export type SupportWidgetProvider = ProviderContract;
+export function providerContractSuite(name: ProviderName, factory: () => ProviderContract): void { describe(name, () => { it('reports health', async () => { expect(await factory().health()).toEqual({ ok: true }); }); }); }
+declare const describe: (name: string, body: () => void) => void;
+declare const it: (name: string, body: () => Promise<void>) => void;
+declare const expect: (value: unknown) => { toEqual(expected: unknown): void };

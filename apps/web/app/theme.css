@@ -1,0 +1,22 @@
+:root {
+    --brand-primary: rgb(0 92 82);
+    --brand-surface: rgb(255 255 255);
+    --brand-on-surface: rgb(20 24 23);
+}
+
+body {
+    background: var(--brand-surface);
+    color: var(--brand-on-surface);
+    font-family: system-ui, sans-serif;
+    margin: 0;
+}
+
+main {
+    margin: 4rem auto;
+    max-width: 60rem;
+    padding: 2rem;
+}
+
+h1 {
+    color: var(--brand-primary);
+}
