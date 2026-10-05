@@ -15,6 +15,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { CatalogImportModule } from './modules/import/catalog-import.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
     InventoryModule,
     CatalogImportModule,
     PromotionsModule,
+    SearchModule,
   ],
   controllers: [HealthController],
   providers: [
@@ -36,4 +38,8 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
     { provide: APP_GUARD, useExisting: AuthGuard },
   ],
 })
-export class AppModule implements NestModule { configure(consumer: MiddlewareConsumer): void { consumer.apply(TenantContextMiddleware).forRoutes('*'); } }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(TenantContextMiddleware).forRoutes('*');
+  }
+}

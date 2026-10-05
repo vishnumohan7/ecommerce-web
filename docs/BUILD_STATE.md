@@ -2,12 +2,13 @@
 
 ## Session log
 
-| # | Name | Status | Gate | Commit | Notes |
-|---|---|---|---|---|---|
-| 1 | Foundation | IN PROGRESS | BLOCKED | — | Code gate green; Docker runtime gate unavailable on host |
-| 2 | Database schema | COMPLETE | PASS | `a277793` | Two migrations, seeds, and live constraint tests verified on Supabase PostgreSQL |
-| 3 | Backend core | IN PROGRESS | BLOCKED | — | Static/unit/Swagger gates green; auth E2E requires PostgreSQL and Redis |
-| 4 | Catalog, inventory, bulk import | COMPLETE | PASS | `main` | Build/lint/typecheck green; live catalog, 50-way stock race, multipart import, and 10,000-row rollback gates pass |
+| #   | Name                                   | Status      | Gate    | Commit    | Notes                                                                                                             |
+| --- | -------------------------------------- | ----------- | ------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1   | Foundation                             | IN PROGRESS | BLOCKED | —         | Code gate green; Docker runtime gate unavailable on host                                                          |
+| 2   | Database schema                        | COMPLETE    | PASS    | `a277793` | Two migrations, seeds, and live constraint tests verified on Supabase PostgreSQL                                  |
+| 3   | Backend core                           | IN PROGRESS | BLOCKED | —         | Static/unit/Swagger gates green; auth E2E requires PostgreSQL and Redis                                           |
+| 4   | Catalog, inventory, bulk import        | COMPLETE    | PASS    | `main`    | Build/lint/typecheck green; live catalog, 50-way stock race, multipart import, and 10,000-row rollback gates pass |
+| 5   | Search, filtering, listing performance | COMPLETE    | PASS    | `main`    | Live PostgreSQL/provider/filter/cursor/query-count/HTTP gates and warm p95 benchmark pass                         |
 
 ## Implemented modules
 
@@ -18,6 +19,7 @@
 - api/database-schema — COMPLETE (deployed and verified on Supabase PostgreSQL)
 - api/backend-core — COMPLETE (database-backed E2E verification blocked by missing services)
 - api/catalog — COMPLETE (CRUD, variants with their own stock, exact decimal ABV, secure responsive images, locking ledger, low-stock outbox, CSV/XLSX import, and HFSS checks verified)
+- api/search — COMPLETE (PostgreSQL and Meilisearch providers, outbox sync, synonyms, filters/facets, age-gated listings, cursor pagination, logs, and performance cache verified)
 - api/cart — NOT STARTED
 - api/checkout — NOT STARTED
 
@@ -34,4 +36,4 @@
 ## Deferred-with-adapter (integration boundary built, live provider not wired)
 
 | Capability | Interface | Dev impl | Live impl | Blocked on |
-|---|---|---|---|---|
+| ---------- | --------- | -------- | --------- | ---------- |

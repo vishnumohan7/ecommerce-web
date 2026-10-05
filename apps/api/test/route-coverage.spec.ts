@@ -9,17 +9,35 @@ import { ImageController } from '../src/modules/catalog/image.controller';
 import { CatalogImportController } from '../src/modules/import/catalog-import.controller';
 import { InventoryController } from '../src/modules/inventory/inventory.controller';
 import { PromotionsController } from '../src/modules/promotions/promotions.controller';
+import { SearchController } from '../src/modules/search/search.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
     const missing: string[] = [];
-    for (const controller of [AuthController, HealthController, MetricsController, CatalogController, ImageController, CatalogImportController, InventoryController, PromotionsController]) {
-      for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter((name) => name !== 'constructor')) {
-        const handler = Object.getOwnPropertyDescriptor(controller.prototype, methodName)?.value as object | undefined;
+    for (const controller of [
+      AuthController,
+      HealthController,
+      MetricsController,
+      CatalogController,
+      ImageController,
+      CatalogImportController,
+      InventoryController,
+      PromotionsController,
+      SearchController,
+    ]) {
+      for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
+        (name) => name !== 'constructor',
+      )) {
+        const handler = Object.getOwnPropertyDescriptor(controller.prototype, methodName)?.value as
+          object | undefined;
         if (!handler || Reflect.getMetadata(PATH_METADATA, handler) === undefined) continue;
-        const publicRoute = Reflect.getMetadata(PUBLIC_ROUTE, handler) === true || Reflect.getMetadata(PUBLIC_ROUTE, controller) === true;
-        const permissions = (Reflect.getMetadata(REQUIRED_PERMISSIONS, handler) ?? Reflect.getMetadata(REQUIRED_PERMISSIONS, controller)) as string[] | undefined;
-        if (!publicRoute && (!permissions || permissions.length === 0)) missing.push(`${controller.name}.${methodName}`);
+        const publicRoute =
+          Reflect.getMetadata(PUBLIC_ROUTE, handler) === true ||
+          Reflect.getMetadata(PUBLIC_ROUTE, controller) === true;
+        const permissions = (Reflect.getMetadata(REQUIRED_PERMISSIONS, handler) ??
+          Reflect.getMetadata(REQUIRED_PERMISSIONS, controller)) as string[] | undefined;
+        if (!publicRoute && (!permissions || permissions.length === 0))
+          missing.push(`${controller.name}.${methodName}`);
       }
     }
     expect(missing).toEqual([]);

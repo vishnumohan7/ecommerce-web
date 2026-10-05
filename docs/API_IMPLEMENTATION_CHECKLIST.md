@@ -52,12 +52,12 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 5 — Search and filtering
 
-- [ ] `GET /api/v1/search` — ranked, typo-tolerant search, filtering, facets, cursor pagination
-- [ ] `GET /api/v1/search/autocomplete` — low-latency suggestions
-- [ ] `GET /api/v1/search/synonyms` — admin synonym list
-- [ ] `POST /api/v1/search/synonyms` — admin synonym creation
-- [ ] `PATCH /api/v1/search/synonyms/:id` — admin synonym update
-- [ ] `DELETE /api/v1/search/synonyms/:id` — admin synonym removal
+- [x] `GET /api/v1/search` — ranked, typo-tolerant search, filtering, facets, cursor pagination
+- [x] `GET /api/v1/search/autocomplete` — low-latency suggestions
+- [x] `GET /api/v1/search/synonyms` — admin synonym list
+- [x] `POST /api/v1/search/synonyms` — admin synonym creation
+- [x] `PATCH /api/v1/search/synonyms/:id` — admin synonym update
+- [x] `DELETE /api/v1/search/synonyms/:id` — admin synonym removal
 
 ### Milestone 6 — Combined cart
 
@@ -191,6 +191,6 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ## Counts
 
-- Implemented HTTP routes: **27** (including health, metrics, and OpenAPI endpoints)
-- Pending route groups: **Milestones 5–18**
-- Fully completed API milestone: not declared until its complete exit gate and checklist are green
+- Implemented HTTP routes: **33** (including health, metrics, and OpenAPI endpoints)
+- Pending route groups: **Milestones 6–18**
+- Fully completed API milestones: **Milestones 4 and 5**

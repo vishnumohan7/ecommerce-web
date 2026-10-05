@@ -53,3 +53,23 @@ Status: IN PROGRESS — external PostgreSQL and Redis services required.
 - [x] JPEG-magic polyglot payload is rejected before image decoding or storage
 
 Status: COMPLETE — local and live Supabase gates verified on 2026-10-05.
+
+## Milestone 5 — Search, filtering, and listing performance
+
+- [x] `SearchProvider` port has PostgreSQL and Meilisearch implementations
+- [x] PostgreSQL uses indexed weighted full text plus word-level `pg_trgm` typo ranking across name, SKU, description, brand, category, and tags
+- [x] Meilisearch document updates/deletes are driven by transactional outbox messages
+- [x] Autocomplete, English stopwords, and admin-editable synonym groups are implemented
+- [x] Default aubergine/eggplant and coriander/cilantro synonym groups are seeded idempotently
+- [x] Category/subcategory, brand, price, stock, dietary, allergen-free, alcohol, ABV, storage, rating, and on-offer filters pass live tests
+- [x] Category, brand, storage, alcohol, and on-offer facet counts are returned with results
+- [x] Alcohol is excluded from search and product listings without a valid signed session-bound age-gate token
+- [x] Opaque keyset cursors produce stable pages without duplicate products
+- [x] Search logs capture terms, filters, result counts, and response time
+- [x] Search endpoint uses four operations, below the five-query cap
+- [x] PostgreSQL and mocked Meilisearch provider contract suites pass
+- [x] Live HTTP smoke passes for search, autocomplete, facets, cursor, and ungated alcohol exclusion
+- [x] Warm application p95 on the 360-product demo dataset is below 150 ms search and 50 ms autocomplete
+- [x] API build, lint, strict typecheck, migration, seed, and focused suites pass
+
+Status: COMPLETE — live Supabase and HTTP gates verified on 2026-10-05. Cold cross-region database latency is tracked separately from the required warm application benchmark.
