@@ -5,9 +5,9 @@
 | # | Name | Status | Gate | Commit | Notes |
 |---|---|---|---|---|---|
 | 1 | Foundation | IN PROGRESS | BLOCKED | — | Code gate green; Docker runtime gate unavailable on host |
-| 2 | Database schema | IN PROGRESS | BLOCKED | — | Static schema gate green; database execution requires PostgreSQL container |
+| 2 | Database schema | COMPLETE | PASS | `a277793` | Two migrations, seeds, and live constraint tests verified on Supabase PostgreSQL |
 | 3 | Backend core | IN PROGRESS | BLOCKED | — | Static/unit/Swagger gates green; auth E2E requires PostgreSQL and Redis |
-| 4 | Catalog, inventory, bulk import | IN PROGRESS | PARTIAL | — | Build, lint, strict typecheck, and 10 focused tests green; live PostgreSQL import/concurrency E2E pending Supabase password |
+| 4 | Catalog, inventory, bulk import | COMPLETE | PASS | `main` | Build/lint/typecheck green; live catalog, 50-way stock race, multipart import, and 10,000-row rollback gates pass |
 
 ## Implemented modules
 
@@ -15,17 +15,17 @@
 - packages/money — COMPLETE
 - packages/ports — COMPLETE (interface and contract-suite foundation)
 - api/health — COMPLETE
-- api/database-schema — COMPLETE (runtime verification blocked by missing PostgreSQL container)
+- api/database-schema — COMPLETE (deployed and verified on Supabase PostgreSQL)
 - api/backend-core — COMPLETE (database-backed E2E verification blocked by missing services)
-- api/catalog — IN PROGRESS (CRUD, variants, secure responsive image processing, inventory ledger/locking, low-stock outbox, CSV/XLSX import and HFSS checks implemented)
+- api/catalog — COMPLETE (CRUD, variants with their own stock, exact decimal ABV, secure responsive images, locking ledger, low-stock outbox, CSV/XLSX import, and HFSS checks verified)
 - api/cart — NOT STARTED
 - api/checkout — NOT STARTED
 
 ## Known deviations from BUILD_CONTRACT.md
 
 - Session 1 Docker runtime gate cannot run until a container engine with external-drive storage is available on the host.
-- Session 2 migration, seed, drift, and constraint-test gates require that same container engine.
-- Supabase project `nyjkcireqkpnlczmgkbx` is selected as the external PostgreSQL replacement. Prisma transaction/session pooler configuration is complete; connection and migration await the database password.
+- PostgreSQL gates use the Supabase transaction/session poolers instead of a local container, avoiding internal-SSD usage.
+- Prisma migration history is authoritative for drift because the SQL migrations intentionally include database-native foreign keys, triggers, RLS, expression/partial indexes, and generated defaults not fully represented in the relation-light Prisma datamodel.
 
 ## Open TODOs carried forward
 

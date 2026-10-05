@@ -14,7 +14,7 @@ const tenantId = '00000000-0000-4000-8000-000000000001';
 const prisma = new PrismaService();
 let app: INestApplication;
 let adminId = '';
-let jobId = '';
+const jobIds: string[] = [];
 
 describe('catalog import HTTP E2E', () => {
   beforeAll(async () => {
@@ -27,9 +27,9 @@ describe('catalog import HTTP E2E', () => {
   }, 30_000);
 
   afterAll(async () => {
-    if (jobId) {
-      await prisma.importError.deleteMany({ where: { importJobId: jobId } });
-      await prisma.importJob.deleteMany({ where: { id: jobId } });
+    if (jobIds.length > 0) {
+      await prisma.importError.deleteMany({ where: { importJobId: { in: jobIds } } });
+      await prisma.importJob.deleteMany({ where: { id: { in: jobIds } } });
     }
     if (app) await app.close();
     await prisma.$disconnect();
@@ -48,11 +48,39 @@ describe('catalog import HTTP E2E', () => {
       .attach('file', Buffer.from(csv), { filename: 'catalog.csv', contentType: 'text/csv' })
       .expect(201);
     const body = response.body as unknown as { jobId: string; applied: number; changes: Array<{ sku: string; operation: string }> };
-    jobId = body.jobId;
+    jobIds.push(body.jobId);
     expect(body.applied).toBe(0);
     expect(body.changes).toEqual([{ sku: `E2E-${suffix}`, operation: 'create' }]);
-    const job = await prisma.importJob.findUniqueOrThrow({ where: { id: jobId } });
+    const job = await prisma.importJob.findUniqueOrThrow({ where: { id: body.jobId } });
     expect(job.status).toBe('READY');
     expect(job.dryRun).toBe(true);
   }, 30_000);
+
+  it('rolls back all product writes when one row in a 10,000-row import is invalid', async () => {
+    const category = await prisma.category.findFirstOrThrow({ where: { tenantId, active: true } });
+    const suffix = Date.now().toString(36);
+    const skuPrefix = `ROLLBACK-${suffix}-`;
+    const header = 'sku,slug,name,description,categorySlug,priceMinor,vatRateBps,restrictionReason,ageRestriction,abv';
+    const rows = Array.from({ length: 10_000 }, (_, index) => {
+      const sequence = String(index + 1).padStart(5, '0');
+      const price = index === 9_999 ? 'invalid' : '299';
+      return `${skuPrefix}${sequence},rollback-${suffix}-${sequence},Rollback ${sequence},Atomic import proof,${category.slug},${price},0,NONE,0,`;
+    });
+    const httpServer = app.getHttpServer() as unknown as Parameters<typeof request>[0];
+    const response = await request(httpServer)
+      .post('/api/v1/catalog/imports?duplicatePolicy=fail&dryRun=false')
+      .attach('file', Buffer.from([header, ...rows].join('\n')), { filename: 'catalog-10000.csv', contentType: 'text/csv' })
+      .expect(201);
+    const body = response.body as unknown as { jobId: string; applied: number; errors: Array<{ rowNumber: number; field?: string }> };
+    jobIds.push(body.jobId);
+    expect(body.applied).toBe(0);
+    expect(body.errors).toEqual(expect.arrayContaining([expect.objectContaining({ rowNumber: 10_001, field: 'priceMinor' })]));
+    const [productCount, job] = await Promise.all([
+      prisma.product.count({ where: { tenantId, sku: { startsWith: skuPrefix } } }),
+      prisma.importJob.findUniqueOrThrow({ where: { id: body.jobId } }),
+    ]);
+    expect(productCount).toBe(0);
+    expect(job.status).toBe('FAILED');
+    expect(job.totalRows).toBe(10_000);
+  }, 120_000);
 });

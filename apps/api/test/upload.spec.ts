@@ -14,4 +14,9 @@ describe('catalog image security', () => {
   it('rejects unsupported bytes before storage or database access', async () => {
     await expect(service.upload('product', Buffer.from('<script>alert(1)</script>'), 'Unsafe')).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('rejects a polyglot payload even when its magic bytes look like a JPEG', async () => {
+    const polyglot = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.from('<script>alert(1)</script>')]);
+    await expect(service.upload('product', polyglot, 'Polyglot')).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

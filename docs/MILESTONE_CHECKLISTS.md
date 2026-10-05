@@ -18,11 +18,11 @@ Status: IN PROGRESS — runtime gate outstanding.
 - [x] Prisma schema and initial SQL migration created
 - [x] Invariant constraints, RLS policies, audit immutability trigger, indexes, and seeders implemented
 - [x] Prisma static validation and generation pass
-- [ ] Migration deployed to PostgreSQL
-- [ ] Minimal and demo seeds executed
-- [ ] Constraint tests and schema drift check pass against PostgreSQL
+- [x] Both migrations deployed to Supabase PostgreSQL
+- [x] Minimal and demo seeds executed (360 products, 6 customers, and 40 orders)
+- [x] Live constraint suite passes (4/4) and migration history reports the database up to date
 
-Status: IN PROGRESS — Supabase password required for live verification.
+Status: COMPLETE — live Supabase gate verified on 2026-10-05.
 
 ## Milestone 3 — Backend core
 
@@ -45,9 +45,11 @@ Status: IN PROGRESS — external PostgreSQL and Redis services required.
 - [x] CSV/XLSX validation, dry run, duplicate policies, atomic apply, and row-keyed error reports
 - [x] 10,000-row deliberate-error test proves zero product writes
 - [x] 50 contenders against stock 10 produce exactly 10 successful reservations in the focused concurrency test
-- [x] API build, lint, strict typecheck, and 10 focused tests pass
-- [ ] Migration and seed changes execute against PostgreSQL
-- [ ] Real PostgreSQL concurrency test passes
-- [ ] Import HTTP E2E passes against PostgreSQL
+- [x] API build, lint, strict typecheck, and focused unit/integration suites pass
+- [x] Catalog/variant migration and demo seed changes execute against Supabase PostgreSQL
+- [x] Real PostgreSQL concurrency test passes: exactly 10 of 50 contenders reserve stock 10
+- [x] Multipart HTTP import E2E passes against PostgreSQL
+- [x] Live 10,000-row HTTP import with one invalid row produces zero product writes
+- [x] JPEG-magic polyglot payload is rejected before image decoding or storage
 
-Status: IN PROGRESS — local gate green; live database gate outstanding.
+Status: COMPLETE — local and live Supabase gates verified on 2026-10-05.
