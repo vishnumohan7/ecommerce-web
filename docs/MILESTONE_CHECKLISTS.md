@@ -90,3 +90,16 @@ Status: COMPLETE — live Supabase and HTTP gates verified on 2026-10-05. Cold c
 - [x] API build, lint, strict typecheck, migration status, route coverage, and focused suites pass
 
 Status: COMPLETE — live Supabase cart and database-constraint gates verified on 2026-10-05.
+
+## Milestone 17 — Admin dashboard (parallel preview)
+
+- [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets
+- [x] Dashboard reads live health, catalogue, and search APIs and handles unavailable/empty states
+- [x] Product catalogue/search, system health, and honest feature-status screens implemented
+- [x] Write actions remain disabled until secure admin authentication and role checks are available
+- [x] Admin lint, strict typecheck, tests, production build, and four-route HTTP smoke pass
+- [ ] Secure admin authentication and RBAC session flow
+- [ ] Product, inventory, promotion, order, refund, customer, settings, and audit management workflows
+- [ ] Milestone 17 reporting APIs and final browser accessibility/visual regression gate
+
+Status: IN PROGRESS — useful read-only preview is live; this is not full Milestone 17 completion.

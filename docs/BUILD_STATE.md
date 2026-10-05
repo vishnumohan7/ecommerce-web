@@ -10,6 +10,7 @@
 | 4   | Catalog, inventory, bulk import        | COMPLETE    | PASS    | `main`    | Build/lint/typecheck green; live catalog, 50-way stock race, multipart import, and 10,000-row rollback gates pass |
 | 5   | Search, filtering, listing performance | COMPLETE    | PASS    | `main`    | Live PostgreSQL/provider/filter/cursor/query-count/HTTP gates and warm p95 benchmark pass                         |
 | 6   | Combined cart                          | COMPLETE    | PASS    | `main`    | Signed guest cart, DB owner constraints, revalidation, merge caps, and 8/8 live Supabase E2E gates pass           |
+| 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Read-only Larkon-inspired shell, live catalogue/search/health views, production build, and HTTP smoke pass        |
 
 ## Implemented modules
 
@@ -23,6 +24,7 @@
 - api/search — COMPLETE (PostgreSQL and Meilisearch providers, outbox sync, synonyms, filters/facets, age-gated listings, cursor pagination, logs, and performance cache verified)
 - api/cart — COMPLETE (signed guest/authenticated identity, immutable server snapshots, live revalidation, grouped totals, coupons, substitution preferences, merge, and abandonment)
 - api/checkout — NOT STARTED
+- admin/dashboard — IN PROGRESS (verified read-only preview; secure write workflows and reporting APIs remain)
 
 ## Known deviations from BUILD_CONTRACT.md
 
