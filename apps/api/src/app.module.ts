@@ -16,6 +16,7 @@ import { CatalogImportModule } from './modules/import/catalog-import.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { SearchModule } from './modules/search/search.module';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SearchModule } from './modules/search/search.module';
     CatalogImportModule,
     PromotionsModule,
     SearchModule,
+    CartModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -73,3 +73,20 @@ Status: COMPLETE — local and live Supabase gates verified on 2026-10-05.
 - [x] API build, lint, strict typecheck, migration, seed, and focused suites pass
 
 Status: COMPLETE — live Supabase and HTTP gates verified on 2026-10-05. Cold cross-region database latency is tracked separately from the required warm application benchmark.
+
+## Milestone 6 — Combined cart
+
+- [x] One active cart per authenticated user or signed guest session is enforced in PostgreSQL
+- [x] Guest cart identity uses a tamper-resistant, HTTP-only 30-day cookie without exposing the database identifier
+- [x] Every cart has exactly one owner; zero-owner and dual-owner writes are rejected by a database constraint
+- [x] Product category, price, currency, and age restriction snapshots are derived exclusively on the server
+- [x] Cart reads revalidate availability, stock, price, and age restriction without silently accepting price changes
+- [x] Add, quantity update, remove, substitution-preference, coupon attach/remove, and guest-to-user merge routes are implemented
+- [x] Guest-to-user merge sums matching quantities, caps them to available stock, and records the adjustment
+- [x] Responses separate grocery and alcohol groups, calculate snapshot totals, and expose whether age verification is required
+- [x] Alcohol can be held in a guest cart while storefront visibility remains protected by the age gate
+- [x] Inactive carts can be marked abandoned with an auditable timestamp
+- [x] Live Supabase E2E covers uniqueness, owner constraints, forbidden fields, merge caps, price changes, deactivation, coupons, and abandonment (8/8)
+- [x] API build, lint, strict typecheck, migration status, route coverage, and focused suites pass
+
+Status: COMPLETE — live Supabase cart and database-constraint gates verified on 2026-10-05.

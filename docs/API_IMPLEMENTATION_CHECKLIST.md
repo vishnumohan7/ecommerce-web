@@ -61,15 +61,14 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 6 — Combined cart
 
-- [ ] `GET /api/v1/cart`
-- [ ] `POST /api/v1/cart/items`
-- [ ] `PATCH /api/v1/cart/items/:id`
-- [ ] `DELETE /api/v1/cart/items/:id`
-- [ ] `POST /api/v1/cart/items/:id/save-for-later`
-- [ ] `POST /api/v1/cart/items/:id/move-to-cart`
-- [ ] `POST /api/v1/cart/coupon`
-- [ ] `DELETE /api/v1/cart/coupon`
-- [ ] `POST /api/v1/cart/merge`
+- [x] `GET /api/v1/cart` — create/read and revalidate the combined guest or customer cart
+- [x] `POST /api/v1/cart/items` — add with server-derived category, price, and age snapshots
+- [x] `PATCH /api/v1/cart/items/:id` — update quantity with live stock enforcement
+- [x] `DELETE /api/v1/cart/items/:id` — remove an item
+- [x] `POST /api/v1/cart/items/:id/substitution-preference` — update fulfilment substitution preference
+- [x] `POST /api/v1/cart/coupon` — attach an active coupon for later authoritative pricing
+- [x] `DELETE /api/v1/cart/coupon` — remove the attached coupon
+- [x] `POST /api/v1/cart/merge` — merge a signed guest cart into the authenticated cart
 
 ### Milestone 7 — Age gate and purchase verification
 
@@ -191,6 +190,6 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ## Counts
 
-- Implemented HTTP routes: **33** (including health, metrics, and OpenAPI endpoints)
-- Pending route groups: **Milestones 6–18**
-- Fully completed API milestones: **Milestones 4 and 5**
+- Implemented HTTP routes: **41** (including health, metrics, and OpenAPI endpoints)
+- Pending route groups: **Milestones 7–18**
+- Fully completed API milestones: **Milestones 4–6**

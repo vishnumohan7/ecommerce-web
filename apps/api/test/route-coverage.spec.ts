@@ -10,6 +10,7 @@ import { CatalogImportController } from '../src/modules/import/catalog-import.co
 import { InventoryController } from '../src/modules/inventory/inventory.controller';
 import { PromotionsController } from '../src/modules/promotions/promotions.controller';
 import { SearchController } from '../src/modules/search/search.controller';
+import { CartController } from '../src/modules/cart/cart.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
@@ -24,6 +25,7 @@ describe('route coverage', () => {
       InventoryController,
       PromotionsController,
       SearchController,
+      CartController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
         (name) => name !== 'constructor',

@@ -11,6 +11,7 @@ const schema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('denes-commerce'),
   AGE_GATE_SECRET: z.string().min(32).optional(),
+  GUEST_CART_SECRET: z.string().min(32).optional(),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3001,http://localhost:3002,http://localhost:3003'),

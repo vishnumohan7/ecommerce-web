@@ -9,6 +9,7 @@
 | 3   | Backend core                           | IN PROGRESS | BLOCKED | —         | Static/unit/Swagger gates green; auth E2E requires PostgreSQL and Redis                                           |
 | 4   | Catalog, inventory, bulk import        | COMPLETE    | PASS    | `main`    | Build/lint/typecheck green; live catalog, 50-way stock race, multipart import, and 10,000-row rollback gates pass |
 | 5   | Search, filtering, listing performance | COMPLETE    | PASS    | `main`    | Live PostgreSQL/provider/filter/cursor/query-count/HTTP gates and warm p95 benchmark pass                         |
+| 6   | Combined cart                          | COMPLETE    | PASS    | `main`    | Signed guest cart, DB owner constraints, revalidation, merge caps, and 8/8 live Supabase E2E gates pass           |
 
 ## Implemented modules
 
@@ -20,7 +21,7 @@
 - api/backend-core — COMPLETE (database-backed E2E verification blocked by missing services)
 - api/catalog — COMPLETE (CRUD, variants with their own stock, exact decimal ABV, secure responsive images, locking ledger, low-stock outbox, CSV/XLSX import, and HFSS checks verified)
 - api/search — COMPLETE (PostgreSQL and Meilisearch providers, outbox sync, synonyms, filters/facets, age-gated listings, cursor pagination, logs, and performance cache verified)
-- api/cart — NOT STARTED
+- api/cart — COMPLETE (signed guest/authenticated identity, immutable server snapshots, live revalidation, grouped totals, coupons, substitution preferences, merge, and abandonment)
 - api/checkout — NOT STARTED
 
 ## Known deviations from BUILD_CONTRACT.md
