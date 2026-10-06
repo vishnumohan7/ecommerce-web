@@ -12,6 +12,7 @@ import { PromotionsController } from '../src/modules/promotions/promotions.contr
 import { SearchController } from '../src/modules/search/search.controller';
 import { CartController } from '../src/modules/cart/cart.controller';
 import { AgeVerificationController } from '../src/modules/age-verification/age-verification.controller';
+import { DeliveryController } from '../src/modules/delivery/delivery.controller';
 import { TaxonomyController } from '../src/modules/catalog/taxonomy.controller';
 
 describe('route coverage', () => {
@@ -29,6 +30,7 @@ describe('route coverage', () => {
       SearchController,
       CartController,
       AgeVerificationController,
+      DeliveryController,
       TaxonomyController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(

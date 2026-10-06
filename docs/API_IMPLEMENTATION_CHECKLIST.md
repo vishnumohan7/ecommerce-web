@@ -87,15 +87,15 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 8 — Delivery zones, slots, and charges
 
-- [ ] `GET /api/v1/delivery/zones/resolve`
-- [ ] `GET /api/v1/delivery/slots`
-- [ ] `POST /api/v1/delivery/slots/:id/reserve`
-- [ ] `GET /api/v1/admin/delivery/zones`
-- [ ] `POST /api/v1/admin/delivery/zones`
-- [ ] `PATCH /api/v1/admin/delivery/zones/:id`
-- [ ] `GET /api/v1/admin/delivery/slots`
-- [ ] `POST /api/v1/admin/delivery/slots`
-- [ ] `PATCH /api/v1/admin/delivery/slots/:id`
+- [x] `GET /api/v1/delivery/zones/resolve` — resolve the postcode and return one basket fee plus breakdown
+- [x] `GET /api/v1/delivery/slots` — return only server-validated slots for the current basket
+- [x] `POST /api/v1/delivery/slots/:id/reserve` — transactionally reserve capacity
+- [x] `GET /api/v1/admin/delivery/zones` — permission-protected zone list
+- [x] `POST /api/v1/admin/delivery/zones` — create zone, fee schedule, and basket constraints
+- [x] `PATCH /api/v1/admin/delivery/zones/:id` — update zone rules with audit history
+- [x] `GET /api/v1/admin/delivery/slots` — permission-protected slot list
+- [x] `POST /api/v1/admin/delivery/slots` — create capacity/cutoff/surcharge rules
+- [x] `PATCH /api/v1/admin/delivery/slots/:id` — update a slot without reducing capacity below reservations
 
 ### Milestone 9 — Pricing, VAT, coupons, and promotion evaluation
 
@@ -196,6 +196,6 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ## Counts
 
-- Implemented HTTP routes: **65** (including health, metrics, and OpenAPI endpoints)
-- Pending route groups: **Milestones 8–18**
-- Fully completed API milestones: **Milestones 4–7**
+- Implemented HTTP routes: **74** (including health, metrics, and OpenAPI endpoints)
+- Pending route groups: **Milestones 9–18**
+- Fully completed API milestones: **Milestones 4–8**

@@ -15,4 +15,5 @@ All notable changes follow Keep a Changelog and Semantic Versioning.
 - Session 6 signed guest and authenticated combined carts, server-derived price/category/age snapshots, live cart revalidation, stock-capped cart merging, coupons, substitution preferences, grouped totals, and abandonment tracking.
 - Completed product archive plus category, brand, and attribute-set CRUD with hierarchy and in-use protections.
 - Session 7 middleware-enforced alcohol browsing gate, session-bound signed cookies, accessible interstitial, purchase age verification, Stub/Yoti/manual provider adapters, postcode jurisdiction rules, and checkout age/sale-window enforcement.
+- Session 8 postcode delivery zones, tiered fee schedules, four mixed-basket fee strategies, basket-aware slot filtering, admin CRUD, and row-locked slot reservations.
 - Parallel Session 17 preview with a responsive Larkon-inspired admin shell plus live catalogue, search, health, and feature-readiness views.

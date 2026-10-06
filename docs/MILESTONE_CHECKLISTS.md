@@ -111,6 +111,22 @@ Status: COMPLETE — live Supabase cart and database-constraint gates verified o
 
 Status: COMPLETE — middleware/browser/accessibility and live Supabase security gates verified on 2026-10-06. Live Yoti activation remains a credential/configuration task behind the verified provider adapter.
 
+## Milestone 8 — Delivery zones, slots, and charges
+
+- [x] Zones support outward-code patterns plus explicit postcode inclusions and exclusions
+- [x] Zone rules enforce order minimum/maximum, supported storage types, alcohol availability, and alcohol subtotal minimum
+- [x] Per-zone tiered fee schedules and grocery free-delivery thresholds are admin-editable
+- [x] `MAX`, `SUM`, `GROCERY_ONLY`, and `HIGHEST_PLUS_SURCHARGE` strategies return one customer-facing fee plus an internal breakdown
+- [x] Slots carry capacity, surcharge, cutoff, and age-restriction compatibility controls
+- [x] Slot availability is filtered server-side for zone, basket, storage, cutoff, capacity, age compatibility, and jurisdiction windows
+- [x] Slot reservations lock the row, are cart-idempotent, and cannot exceed capacity
+- [x] Delivery zone and slot admin list/create/update routes are permission-protected and audited
+- [x] Mixed-basket fee, grocery-only threshold, and alcohol-restricted-zone assertions pass against Supabase
+- [x] Thirty concurrent racers against capacity five produce exactly five reservations
+- [x] API lint, strict typecheck, build, full regression suite, route coverage, and eight-migration status pass
+
+Status: COMPLETE — live Supabase rule, CRUD, and 30-way capacity gates verified on 2026-10-06.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets

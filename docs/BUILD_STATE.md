@@ -11,6 +11,7 @@
 | 5   | Search, filtering, listing performance | COMPLETE    | PASS    | `main`    | Live PostgreSQL/provider/filter/cursor/query-count/HTTP gates and warm p95 benchmark pass                         |
 | 6   | Combined cart                          | COMPLETE    | PASS    | `main`    | Signed guest cart, DB owner constraints, revalidation, merge caps, and 8/8 live Supabase E2E gates pass           |
 | 7   | Age gate and purchase verification     | COMPLETE    | PASS    | `main`    | Middleware gate, provider boundary, postcode rules, checkout guard, accessibility, and 13/13 age tests pass       |
+| 8   | Delivery zones, slots, and charges     | COMPLETE    | PASS    | `main`    | Basket-aware zone/slot rules, four fee strategies, CRUD, and 30-way capacity-five race pass                       |
 | 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Read-only Larkon-inspired shell, live catalogue/search/health views, production build, and HTTP smoke pass        |
 
 ## Implemented modules
@@ -25,6 +26,7 @@
 - api/search — COMPLETE (PostgreSQL and Meilisearch providers, outbox sync, synonyms, filters/facets, age-gated listings, cursor pagination, logs, and performance cache verified)
 - api/cart — COMPLETE (signed guest/authenticated identity, immutable server snapshots, live revalidation, grouped totals, coupons, substitution preferences, merge, and abandonment)
 - api/age-verification — COMPLETE (session-bound browsing gate, three provider adapters, private DOB handling, jurisdiction policy, and authoritative checkout guard)
+- api/delivery — COMPLETE (postcode zones, tiered fees, basket rules, filtered slots, transactional reservations, and admin CRUD)
 - api/checkout — IN PROGRESS (Milestone 7 age/jurisdiction validation is complete; full Milestone 10 orchestration is pending)
 - admin/dashboard — IN PROGRESS (verified read-only preview; secure write workflows and reporting APIs remain)
 

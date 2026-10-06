@@ -29,6 +29,11 @@ export async function seedMinimal(client = prisma): Promise<void> {
         },
         payment: { weightVarianceBufferBps: 1000 },
         fulfilment: { substitutionsEnabled: true },
+        delivery: {
+          combinationStrategy: 'MAX',
+          combinationSurchargeMinor: 0,
+          showBreakdown: false,
+        },
       },
     },
   });
