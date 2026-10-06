@@ -15,7 +15,8 @@
 | 9   | Pricing, VAT, coupons, promotions      | COMPLETE    | PASS    | `main`    | Authoritative cart pricing, 60 golden baskets, live 20-way coupon race, and 145-test regression pass              |
 | 10  | Checkout orchestration                 | COMPLETE    | PASS    | `main`    | Hashed snapshots, ordered validation, guest tombstones, stock TTL/reservation release, and 25 focused tests       |
 | 11  | Stripe payments and webhooks           | COMPLETE    | PASS    | `main`    | One intent, signed durable webhooks, atomic order promotion, buffered/capped manual capture, and 5/5 live E2E     |
-| 12  | Orders, invoices, fulfilment, picking  | COMPLETE    | PASS    | pending   | Gapless yearly numbers, grouped orders, PDF invoices, picking, age handover, and immutable day-book exports      |
+| 12  | Orders, invoices, fulfilment, picking  | COMPLETE    | PASS    | `d5ebd40` | Gapless yearly numbers, grouped orders, PDF invoices, picking, age handover, and immutable day-book exports      |
+| 13  | Returns and refunds                    | COMPLETE    | PASS    | `main`    | Audited returns, partial card/store-credit refunds, policy snapshots, restock/write-off, and 20-way guard         |
 | 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Live catalogue, delivery, pricing, order operations, invoice download, and health views                           |
 
 ## Implemented modules
@@ -35,7 +36,8 @@
 - api/checkout — COMPLETE (full authoritative summary, hashed session snapshots, transactional stock TTL, guest tombstones, and mutation invalidation)
 - api/payments — COMPLETE (Stripe PaymentIntents, server-only totals, durable signed webhooks, atomic one-order promotion, manual capture caps, dispute freeze, and expiry cancellation)
 - api/orders — COMPLETE (one grouped order/invoice, gapless numbering, guarded fulfilment, picking/weight/substitution, tracking, proof-of-age, and day-book PDF/CSV)
-- admin/dashboard — IN PROGRESS (catalogue, delivery, pricing, VAT, order detail, fulfilment, and invoice operations are wired; secure interactive login and later milestone workflows remain)
+- api/returns — COMPLETE (customer/admin workflow, exact discount/VAT unwind, idempotent card/store-credit refunds, refusal automation, and captured-payment guard)
+- admin/dashboard — IN PROGRESS (catalogue, delivery, pricing, VAT, orders, fulfilment, returns/refunds, and invoices are wired; secure interactive login and later milestone workflows remain)
 
 ## Known deviations from BUILD_CONTRACT.md
 

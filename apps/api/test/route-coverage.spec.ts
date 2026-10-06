@@ -18,6 +18,7 @@ import { PricingController } from '../src/modules/pricing/pricing.controller';
 import { CheckoutController } from '../src/modules/checkout/checkout.controller';
 import { PaymentController } from '../src/modules/payments/payment.controller';
 import { OrderController } from '../src/modules/orders/order.controller';
+import { ReturnController } from '../src/modules/returns/return.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
@@ -40,6 +41,7 @@ describe('route coverage', () => {
       CheckoutController,
       PaymentController,
       OrderController,
+      ReturnController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
         (name) => name !== 'constructor',

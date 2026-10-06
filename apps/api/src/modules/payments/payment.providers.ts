@@ -1,4 +1,4 @@
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import type { PaymentIntentRequest, PaymentIntentResult, PaymentProvider } from '@app/ports';
 import { AppConfigService } from '../../common/config/app-config.service';
@@ -8,6 +8,7 @@ export class StubPaymentProvider implements PaymentProvider {
   calls = 0;
   captureCalls = 0;
   cancelCalls = 0;
+  refundCalls = 0;
   health() {
     return Promise.resolve({ ok: true });
   }
@@ -30,6 +31,18 @@ export class StubPaymentProvider implements PaymentProvider {
   cancelIntent(): Promise<void> {
     this.cancelCalls += 1;
     return Promise.resolve();
+  }
+  refundIntent(
+    _providerPaymentIntentId: string,
+    amountMinor: bigint,
+    idempotencyKey: string,
+  ): Promise<{ id: string; status: string; amountMinor: bigint }> {
+    this.refundCalls += 1;
+    return Promise.resolve({
+      id: `re_stub_${createHash('sha256').update(idempotencyKey).digest('hex').slice(0, 24)}`,
+      status: 'succeeded',
+      amountMinor,
+    });
   }
 }
 
@@ -98,6 +111,23 @@ export class StripePaymentProvider implements PaymentProvider {
     );
   }
 
+  async refundIntent(providerPaymentIntentId: string, amountMinor: bigint, idempotencyKey: string) {
+    const payload = await this.post(
+      '/v1/refunds',
+      new URLSearchParams({
+        payment_intent: providerPaymentIntentId,
+        amount: amountMinor.toString(),
+      }),
+      idempotencyKey,
+    );
+    if (!payload.id) throw new Error('Stripe refund response did not include an id');
+    return {
+      id: payload.id,
+      status: payload.status ?? 'pending',
+      amountMinor: BigInt(payload.amount ?? amountMinor),
+    };
+  }
+
   private async post(path: string, form: URLSearchParams, idempotencyKey: string) {
     const secret = this.config.values.STRIPE_SECRET_KEY;
     if (!secret) throw new Error('Stripe is not configured');
@@ -111,8 +141,10 @@ export class StripePaymentProvider implements PaymentProvider {
       body: form,
     });
     const payload = (await response.json()) as {
+      id?: string;
       status?: string;
       amount_received?: string;
+      amount?: string;
       error?: { message?: string };
     };
     if (!response.ok) throw new Error(payload.error?.message ?? 'Stripe request failed');

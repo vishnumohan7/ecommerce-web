@@ -146,13 +146,13 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 13 — Returns and refunds
 
-- [ ] `POST /api/v1/orders/:id/returns`
-- [ ] `GET /api/v1/returns`
-- [ ] `GET /api/v1/returns/:id`
-- [ ] `GET /api/v1/admin/returns`
-- [ ] `PATCH /api/v1/admin/returns/:id`
-- [ ] `POST /api/v1/admin/orders/:id/refunds`
-- [ ] `GET /api/v1/admin/refunds/:id`
+- [x] `POST /api/v1/orders/:id/returns`
+- [x] `GET /api/v1/returns`
+- [x] `GET /api/v1/returns/:id`
+- [x] `GET /api/v1/admin/returns`
+- [x] `PATCH /api/v1/admin/returns/:id`
+- [x] `POST /api/v1/admin/orders/:id/refunds`
+- [x] `GET /api/v1/admin/refunds/:id`
 
 ### Milestone 14 — Picking, substitutions, and variable weight (delivered early in Milestone 12)
 

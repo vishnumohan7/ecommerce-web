@@ -201,6 +201,23 @@ Status: COMPLETE — implementation and live Supabase transaction gates verified
 
 Status: COMPLETE — focused functionality and live Supabase transaction/concurrency gates verified on 2026-10-06. Full regression intentionally deferred per user request.
 
+## Milestone 13 — Returns and refunds
+
+- [x] Customer return request/list/detail and admin review endpoints
+- [x] Item/quantity eligibility uses persisted grocery/alcohol policy snapshots
+- [x] Approval/rejection/refund lifecycle is audited and emits outbox events
+- [x] Exact line total, allocated discount, and VAT unwind to the penny
+- [x] Multiple idempotent partial card refunds through the payment-provider adapter
+- [x] Customer-locked single-use store-credit coupon alternative
+- [x] Payment row lock plus database trigger prevent aggregate refunds exceeding captured funds
+- [x] Disputed payments freeze refunds
+- [x] Configurable restock writes one inventory row and `RETURN`; write-off records `WASTAGE`
+- [x] Refused restricted delivery invokes the automatic restricted-line refund path
+- [x] Admin Returns queue, review controls, and order refund form wired to live APIs
+- [x] Migration 18 deployed; focused unit 4/4 and live Supabase refund/concurrency 3/3 pass
+
+Status: COMPLETE — focused functional, database-safety, and live Supabase gates verified on 2026-10-06. Broader regression deferred to accelerate remaining milestones.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets
@@ -210,6 +227,7 @@ Status: COMPLETE — focused functionality and live Supabase transaction/concurr
 - [x] Protected reads and writes use a server-only `ADMIN_API_TOKEN` and surface explicit authentication/API errors
 - [x] Catalogue, delivery, pricing, and product-create routes pass focused lint, typecheck, and live HTTP 200 checks
 - [x] Orders list/detail, grocery/alcohol grouping, fulfilment transitions, and invoice download are wired to the live API
+- [x] Returns queue, approve/reject disposition controls, and card/store-credit refund initiation are wired to the live API
 - [x] Admin lint, strict typecheck, tests, production build, and four-route HTTP smoke pass
 - [ ] Secure admin authentication and RBAC session flow
 - [ ] Product, inventory, promotion, order, refund, customer, settings, and audit management workflows

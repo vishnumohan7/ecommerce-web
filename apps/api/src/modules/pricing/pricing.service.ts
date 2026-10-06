@@ -34,6 +34,42 @@ export class PricingService {
     return calculatePricing(input);
   }
 
+  /** Unwinds the persisted line total, allocated discount and VAT exactly by unit. */
+  calculateRefund(
+    line: {
+      quantity: number;
+      lineTotalMinor: bigint;
+      vatAmountMinor: bigint;
+      discountMinor: bigint;
+    },
+    quantity: number,
+    alreadyRefundedQuantity = 0,
+  ) {
+    if (
+      quantity <= 0 ||
+      alreadyRefundedQuantity < 0 ||
+      alreadyRefundedQuantity + quantity > line.quantity
+    )
+      throw new UnprocessableEntityException({
+        code: 'REFUND_QUANTITY_INVALID',
+        message: 'Refund quantity exceeds the remaining item quantity',
+      });
+    const weights = Array.from({ length: line.quantity }, () => 1n);
+    const amountShares = Money.of(line.lineTotalMinor).allocate(weights);
+    const vatShares = Money.of(line.vatAmountMinor).allocate(weights);
+    const discountShares = Money.of(line.discountMinor).allocate(weights);
+    const start = alreadyRefundedQuantity;
+    const end = start + quantity;
+    return {
+      quantity,
+      amountMinor: amountShares.slice(start, end).reduce((sum, share) => sum + share.minor, 0n),
+      vatPortionMinor: vatShares.slice(start, end).reduce((sum, share) => sum + share.minor, 0n),
+      discountPortionMinor: discountShares
+        .slice(start, end)
+        .reduce((sum, share) => sum + share.minor, 0n),
+    };
+  }
+
   async quote(
     identity: PricingIdentity,
     input: { postcode?: string | undefined; couponCode?: string | undefined },
@@ -329,6 +365,8 @@ export class PricingService {
       where: { code, active: true, startsAt: { lte: now }, endsAt: { gte: now } },
     });
     if (!coupon || (coupon.maxUses !== null && coupon.uses >= coupon.maxUses))
+      throw this.invalidCoupon();
+    if (coupon.lockedUserId && (!('userId' in identity) || identity.userId !== coupon.lockedUserId))
       throw this.invalidCoupon();
     if (coupon.minimumSpendMinor !== null && subtotalMinor < coupon.minimumSpendMinor)
       throw new UnprocessableEntityException({

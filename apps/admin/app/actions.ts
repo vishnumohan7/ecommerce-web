@@ -154,3 +154,34 @@ export async function transitionFulfilment(data: FormData) {
   );
   finish(`/orders/${orderId}`, result, 'Fulfilment status updated.');
 }
+
+export async function reviewReturn(data: FormData) {
+  const id = textValue(data, 'id');
+  const status = textValue(data, 'status');
+  const result = await adminMutation(`/api/v1/admin/returns/${id}`, 'PATCH', {
+    status,
+    adminNote: textValue(data, 'adminNote') || undefined,
+    ...(status === 'APPROVED' ? { disposition: textValue(data, 'disposition') } : {}),
+  });
+  finish('/returns', result, status === 'APPROVED' ? 'Return approved.' : 'Return rejected.');
+}
+
+export async function initiateRefund(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const items = [...data.entries()]
+    .filter(([key, value]) => key.startsWith('quantity:') && Number(value) > 0)
+    .map(([key, value]) => ({
+      orderItemId: key.slice('quantity:'.length),
+      quantity: Number(value),
+    }));
+  if (items.length === 0) {
+    finish(`/orders/${orderId}`, { ok: false, error: 'Select at least one item to refund.' }, '');
+  }
+  const result = await adminMutation(`/api/v1/admin/orders/${orderId}/refunds`, 'POST', {
+    idempotencyKey: textValue(data, 'idempotencyKey'),
+    reason: textValue(data, 'reason'),
+    method: textValue(data, 'method'),
+    items,
+  });
+  finish(`/orders/${orderId}`, result, 'Refund initiated successfully.');
+}

@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type { FulfilmentStatus, Prisma } from '@prisma/client';
@@ -10,6 +11,7 @@ import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.s
 import { TenantContext } from '../../common/tenancy/tenant-context';
 import { CartService } from '../cart/cart.service';
 import { PaymentService } from '../payments/payment.service';
+import { ReturnService } from '../returns/return.service';
 import { renderAlcoholComplianceCsv, renderAlcoholCompliancePdf } from './compliance.renderer';
 import { renderInvoicePdf } from './invoice.renderer';
 import {
@@ -63,6 +65,7 @@ export class OrderService {
     private readonly db: TenantScopedPrismaService,
     private readonly carts: CartService,
     private readonly payments: PaymentService,
+    @Optional() private readonly returns?: ReturnService,
   ) {}
 
   async customerList() {
@@ -287,7 +290,7 @@ export class OrderService {
     const input = deliveryAgeCheckSchema.parse(raw);
     const actorId = this.userId();
     const tenantId = TenantContext.requireTenantId();
-    return this.db.transaction(async (tx) => {
+    const check = await this.db.transaction(async (tx) => {
       const order = await tx.order.findFirst({ where: { tenantId, id: input.orderId } });
       if (!order) throw new NotFoundException('Order not found');
       const ageRestricted = order.basketType !== 'GROCERY';
@@ -359,6 +362,9 @@ export class OrderService {
       });
       return check;
     });
+    if (input.outcome === 'REFUSED' && this.returns)
+      await this.returns.refundRefusedDelivery(input.orderId);
+    return check;
   }
 
   async createPickList(orderId: string) {

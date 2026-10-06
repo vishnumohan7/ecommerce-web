@@ -51,6 +51,11 @@ export interface PaymentCaptureResult {
   status: string;
   capturedAmountMinor: bigint;
 }
+export interface PaymentRefundResult {
+  id: string;
+  status: string;
+  amountMinor: bigint;
+}
 export interface PaymentProvider extends ProviderContract {
   createIntent(request: PaymentIntentRequest): Promise<PaymentIntentResult>;
   captureIntent(
@@ -59,6 +64,11 @@ export interface PaymentProvider extends ProviderContract {
     idempotencyKey: string,
   ): Promise<PaymentCaptureResult>;
   cancelIntent(providerPaymentIntentId: string, idempotencyKey: string): Promise<void>;
+  refundIntent(
+    providerPaymentIntentId: string,
+    amountMinor: bigint,
+    idempotencyKey: string,
+  ): Promise<PaymentRefundResult>;
 }
 export type WalletProvider = ProviderContract;
 export type AgeVerificationOutcome = 'PENDING' | 'PASSED' | 'FAILED' | 'CANCELLED';

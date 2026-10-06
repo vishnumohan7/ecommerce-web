@@ -167,6 +167,43 @@ export interface OrderDetail extends OrderSummary {
   invoice: { id: string; displayInvoiceNumber: string; issuedAt: string } | null;
 }
 
+export type ReturnRequestStatus =
+  'REQUESTED' | 'APPROVED' | 'REJECTED' | 'REFUND_PENDING' | 'COMPLETED';
+
+export interface ReturnRequest {
+  id: string;
+  orderId: string;
+  userId: string;
+  status: ReturnRequestStatus;
+  reason: string;
+  customerNote: string | null;
+  adminNote: string | null;
+  disposition: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RefundDetail {
+  id: string;
+  orderId: string;
+  returnRequestId: string | null;
+  method: 'CARD' | 'STORE_CREDIT';
+  amountMinor: string;
+  currency: string;
+  status: string;
+  reason: string;
+  createdAt: string;
+  items: Array<{
+    id: string;
+    orderItemId: string;
+    quantity: number;
+    amountMinor: string;
+    vatPortionMinor: string;
+  }>;
+}
+
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 async function get<T>(path: string, admin = false): Promise<ApiResult<T>> {
@@ -264,6 +301,16 @@ export function fetchOrders(filters: Record<string, string | undefined> = {}) {
 }
 export function fetchOrder(id: string) {
   return get<OrderDetail>(`/api/v1/admin/orders/${encodeURIComponent(id)}`, true);
+}
+export function fetchReturns(filters: { status?: string; orderId?: string } = {}) {
+  const params = new URLSearchParams();
+  if (filters.status) params.set('status', filters.status);
+  if (filters.orderId) params.set('orderId', filters.orderId);
+  const query = params.size > 0 ? `?${params.toString()}` : '';
+  return get<ReturnRequest[]>(`/api/v1/admin/returns${query}`, true);
+}
+export function fetchRefund(id: string) {
+  return get<RefundDetail>(`/api/v1/admin/refunds/${encodeURIComponent(id)}`, true);
 }
 export function fetchSearch(query: string) {
   const params = new URLSearchParams({ limit: '50', sort: query ? 'relevance' : 'name-asc' });

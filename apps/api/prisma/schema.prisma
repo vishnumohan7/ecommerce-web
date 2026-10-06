@@ -113,6 +113,14 @@ enum RefundStatus {
   FAILED
 }
 
+enum ReturnRequestStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  REFUND_PENDING
+  COMPLETED
+}
+
 enum AgeVerificationStatus {
   NOT_REQUIRED
   PENDING
@@ -748,6 +756,8 @@ model Coupon {
   categoryIds           String[]        @default([]) @db.Uuid
   brandIds              String[]        @default([]) @db.Uuid
   influencerId          String?         @db.Uuid
+  lockedUserId          String?         @db.Uuid
+  returnRequestId       String?         @db.Uuid
   attributionWindowDays Int             @default(30)
   commissionBasis       String          @default("NET_EX_VAT_DELIVERY")
   active                Boolean         @default(true)
@@ -1042,6 +1052,10 @@ model Refund {
   tenantId         String       @db.Uuid
   orderId          String       @db.Uuid
   paymentId        String       @db.Uuid
+  returnRequestId  String?      @db.Uuid
+  idempotencyKey   String
+  requestHash      String
+  method           String       @default("CARD")
   providerRefundId String?      @unique
   amountMinor      BigInt
   currency         String
@@ -1051,8 +1065,57 @@ model Refund {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId, orderId])
   @@index([tenantId, status])
+}
+
+model RefundItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @db.Uuid
+  refundId        String   @db.Uuid
+  orderItemId     String   @db.Uuid
+  quantity        Int
+  amountMinor     BigInt
+  vatPortionMinor BigInt
+  createdAt       DateTime @default(now())
+
+  @@unique([tenantId, refundId, orderItemId])
+  @@index([tenantId, orderItemId])
+}
+
+model ReturnRequest {
+  id             String              @id @default(uuid()) @db.Uuid
+  tenantId       String              @db.Uuid
+  orderId        String              @db.Uuid
+  userId         String              @db.Uuid
+  status         ReturnRequestStatus @default(REQUESTED)
+  reason         String
+  customerNote   String?
+  adminNote      String?
+  disposition    String?
+  policySnapshot Json
+  reviewedById   String?             @db.Uuid
+  reviewedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([tenantId, userId, createdAt(sort: Desc)])
+  @@index([tenantId, status, createdAt(sort: Desc)])
+  @@index([tenantId, orderId])
+}
+
+model ReturnRequestItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @db.Uuid
+  returnRequestId String   @db.Uuid
+  orderItemId     String   @db.Uuid
+  quantity        Int
+  policySnapshot  Json
+  createdAt       DateTime @default(now())
+
+  @@unique([tenantId, returnRequestId, orderItemId])
+  @@index([tenantId, orderItemId])
 }
 
 model PickList {

@@ -15,6 +15,7 @@ const navigation = [
   { href: '/products', label: 'Products', icon: 'box' },
   { href: '/catalogue', label: 'Categories & brands', icon: 'layers' },
   { href: '/orders', label: 'Orders', icon: 'orders' },
+  { href: '/returns', label: 'Returns & refunds', icon: 'returns' },
   { href: '/delivery', label: 'Delivery', icon: 'truck' },
   { href: '/pricing', label: 'Pricing & tax', icon: 'promo' },
   { href: '/system', label: 'System health', icon: 'pulse' },

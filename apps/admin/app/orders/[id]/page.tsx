@@ -1,7 +1,8 @@
 /* eslint-disable local/no-jsx-literals -- Milestone 17 admin preview is English-only. */
 import type { Metadata } from 'next';
+import { randomUUID } from 'node:crypto';
 import Link from 'next/link';
-import { transitionFulfilment } from '../../actions';
+import { initiateRefund, transitionFulfilment } from '../../actions';
 import { ActionMessage } from '../../components/action-message';
 import { ApiNotice } from '../../components/api-notice';
 import { Currency } from '../../components/currency';
@@ -260,6 +261,62 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
           </article>
         </aside>
       </section>
+      <article className="panel refund-panel">
+        <header className="panel-header">
+          <div>
+            <p className="eyebrow">Payment adjustment</p>
+            <h2>Initiate a refund</h2>
+          </div>
+          <span className="status-badge status-warn">
+            <span />
+            {order.refundStatus.replaceAll('_', ' ')}
+          </span>
+        </header>
+        <form action={initiateRefund} className="refund-form">
+          <input type="hidden" name="orderId" value={order.id} />
+          <input type="hidden" name="idempotencyKey" value={`admin-${randomUUID()}`} />
+          <div className="refund-lines">
+            {[...order.sections.grocery, ...order.sections.alcohol].map((line) => (
+              <label key={line.id}>
+                <span>
+                  <strong>{line.productName}</strong>
+                  <small>
+                    {line.sku} · ordered {line.quantity}
+                  </small>
+                </span>
+                <input
+                  aria-label={`Refund quantity for ${line.productName}`}
+                  name={`quantity:${line.id}`}
+                  type="number"
+                  min="0"
+                  max={line.quantity}
+                  defaultValue="0"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="refund-controls">
+            <label>
+              Refund method
+              <select name="method" defaultValue="CARD">
+                <option value="CARD">Original card</option>
+                <option value="STORE_CREDIT">Store credit</option>
+              </select>
+            </label>
+            <label className="refund-reason">
+              Reason
+              <input name="reason" required maxLength={300} placeholder="Reason for refund" />
+            </label>
+            <button className="button button-primary" type="submit">
+              Initiate refund
+            </button>
+          </div>
+          <p className="page-note">
+            Enter only the quantities to refund. The API validates prior refunds, captured payment
+            limits and approved return quantities.
+          </p>
+        </form>
+      </article>
     </>
   );
 }

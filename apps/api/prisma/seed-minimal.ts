@@ -35,6 +35,21 @@ export async function seedMinimal(client = prisma): Promise<void> {
           showBreakdown: false,
         },
         pricing: { couponStackingPolicy: 'STACK', pricesIncludeVat: true },
+        returns: {
+          refusedDeliveryScope: 'RESTRICTED_LINES',
+          GROCERY: {
+            windowDays: 14,
+            eligibleReasons: ['DAMAGED', 'WRONG_ITEM', 'QUALITY_ISSUE', 'UNWANTED'],
+            disposition: 'RESTOCK_OR_WRITE_OFF',
+            approvalRole: 'STORE_MANAGER',
+          },
+          ALCOHOL: {
+            windowDays: 14,
+            eligibleReasons: ['DAMAGED', 'WRONG_ITEM', 'QUALITY_ISSUE'],
+            disposition: 'WRITE_OFF',
+            approvalRole: 'STORE_MANAGER',
+          },
+        },
       },
     },
   });

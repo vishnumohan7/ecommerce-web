@@ -23,6 +23,7 @@ import { PricingModule } from './modules/pricing/pricing.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { OrderModule } from './modules/orders/order.module';
+import { ReturnModule } from './modules/returns/return.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { OrderModule } from './modules/orders/order.module';
     CheckoutModule,
     PaymentModule,
     OrderModule,
+    ReturnModule,
   ],
   controllers: [HealthController],
   providers: [
