@@ -116,6 +116,57 @@ export interface TaxRule {
   active: boolean;
 }
 
+export type OrderCategory = 'GROCERY' | 'ALCOHOL';
+
+export interface OrderSummary {
+  id: string;
+  displayOrderNumber: string;
+  createdAt: string;
+  basketType: 'GROCERY' | 'ALCOHOL' | 'MIXED';
+  totalMinor: string;
+  currency: string;
+  paymentStatus: string;
+  fulfilmentStatus: string;
+  ageVerificationStatus: string;
+  deliveryAgeCheckStatus: string;
+  label: string;
+}
+
+export interface OrderLine {
+  id: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  unitPriceMinor: string;
+  lineTotalMinor: string;
+  currency: string;
+  vatRateBps: number;
+  orderCategory: OrderCategory;
+  ageRestriction: number;
+  abv: string | null;
+  unitPriceDisplay: string;
+}
+
+export interface FulfilmentGroup {
+  id: string;
+  category: OrderCategory;
+  status: string;
+  updatedAt: string;
+}
+
+export interface OrderDetail extends OrderSummary {
+  subtotalMinor: string;
+  discountMinor: string;
+  taxMinor: string;
+  deliveryFeeMinor: string;
+  refundStatus: string;
+  deliveryAddress: Record<string, unknown>;
+  customerSnapshot: Record<string, unknown>;
+  sections: { grocery: OrderLine[]; alcohol: OrderLine[] };
+  fulfilmentGroups: FulfilmentGroup[];
+  invoice: { id: string; displayInvoiceNumber: string; issuedAt: string } | null;
+}
+
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 async function get<T>(path: string, admin = false): Promise<ApiResult<T>> {
@@ -202,6 +253,17 @@ export function fetchInfluencers() {
 }
 export function fetchTaxRules() {
   return get<TaxRule[]>('/api/v1/admin/tax-rules', true);
+}
+export function fetchOrders(filters: Record<string, string | undefined> = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  const query = params.size > 0 ? `?${params.toString()}` : '';
+  return get<OrderSummary[]>(`/api/v1/admin/orders${query}`, true);
+}
+export function fetchOrder(id: string) {
+  return get<OrderDetail>(`/api/v1/admin/orders/${encodeURIComponent(id)}`, true);
 }
 export function fetchSearch(query: string) {
   const params = new URLSearchParams({ limit: '50', sort: query ? 'relevance' : 'name-asc' });

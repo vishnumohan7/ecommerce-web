@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './theme.css';
+import './orders/orders.css';
 
 export const metadata: Metadata = {
   title: { default: 'Denes Commerce — Admin', template: '%s — Denes Admin' },
@@ -13,6 +14,7 @@ const navigation = [
   { href: '/', label: 'Overview', icon: 'grid' },
   { href: '/products', label: 'Products', icon: 'box' },
   { href: '/catalogue', label: 'Categories & brands', icon: 'layers' },
+  { href: '/orders', label: 'Orders', icon: 'orders' },
   { href: '/delivery', label: 'Delivery', icon: 'truck' },
   { href: '/pricing', label: 'Pricing & tax', icon: 'promo' },
   { href: '/system', label: 'System health', icon: 'pulse' },
@@ -45,10 +47,6 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
                 </Link>
               ))}
               <p className="nav-caption nav-caption-spaced">Coming online</p>
-              <span className="nav-disabled">
-                <NavIcon name="orders" />
-                Orders <em>Planned</em>
-              </span>
               <span className="nav-disabled">
                 <NavIcon name="users" />
                 Customers <em>Planned</em>

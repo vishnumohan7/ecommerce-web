@@ -16,6 +16,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context';
 import type { PricingIdentity } from '../pricing/pricing.service';
 import { CheckoutService } from '../checkout/checkout.service';
 import { verifyStripeSignature } from './payment.providers';
+import { allocateCommerceNumber } from './commerce-number';
 
 type Snapshot = {
   summary: {
@@ -330,11 +331,14 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       );
       const hasGrocery = lines.some((line) => line.orderCategory === 'GROCERY');
       const hasAlcohol = lines.some((line) => line.orderCategory === 'ALCOHOL');
+      const numberYear = new Date().getUTCFullYear();
+      const orderNumber = await allocateCommerceNumber(tx, tenantId, numberYear, 'ORDER');
       const order = await tx.order.create({
         data: {
           tenantId,
           userId: session.userId ?? session.guestUserId,
-          orderNumber: intent.reservedOrderNumber,
+          orderNumber,
+          orderNumberYear: numberYear,
           idempotencyKey: intent.checkoutSessionId,
           basketType: hasGrocery && hasAlcohol ? 'MIXED' : hasAlcohol ? 'ALCOHOL' : 'GROCERY',
           currency: intent.currency,
@@ -428,16 +432,13 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
           manualCapture: intent.manualCapture,
         },
       });
-      const invoiceRows = await tx.$queryRaw<
-        Array<{ invoiceNumber: bigint }>
-      >`SELECT nextval('commerce_invoice_number_seq') AS "invoiceNumber"`;
-      const invoiceNumber = invoiceRows[0]?.invoiceNumber;
-      if (invoiceNumber === undefined) throw new Error('Unable to reserve an invoice number');
+      const invoiceNumber = await allocateCommerceNumber(tx, tenantId, numberYear, 'INVOICE');
       await tx.invoice.create({
         data: {
           tenantId,
           orderId: order.id,
           invoiceNumber,
+          invoiceNumberYear: numberYear,
           subtotalMinor: order.subtotalMinor,
           taxMinor: order.taxMinor,
           totalMinor: order.totalMinor,

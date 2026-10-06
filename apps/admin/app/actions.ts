@@ -143,3 +143,14 @@ export async function createTaxRule(data: FormData) {
   });
   finish('/pricing', result, 'Tax rule created.');
 }
+
+export async function transitionFulfilment(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const groupId = textValue(data, 'groupId');
+  const result = await adminMutation(
+    `/api/v1/admin/orders/${orderId}/fulfilment-groups/${groupId}`,
+    'PATCH',
+    { status: textValue(data, 'status') },
+  );
+  finish(`/orders/${orderId}`, result, 'Fulfilment status updated.');
+}

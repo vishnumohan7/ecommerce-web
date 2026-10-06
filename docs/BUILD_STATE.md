@@ -15,7 +15,8 @@
 | 9   | Pricing, VAT, coupons, promotions      | COMPLETE    | PASS    | `main`    | Authoritative cart pricing, 60 golden baskets, live 20-way coupon race, and 145-test regression pass              |
 | 10  | Checkout orchestration                 | COMPLETE    | PASS    | `main`    | Hashed snapshots, ordered validation, guest tombstones, stock TTL/reservation release, and 25 focused tests       |
 | 11  | Stripe payments and webhooks           | COMPLETE    | PASS    | `main`    | One intent, signed durable webhooks, atomic order promotion, buffered/capped manual capture, and 5/5 live E2E     |
-| 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Read-only Larkon-inspired shell, live catalogue/search/health views, production build, and HTTP smoke pass        |
+| 12  | Orders, invoices, fulfilment, picking  | COMPLETE    | PASS    | pending   | Gapless yearly numbers, grouped orders, PDF invoices, picking, age handover, and immutable day-book exports      |
+| 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Live catalogue, delivery, pricing, order operations, invoice download, and health views                           |
 
 ## Implemented modules
 
@@ -33,13 +34,15 @@
 - api/pricing — COMPLETE (authoritative cart pipeline, effective tax rules, scoped coupons, promotion stacking, influencer attribution, and live concurrency proof)
 - api/checkout — COMPLETE (full authoritative summary, hashed session snapshots, transactional stock TTL, guest tombstones, and mutation invalidation)
 - api/payments — COMPLETE (Stripe PaymentIntents, server-only totals, durable signed webhooks, atomic one-order promotion, manual capture caps, dispute freeze, and expiry cancellation)
-- admin/dashboard — IN PROGRESS (catalogue, delivery, pricing, and VAT operations are wired; secure interactive login and later milestone workflows remain)
+- api/orders — COMPLETE (one grouped order/invoice, gapless numbering, guarded fulfilment, picking/weight/substitution, tracking, proof-of-age, and day-book PDF/CSV)
+- admin/dashboard — IN PROGRESS (catalogue, delivery, pricing, VAT, order detail, fulfilment, and invoice operations are wired; secure interactive login and later milestone workflows remain)
 
 ## Known deviations from BUILD_CONTRACT.md
 
 - Session 1 Docker runtime gate cannot run until a container engine with external-drive storage is available on the host.
 - PostgreSQL gates use the Supabase transaction/session poolers instead of a local container, avoiding internal-SSD usage.
 - Prisma migration history is authoritative for drift because the SQL migrations intentionally include database-native foreign keys, triggers, RLS, expression/partial indexes, and generated defaults not fully represented in the relation-light Prisma datamodel.
+- The buyer removed the standalone driver application and driver-manifest feature from scope on 2026-10-06; delivery proof-of-age remains an authorised admin/operations workflow.
 
 ## Open TODOs carried forward
 

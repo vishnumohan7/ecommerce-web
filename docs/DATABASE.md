@@ -41,7 +41,7 @@ erDiagram
 - `OrderItem` snapshots product, price, tax, category, alcohol, age, variable-weight, unit-price, HFSS, and return-policy facts so edits never rewrite history.
 - `Payment` and `Invoice` have unique `orderId`; provider payment intent identifiers are globally unique; order idempotency keys are unique within a tenant.
 - `AgeVerification` stores an outcome and provider reference, never identity-document data.
-- `AlcoholDayBookEntry` and `DriverManifest` carry immutable hashes for regulated exports.
+- `AlcoholDayBookEntry` carries an immutable hash for regulated daily PDF/CSV exports.
 - `WebhookEvent`, `OutboxMessage`, and `IdempotencyKey` make asynchronous boundaries durable and replay-safe.
 - `AuditLog` is append-only through a database trigger and indexed for entity history.
 

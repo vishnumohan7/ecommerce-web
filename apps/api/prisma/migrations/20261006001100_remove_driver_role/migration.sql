@@ -1,0 +1,19 @@
+DELETE FROM "RolePermission"
+WHERE "roleId" IN (SELECT "id" FROM "Role" WHERE "key" = 'DRIVER');
+DELETE FROM "Role" WHERE "key" = 'DRIVER';
+
+ALTER TYPE "UserRole" RENAME TO "UserRole_old";
+CREATE TYPE "UserRole" AS ENUM (
+  'SUPER_ADMIN',
+  'TENANT_ADMIN',
+  'STORE_MANAGER',
+  'CATALOG_MANAGER',
+  'FULFILMENT_STAFF',
+  'CUSTOMER'
+);
+ALTER TABLE "User" ALTER COLUMN "role" DROP DEFAULT;
+ALTER TABLE "User"
+  ALTER COLUMN "role" TYPE "UserRole"
+  USING ("role"::text::"UserRole");
+ALTER TABLE "User" ALTER COLUMN "role" SET DEFAULT 'CUSTOMER'::"UserRole";
+DROP TYPE "UserRole_old";

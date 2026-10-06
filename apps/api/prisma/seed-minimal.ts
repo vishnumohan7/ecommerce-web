@@ -159,7 +159,6 @@ export async function seedMinimal(client = prisma): Promise<void> {
       'orders.read',
       'orders.write',
     ],
-    DRIVER: ['delivery.read', 'delivery.write'],
     CUSTOMER: ['catalog.read', 'orders.read'],
   };
   for (const [key, keys] of Object.entries(rolePermissions)) {
@@ -197,7 +196,6 @@ export async function seedMinimal(client = prisma): Promise<void> {
       saleEnd: 1440,
       challengeAge: 25,
       dayBook: false,
-      manifest: false,
       digital: true,
       postcodeAreas: [] as string[],
     },
@@ -208,7 +206,6 @@ export async function seedMinimal(client = prisma): Promise<void> {
       saleEnd: 1320,
       challengeAge: 25,
       dayBook: true,
-      manifest: true,
       digital: false,
       postcodeAreas: [
         'AB',
@@ -236,7 +233,6 @@ export async function seedMinimal(client = prisma): Promise<void> {
       saleEnd: 1380,
       challengeAge: 25,
       dayBook: false,
-      manifest: false,
       digital: false,
       postcodeAreas: ['BT'],
     },
@@ -266,7 +262,6 @@ export async function seedMinimal(client = prisma): Promise<void> {
         prohibitedDeliveryEndMinutes: seed.code === JurisdictionCode.SCOTLAND ? 360 : null,
         challengeAge: seed.challengeAge,
         requiresDayBook: seed.dayBook,
-        requiresDriverManifest: seed.manifest,
         allowsDigitalProofOfAge: seed.digital,
         hfssEnforced: seed.code === JurisdictionCode.ENGLAND_WALES,
       },

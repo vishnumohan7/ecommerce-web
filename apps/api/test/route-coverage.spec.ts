@@ -17,6 +17,7 @@ import { TaxonomyController } from '../src/modules/catalog/taxonomy.controller';
 import { PricingController } from '../src/modules/pricing/pricing.controller';
 import { CheckoutController } from '../src/modules/checkout/checkout.controller';
 import { PaymentController } from '../src/modules/payments/payment.controller';
+import { OrderController } from '../src/modules/orders/order.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
@@ -38,6 +39,7 @@ describe('route coverage', () => {
       PricingController,
       CheckoutController,
       PaymentController,
+      OrderController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
         (name) => name !== 'constructor',

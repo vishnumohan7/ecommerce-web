@@ -331,6 +331,7 @@ async function seedDemo(): Promise<void> {
         tenantId: DEFAULT_TENANT_ID,
         userId: customers[index % customers.length]!.id,
         orderNumber: BigInt(index + 1),
+        orderNumberYear: new Date().getUTCFullYear(),
         idempotencyKey: `demo-order-${index + 1}`,
         basketType,
         subtotalMinor: totalMinor - 399n,

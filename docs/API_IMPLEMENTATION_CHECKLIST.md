@@ -128,15 +128,21 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 12 — Orders, fulfilment, invoices, and tracking
 
-- [ ] `GET /api/v1/orders`
-- [ ] `GET /api/v1/orders/:id`
-- [ ] `GET /api/v1/orders/:id/tracking`
-- [ ] `GET /api/v1/orders/:id/invoice`
-- [ ] `POST /api/v1/orders/:id/reorder`
-- [ ] `GET /api/v1/admin/orders`
-- [ ] `GET /api/v1/admin/orders/:id`
-- [ ] `PATCH /api/v1/admin/orders/:id/fulfilment-groups/:groupId`
-- [ ] `POST /api/v1/delivery-age-check`
+- [x] `GET /api/v1/orders`
+- [x] `GET /api/v1/orders/:id`
+- [x] `GET /api/v1/orders/:id/tracking`
+- [x] `GET /api/v1/orders/:id/invoice`
+- [x] `POST /api/v1/orders/:id/reorder`
+- [x] `GET /api/v1/admin/orders`
+- [x] `GET /api/v1/admin/orders/:id`
+- [x] `GET /api/v1/admin/orders/:id/invoice`
+- [x] `PATCH /api/v1/admin/orders/:id/fulfilment-groups/:groupId`
+- [x] `POST /api/v1/admin/orders/:id/pick-list`
+- [x] `GET /api/v1/admin/orders/:id/pick-list`
+- [x] `PATCH /api/v1/admin/orders/:id/pick-list/items/:itemId`
+- [x] `POST /api/v1/admin/orders/:id/pick-list/complete`
+- [x] `GET /api/v1/admin/compliance/alcohol-day-book` — JSON, PDF, and CSV
+- [x] `POST /api/v1/delivery-age-check`
 
 ### Milestone 13 — Returns and refunds
 
@@ -148,14 +154,13 @@ The exact request/response DTOs are finalized when each milestone is implemented
 - [ ] `POST /api/v1/admin/orders/:id/refunds`
 - [ ] `GET /api/v1/admin/refunds/:id`
 
-### Milestone 14 — Picking, substitutions, and variable weight
+### Milestone 14 — Picking, substitutions, and variable weight (delivered early in Milestone 12)
 
-- [ ] `GET /api/v1/admin/pick-lists`
-- [ ] `GET /api/v1/admin/pick-lists/:id`
-- [ ] `PATCH /api/v1/admin/pick-lists/:id/items/:itemId`
-- [ ] `POST /api/v1/admin/pick-lists/:id/items/:itemId/substitution`
-- [ ] `POST /api/v1/admin/pick-lists/:id/items/:itemId/weight`
-- [ ] `POST /api/v1/admin/pick-lists/:id/complete`
+- [x] Order-scoped pick-list create/read endpoints
+- [x] Picked/short/substituted outcome endpoint
+- [x] Alcohol/category/age-safe substitution validation
+- [x] Variable-weight capture through the pick-item endpoint
+- [x] Pick completion, total recomputation, and capped payment capture
 
 ### Milestone 15 — Notifications and customer communications
 

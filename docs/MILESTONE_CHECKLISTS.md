@@ -5,7 +5,7 @@ This file records evidence, not optimistic status. A milestone is complete only 
 ## Milestone 1 — Foundation
 
 - [x] pnpm/Turborepo workspace and strict TypeScript configuration
-- [x] API, web, admin, and driver applications build locally
+- [x] API, storefront, and admin applications build locally
 - [x] Money package tests pass with 100% branch coverage
 - [x] Lint, typecheck, build, CI, environment validation, and dependency audit configured
 - [x] Dependency stores and caches reside inside the external-drive project
@@ -183,6 +183,24 @@ Status: COMPLETE — focused functionality and live Supabase reservation gates v
 
 Status: COMPLETE — implementation and live Supabase transaction gates verified on 2026-10-06. Real Stripe test-card/CLI activation remains credential-dependent and is isolated behind the verified provider adapter. Full regression intentionally deferred per user request.
 
+## Milestone 12 — Orders, invoices, fulfilment, and picking
+
+- [x] One mixed basket produces one order number, one order, one payment, and one invoice with separate grocery/alcohol presentation
+- [x] `ORD-YYYY-NNNNNN` and `INV-YYYY-NNNNNN` use tenant/year counters locked with `FOR UPDATE`
+- [x] Existing orders/invoices backfill counters at `MAX(existing)+1`; transaction rollback does not consume a number
+- [x] Two hundred simultaneous number requests produce an exact gapless 1–200 sequence on Supabase
+- [x] Explicit per-category fulfilment transition table rejects illegal transitions, audits changes, and writes outbox events
+- [x] Deterministic invoice PDF includes grocery/alcohol sections, line VAT, totals, payment status, and merchant legal details
+- [x] Customer history/detail/tracking/invoice/reorder and admin list/detail/filter/invoice routes are implemented
+- [x] Pick lists group lines by storage type, record picked/short/substituted outcomes, and capture actual variable weight
+- [x] Cross-category and weaker-age substitutions are rejected; pick completion recomputes and invokes capped manual capture
+- [x] Delivery Challenge 25 records exclude ID numbers/images; unattended restricted delivery is rejected and refusal emits refund/notification/audit work
+- [x] Immutable alcohol despatch day-book entries contain only alcohol lines and export as JSON, PDF, or CSV
+- [x] Standalone driver application and driver manifests removed at buyer request; Supabase cleanup migration applied
+- [x] Focused order/invoice/route tests pass 5/5, live order E2E passes, and live payment finalisation regression passes
+
+Status: COMPLETE — focused functionality and live Supabase transaction/concurrency gates verified on 2026-10-06. Full regression intentionally deferred per user request.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets
@@ -191,6 +209,7 @@ Status: COMPLETE — implementation and live Supabase transaction gates verified
 - [x] Product create/archive, category/brand management, delivery zone/slot controls, coupons, influencers, and VAT rules are wired to completed APIs
 - [x] Protected reads and writes use a server-only `ADMIN_API_TOKEN` and surface explicit authentication/API errors
 - [x] Catalogue, delivery, pricing, and product-create routes pass focused lint, typecheck, and live HTTP 200 checks
+- [x] Orders list/detail, grocery/alcohol grouping, fulfilment transitions, and invoice download are wired to the live API
 - [x] Admin lint, strict typecheck, tests, production build, and four-route HTTP smoke pass
 - [ ] Secure admin authentication and RBAC session flow
 - [ ] Product, inventory, promotion, order, refund, customer, settings, and audit management workflows

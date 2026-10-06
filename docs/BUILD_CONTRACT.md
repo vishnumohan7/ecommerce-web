@@ -11,7 +11,6 @@ Deliverables:
 | 1 | Customer storefront | Next.js 15 App Router, React 19, TypeScript, Tailwind 4 |
 | 2 | Admin console | Next.js 15, TypeScript, Tailwind 4, TanStack Table/Query |
 | 3 | REST API | NestJS 11, TypeScript, Prisma 6, PostgreSQL 17 |
-| 4 | Driver web app (installable PWA) | Next.js 15, mobile-first, offline queue — carries the delivery age check |
 | 5 | Infrastructure | Docker Compose (dev), Dockerfiles + Helm values (prod), GitHub Actions |
 | 6 | Documentation set | Developer docs + **buyer/operator docs** (see 2.6) |
 
@@ -57,7 +56,7 @@ No buyer should edit source to rebrand. All of the following are database-or-env
 - Colour tokens: primary, secondary, accent, success, warning, danger, surface, on-surface — emitted as CSS custom properties, consumed by Tailwind via `@theme` with `var()` references. **No hard-coded hex values anywhere in `apps/web` or `apps/admin`.** Enforce with a lint rule.
 - Typography: font family pair (heading/body) from a curated list plus a custom `@font-face` upload slot
 - Email template branding (logo, colours, footer legal block, unsubscribe address)
-- Branding is served by `GET /api/v1/public/branding` (cached, ETag'd) so web, admin, driver app and any future client consume the same theme
+- Branding is served by `GET /api/v1/public/branding` (cached, ETag'd) so storefront, admin, and any future client consume the same theme
 - Legal page content (Terms, Privacy, Cookie, Returns, Alcohol Policy, Delivery Policy) is CMS-managed, seeded with placeholder text clearly marked `[BUYER MUST REPLACE — NOT LEGAL ADVICE]`
 
 ## 2.3 Extensibility axes (build the seam, ship one implementation)
@@ -65,7 +64,7 @@ No buyer should edit source to rebrand. All of the following are database-or-env
 | Axis | Seam | v1 ships |
 |---|---|---|
 | Currency | `Money` value object (minor units `bigint` + ISO 4217 code), never `float`. All display via `Intl.NumberFormat`. | GBP only |
-| Locale | `next-intl` on web, admin and driver apps. Zero hard-coded user-facing strings — enforce with `eslint-plugin-i18next` / a `no-literal-string` rule. | en-GB only |
+| Locale | `next-intl` on web and admin apps. Zero hard-coded user-facing strings — enforce with `eslint-plugin-i18next` / a `no-literal-string` rule. | en-GB only |
 | Payment | `PaymentProvider` port | Stripe |
 | Age verification | `AgeVerificationProvider` port | Stub (dev) + Yoti (live) |
 | Email / SMS / Push | Three separate ports | Resend / Twilio / FCM |
@@ -93,7 +92,7 @@ A "port" means: a TypeScript `interface` in `packages/ports`, a NestJS injection
 
 ## 2.6 Two documentation sets
 
-**Developer set** (`/docs`): `ARCHITECTURE.md`, `ARCHITECTURE_DECISIONS.md`, `DATABASE.md`, `API.md`, `SECURITY.md`, `TESTING.md`, `ENVIRONMENT.md`, `DEPLOYMENT.md`, `DRIVER_APP.md`, `INTEGRATIONS.md`, `BUILD_STATE.md`, `UPGRADING.md`, `THIRD_PARTY_LICENSES.md`.
+**Developer set** (`/docs`): `ARCHITECTURE.md`, `ARCHITECTURE_DECISIONS.md`, `DATABASE.md`, `API.md`, `SECURITY.md`, `TESTING.md`, `ENVIRONMENT.md`, `DEPLOYMENT.md`, `INTEGRATIONS.md`, `BUILD_STATE.md`, `UPGRADING.md`, `THIRD_PARTY_LICENSES.md`.
 
 **Buyer/operator set** (`/docs/buyer`): `GETTING_STARTED.md`, `ADMIN_GUIDE.md` (screenshot-annotated, task-oriented), `STORE_SETUP_CHECKLIST.md`, `ALCOHOL_COMPLIANCE_CHECKLIST.md`, `INTEGRATION_CREDENTIALS.md` (exactly which accounts to open and which keys to paste where), `TROUBLESHOOTING.md`, `SUPPORT.md`, `DATA_PROTECTION_NOTES.md`.
 
@@ -202,10 +201,10 @@ Scotland's rules differ enough to break a UK-wide hard-coded implementation:
 
 - **Off-sales permitted hours: 10:00–22:00 daily, statutory maximum.** The *sale* — i.e. acceptance of the order — must occur within licensed hours. An individual premises licence may be narrower; it may never be wider.
 - **Delivery between 00:00 and 06:00 is an offence** (s.120, other than to licensed premises).
-- **s.119 record-keeping:** a day book recording the order must be kept at the despatch premises, and a delivery book or invoice must be carried by the delivering person, recording quantity, description and price of the alcohol plus the name and address of the recipient. Implement as a generated, exportable, immutable **Alcohol Despatch Day Book** and a **Driver Delivery Manifest** (PDF + CSV), both retained and downloadable from admin.
+- **s.119 record-keeping:** a day book recording the order must be kept at the despatch premises, and the delivering person must carry the required order/invoice record. Implement a generated, exportable, immutable **Alcohol Despatch Day Book** (PDF + CSV), retained and downloadable from admin. A dedicated driver product and driver manifest are explicitly out of scope by buyer decision.
 - Northern Ireland has a distinct regime again; model it as a jurisdiction with its own ruleset rather than assuming GB rules.
 
-**Implementation:** `JurisdictionRuleService` resolves a ruleset from the **delivery postcode**, not the merchant address. Ruleset fields: `permittedSaleWindow`, `prohibitedDeliveryWindow`, `challengeAge`, `requiresDayBook`, `requiresDriverManifest`, `allowsDigitalProofOfAge`. Seed `ENGLAND_WALES`, `SCOTLAND`, `NORTHERN_IRELAND`, all admin-editable. All window checks evaluate in Europe/London wall-clock.
+**Implementation:** `JurisdictionRuleService` resolves a ruleset from the **delivery postcode**, not the merchant address. Ruleset fields: `permittedSaleWindow`, `prohibitedDeliveryWindow`, `challengeAge`, `requiresDayBook`, `allowsDigitalProofOfAge`. Seed `ENGLAND_WALES`, `SCOTLAND`, `NORTHERN_IRELAND`, all admin-editable. All window checks evaluate in Europe/London wall-clock.
 
 Checkout must **block** alcohol purchase outside the permitted sale window for the resolved jurisdiction, with a clear message and the time the window reopens. Slot selection must **hide or disable** delivery slots that fall in a prohibited delivery window for alcohol-containing baskets.
 
@@ -223,9 +222,9 @@ Implement accordingly:
 
 Order-level `deliveryAgeCheckStatus ∈ { NOT_REQUIRED, PENDING, PASSED, FAILED, REFUSED }`, set to `PENDING` automatically when any line has `ageRestriction > 0`.
 
-Driver web app captures: outcome, challenge age applied (25 in Scotland, configurable elsewhere), ID type category (`PASSPORT` | `DRIVING_LICENCE` | `PASS_CARD` | `DIGITAL_DVS` | `OTHER` — **category only, never the number**), recipient-was-present boolean, refusal reason, free-text note, timestamp, GPS (if consented and configured), and optionally a photo of the doorstep handover — **never a photo of the ID document**. Make that a hard rule in code and in `docs/SECURITY.md`; storing ID images creates a data-protection liability the merchant almost certainly has not assessed.
+The authorised admin/operations workflow captures: outcome, challenge age applied (25 in Scotland, configurable elsewhere), ID type category (`PASSPORT` | `DRIVING_LICENCE` | `PASS_CARD` | `DIGITAL_DVS` | `OTHER` — **category only, never the number**), recipient-was-present boolean, refusal reason, free-text note, timestamp, GPS (if consented and configured), and optionally a photo of the doorstep handover — **never a photo of the ID document**. Make that a hard rule in code and in `docs/SECURITY.md`; storing ID images creates a data-protection liability the merchant almost certainly has not assessed.
 
-**Age-restricted orders may never be left in a safe place, with a neighbour, or in an unattended location.** Enforce in code: the driver app cannot select "left safe" for an order with `deliveryAgeCheckStatus != NOT_REQUIRED`. Refusal triggers: return-to-depot, automatic full refund of restricted lines (configurable: full order vs restricted lines only), customer notification, and an audit entry.
+**Age-restricted orders may never be left in a safe place, with a neighbour, or in an unattended location.** Enforce this in the delivery handover endpoint whenever `deliveryAgeCheckStatus != NOT_REQUIRED`. Refusal triggers: return-to-depot, automatic full refund of restricted lines (configurable: full order vs restricted lines only), customer notification, and an audit entry.
 
 ## 4.5 Payments & SCA
 
@@ -262,7 +261,7 @@ Every row is a **port** as defined in 2.3. Ship the interface, the dev implement
 | 4 | Address lookup | `AddressLookupProvider` | `StaticPostcodeProvider` (fixture set) | **getAddress.io** | Loqate, Ideal Postcodes, Royal Mail PAF | `ADDRESS_PROVIDER`, `GETADDRESS_API_KEY` |
 | 5 | Transactional email | `EmailProvider` | `MailpitProvider` (SMTP → local UI) | **Resend** | Postmark, SendGrid, SES | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO` |
 | 6 | SMS / OTP | `SmsProvider` | `ConsoleSmsProvider` (logs code, dev-only) | **Twilio** (Verify for OTP) | Vonage, MessageBird, Sinch | `SMS_PROVIDER`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` |
-| 7 | Push | `PushProvider` | `NoopPushProvider` | **Web Push (VAPID)** — storefront + driver PWA | FCM, OneSignal (for a future native edition) | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
+| 7 | Push | `PushProvider` | `NoopPushProvider` | **Web Push (VAPID)** — storefront | FCM, OneSignal (for a future native edition) | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
 | 8 | WhatsApp (optional, PRO) | `WhatsAppProvider` | `NoopWhatsAppProvider` | **Meta WhatsApp Cloud API** | Twilio WA, 360dialog | `WHATSAPP_ENABLED`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TOKEN` |
 | 9 | Object storage | `StorageProvider` | **MinIO** in compose | **S3-compatible** (AWS S3 / Cloudflare R2) | GCS, Azure Blob | `STORAGE_ENDPOINT`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_PUBLIC_BASE_URL` |
 | 10 | Image optimisation | `ImageProvider` | `SharpLocalProvider` | Next/Image + Cloudflare Images | imgix, Cloudinary | `IMAGE_PROVIDER`, `CF_IMAGES_TOKEN` |
@@ -270,7 +269,7 @@ Every row is a **port** as defined in 2.3. Ship the interface, the dev implement
 | 12 | Cache / queue | — | **Redis** in compose | Redis + **BullMQ** | — | `REDIS_URL` |
 | 13 | Delivery dispatch | `DispatchProvider` | `InternalFleetProvider` | **Stuart** (UK on-demand, supports age-verified deliveries) | Gophr, DPD Local, Royal Mail Click&Drop, Shutl | `DISPATCH_PROVIDER`, `STUART_CLIENT_ID`, `STUART_CLIENT_SECRET` |
 | 14 | Maps / geocoding | `GeoProvider` | `FixtureGeoProvider` | **Mapbox** | Google Maps, OS Places | `GEO_PROVIDER`, `MAPBOX_TOKEN` |
-| 15 | Error monitoring | — | console | **Sentry** (api + web + admin + driver) | Rollbar, Bugsnag | `SENTRY_DSN`, `SENTRY_ENVIRONMENT` |
+| 15 | Error monitoring | — | console | **Sentry** (api + web + admin) | Rollbar, Bugsnag | `SENTRY_DSN`, `SENTRY_ENVIRONMENT` |
 | 16 | Tracing / metrics | — | OTel → console | **OpenTelemetry** → OTLP collector; Prometheus `/metrics` | Datadog, New Relic | `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | 17 | Product analytics | `AnalyticsProvider` (consent-gated) | `NoopAnalyticsProvider` | **PostHog** (self-hostable — a selling point) | GA4 w/ consent mode, Matomo | `ANALYTICS_PROVIDER`, `POSTHOG_KEY`, `POSTHOG_HOST` |
 | 18 | Feature flags | `FlagProvider` | `EnvFlagProvider` | **Flagsmith** (self-hostable) | Unleash, LaunchDarkly | `FLAG_PROVIDER`, `FLAGSMITH_KEY` |
