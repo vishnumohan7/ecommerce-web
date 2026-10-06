@@ -11,6 +11,7 @@ export const productInputSchema = z
     priceMinor: z.string().regex(/^\d+$/),
     currency: z.literal('GBP').default('GBP'),
     vatRateBps: z.number().int().min(0).max(10000),
+    taxCategory: z.enum(['STANDARD_20', 'REDUCED_5', 'ZERO', 'EXEMPT']).default('ZERO'),
     pricingMode: z.enum(['UNIT', 'WEIGHT_ESTIMATED']),
     pricePerKgMinor: z.string().regex(/^\d+$/).nullable().optional(),
     estimatedWeightGrams: z.number().int().positive().nullable().optional(),

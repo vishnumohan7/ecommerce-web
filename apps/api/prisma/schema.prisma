@@ -29,6 +29,13 @@ enum PricingMode {
   WEIGHT_ESTIMATED
 }
 
+enum TaxCategory {
+  STANDARD_20
+  REDUCED_5
+  ZERO
+  EXEMPT
+}
+
 enum ReturnPolicy {
   STANDARD_14_DAY
   PERISHABLE_EXEMPT
@@ -142,6 +149,18 @@ enum PromotionType {
   FIXED
   MULTIBUY
   FREE_DELIVERY
+}
+
+enum CouponClass {
+  CUSTOMER_CREDIT
+  SITE_WIDE
+  INFLUENCER
+}
+
+enum CouponAppliesTo {
+  GROCERY
+  ALCOHOL
+  BOTH
 }
 
 enum PickListStatus {
@@ -392,6 +411,7 @@ model Product {
   priceMinor           BigInt
   currency             String            @default("GBP")
   vatRateBps           Int
+  taxCategory          TaxCategory       @default(ZERO)
   pricingMode          PricingMode       @default(UNIT)
   pricePerKgMinor      BigInt?
   estimatedWeightGrams Int?
@@ -644,46 +664,46 @@ model AgeVerification {
 }
 
 model DeliveryZone {
-  id                           String        @id @default(uuid()) @db.Uuid
-  tenantId                     String        @db.Uuid
-  code                         String
-  name                         String
-  postcodePatterns             String[]
-  postcodeIncludes             String[]      @default([])
-  postcodeExcludes             String[]      @default([])
-  deliveryFeeMinor             BigInt
-  groceryFeeMinor              BigInt
-  alcoholFeeMinor              BigInt
-  freeDeliveryThresholdMinor   BigInt?
-  minimumOrderMinor            BigInt?
-  maximumOrderMinor            BigInt?
-  alcoholMinimumSubtotalMinor  BigInt?
-  feeSchedule                  Json          @default("[]")
-  supportedStorageTypes        StorageType[] @default([AMBIENT, CHILLED, FROZEN])
-  currency                     String        @default("GBP")
-  alcoholDeliveryAllowed       Boolean       @default(true)
-  active                       Boolean       @default(true)
-  createdAt                    DateTime      @default(now())
-  updatedAt                    DateTime      @updatedAt
+  id                          String        @id @default(uuid()) @db.Uuid
+  tenantId                    String        @db.Uuid
+  code                        String
+  name                        String
+  postcodePatterns            String[]
+  postcodeIncludes            String[]      @default([])
+  postcodeExcludes            String[]      @default([])
+  deliveryFeeMinor            BigInt
+  groceryFeeMinor             BigInt
+  alcoholFeeMinor             BigInt
+  freeDeliveryThresholdMinor  BigInt?
+  minimumOrderMinor           BigInt?
+  maximumOrderMinor           BigInt?
+  alcoholMinimumSubtotalMinor BigInt?
+  feeSchedule                 Json          @default("[]")
+  supportedStorageTypes       StorageType[] @default([AMBIENT, CHILLED, FROZEN])
+  currency                    String        @default("GBP")
+  alcoholDeliveryAllowed      Boolean       @default(true)
+  active                      Boolean       @default(true)
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId, active])
 }
 
 model DeliverySlot {
-  id                    String   @id @default(uuid()) @db.Uuid
-  tenantId              String   @db.Uuid
-  zoneId                String   @db.Uuid
-  startsAt              DateTime
-  endsAt                DateTime
-  capacity              Int
-  reserved              Int      @default(0)
-  surchargeMinor        BigInt   @default(0)
-  cutoffMinutes         Int      @default(120)
-  allowsAgeRestricted   Boolean  @default(true)
-  active                Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  zoneId              String   @db.Uuid
+  startsAt            DateTime
+  endsAt              DateTime
+  capacity            Int
+  reserved            Int      @default(0)
+  surchargeMinor      BigInt   @default(0)
+  cutoffMinutes       Int      @default(120)
+  allowsAgeRestricted Boolean  @default(true)
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@unique([tenantId, zoneId, startsAt, endsAt])
   @@index([tenantId, zoneId, startsAt])
@@ -701,24 +721,66 @@ model DeliverySlotReservation {
 }
 
 model Coupon {
-  id                String        @id @default(uuid()) @db.Uuid
-  tenantId          String        @db.Uuid
-  code              String
-  type              PromotionType
-  valueBps          Int?
-  valueMinor        BigInt?
-  currency          String        @default("GBP")
-  minimumSpendMinor BigInt?
-  startsAt          DateTime
-  endsAt            DateTime
-  maxUses           Int?
-  uses              Int           @default(0)
-  active            Boolean       @default(true)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id                    String          @id @default(uuid()) @db.Uuid
+  tenantId              String          @db.Uuid
+  code                  String
+  type                  PromotionType
+  valueBps              Int?
+  valueMinor            BigInt?
+  currency              String          @default("GBP")
+  minimumSpendMinor     BigInt?
+  maximumDiscountMinor  BigInt?
+  startsAt              DateTime
+  endsAt                DateTime
+  maxUses               Int?
+  uses                  Int             @default(0)
+  couponClass           CouponClass     @default(SITE_WIDE)
+  appliesTo             CouponAppliesTo @default(BOTH)
+  perCustomerLimit      Int?
+  firstOrderOnly        Boolean         @default(false)
+  productIds            String[]        @default([]) @db.Uuid
+  categoryIds           String[]        @default([]) @db.Uuid
+  brandIds              String[]        @default([]) @db.Uuid
+  influencerId          String?         @db.Uuid
+  attributionWindowDays Int             @default(30)
+  commissionBasis       String          @default("NET_EX_VAT_DELIVERY")
+  active                Boolean         @default(true)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId, active, startsAt, endsAt])
+}
+
+model CouponRedemption {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @db.Uuid
+  couponId      String   @db.Uuid
+  userId        String?  @db.Uuid
+  guestToken    String?
+  orderId       String?  @db.Uuid
+  discountMinor BigInt
+  attributedAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, couponId, createdAt])
+  @@index([tenantId, userId, couponId])
+  @@index([tenantId, guestToken, couponId])
+}
+
+model TaxRule {
+  id            String      @id @default(uuid()) @db.Uuid
+  tenantId      String      @db.Uuid
+  taxCategory   TaxCategory
+  rateBps       Int
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([tenantId, taxCategory, effectiveFrom])
+  @@index([tenantId, taxCategory, active, effectiveFrom])
 }
 
 model Promotion {

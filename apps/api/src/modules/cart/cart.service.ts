@@ -7,6 +7,7 @@ import {
 import type { Cart, CartItem, OrderCategory, Prisma, Product } from '@prisma/client';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { TenantContext } from '../../common/tenancy/tenant-context';
+import { PricingService } from '../pricing/pricing.service';
 import {
   addCartItemSchema,
   couponSchema,
@@ -27,11 +28,14 @@ interface CartChange {
 
 @Injectable()
 export class CartService {
-  constructor(private readonly db: TenantScopedPrismaService) {}
+  constructor(
+    private readonly db: TenantScopedPrismaService,
+    private readonly pricing: PricingService,
+  ) {}
 
   async read(identity: CartIdentity) {
     const cart = await this.getOrCreate(identity);
-    return this.view(cart);
+    return this.view(cart, identity);
   }
 
   async add(identity: CartIdentity, raw: unknown) {
@@ -67,7 +71,7 @@ export class CartService {
         },
       });
     await this.bump(cart.id);
-    return this.view(cart);
+    return this.view(cart, identity);
   }
 
   async update(identity: CartIdentity, itemId: string, raw: unknown) {
@@ -86,14 +90,14 @@ export class CartService {
       data: { quantity: input.quantity },
     });
     await this.bump(cart.id);
-    return this.view(cart);
+    return this.view(cart, identity);
   }
 
   async remove(identity: CartIdentity, itemId: string) {
     const { cart, item } = await this.ownedItem(identity, itemId);
     await this.db.client.cartItem.delete({ where: { id: item.id } });
     await this.bump(cart.id);
-    return this.view(cart);
+    return this.view(cart, identity);
   }
 
   async substitution(identity: CartIdentity, itemId: string, raw: unknown) {
@@ -104,7 +108,7 @@ export class CartService {
       data: { substitutionPreference: input.preference },
     });
     await this.bump(cart.id);
-    return this.view(cart);
+    return this.view(cart, identity);
   }
 
   async applyCoupon(identity: CartIdentity, raw: unknown) {
@@ -123,7 +127,7 @@ export class CartService {
       where: { id: cart.id },
       data: { couponCode: coupon.code, version: { increment: 1 } },
     });
-    return this.view({ ...cart, couponCode: coupon.code });
+    return this.view({ ...cart, couponCode: coupon.code }, identity);
   }
 
   async removeCoupon(identity: CartIdentity) {
@@ -132,7 +136,7 @@ export class CartService {
       where: { id: cart.id },
       data: { couponCode: null, version: { increment: 1 } },
     });
-    return this.view({ ...cart, couponCode: null });
+    return this.view({ ...cart, couponCode: null }, identity);
   }
 
   async merge(userId: string, guestSessionId?: string) {
@@ -205,7 +209,7 @@ export class CartService {
       return target.id;
     });
     const cart = await this.db.client.cart.findFirstOrThrow({ where: { id: targetId } });
-    const view = await this.view(cart);
+    const view = await this.view(cart, { userId });
     return { ...view, changes: [...conflicts, ...view.changes] };
   }
 
@@ -216,7 +220,7 @@ export class CartService {
     });
   }
 
-  private async view(cart: Cart) {
+  private async view(cart: Cart, identity: CartIdentity) {
     const items = await this.db.client.cartItem.findMany({
       where: { cartId: cart.id },
       orderBy: { createdAt: 'asc' },
@@ -284,7 +288,6 @@ export class CartService {
         substitutionPreference: item.substitutionPreference,
         priceSnapshotMinor: item.priceSnapshotMinor.toString(),
         currentPriceMinor: product.priceMinor.toString(),
-        lineSubtotalMinor: (item.priceSnapshotMinor * BigInt(item.quantity)).toString(),
         availableStock: available,
         ageRestriction: product.ageRestriction,
         isAlcohol: product.isAlcohol,
@@ -292,16 +295,22 @@ export class CartService {
     }
     if (removeIds.length > 0)
       await this.db.client.cartItem.deleteMany({ where: { id: { in: removeIds } } });
+    const breakdown = await this.pricing.quote(identity, {});
+    const pricedLineById = new Map(breakdown.lines.map((line) => [line.id, line]));
+    for (const item of [...grouped.GROCERY, ...grouped.ALCOHOL]) {
+      const priced = pricedLineById.get(String(item['id']));
+      item['lineSubtotalMinor'] = priced?.baseMinor.toString() ?? '0';
+      item['lineDiscountMinor'] = priced?.discountMinor.toString() ?? '0';
+      item['lineTotalMinor'] = priced?.totalMinor.toString() ?? '0';
+      item['vatMinor'] = priced?.vatMinor.toString() ?? '0';
+    }
     const makeGroup = (category: OrderCategory) => {
       const categoryItems = grouped[category];
-      const subtotal = categoryItems.reduce(
-        (sum, item) => sum + BigInt(item['lineSubtotalMinor'] as string),
-        0n,
-      );
+      const subtotal =
+        category === 'GROCERY' ? breakdown.grocerySubtotalMinor : breakdown.alcoholSubtotalMinor;
       return { category, items: categoryItems, subtotalMinor: subtotal.toString() };
     };
     const groups = [makeGroup('GROCERY'), makeGroup('ALCOHOL')];
-    const subtotal = groups.reduce((sum, group) => sum + BigInt(group.subtotalMinor), 0n);
     return {
       id: cart.id,
       status: cart.status,
@@ -310,9 +319,10 @@ export class CartService {
       couponCode: cart.couponCode,
       groups,
       totals: {
-        subtotalMinor: subtotal.toString(),
-        discountMinor: '0',
-        grandTotalMinor: subtotal.toString(),
+        subtotalMinor: breakdown.subtotalMinor.toString(),
+        discountMinor: breakdown.discountMinor.toString(),
+        taxMinor: breakdown.taxMinor.toString(),
+        grandTotalMinor: breakdown.totalMinor.toString(),
       },
       requiresAgeVerification: grouped.ALCOHOL.some((item) => Number(item['ageRestriction']) > 0),
       changes,

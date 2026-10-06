@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { argon2id, hash } from 'argon2';
-import { CmsPageType, JurisdictionCode, PrismaClient, UserRole } from '@prisma/client';
+import { CmsPageType, JurisdictionCode, PrismaClient, TaxCategory, UserRole } from '@prisma/client';
 
 export const DEFAULT_TENANT_ID = '00000000-0000-4000-8000-000000000001';
 const prisma = new PrismaClient();
@@ -34,9 +34,34 @@ export async function seedMinimal(client = prisma): Promise<void> {
           combinationSurchargeMinor: 0,
           showBreakdown: false,
         },
+        pricing: { couponStackingPolicy: 'STACK', pricesIncludeVat: true },
       },
     },
   });
+
+  for (const [taxCategory, rateBps] of [
+    [TaxCategory.STANDARD_20, 2000],
+    [TaxCategory.REDUCED_5, 500],
+    [TaxCategory.ZERO, 0],
+    [TaxCategory.EXEMPT, 0],
+  ] as const) {
+    await client.taxRule.upsert({
+      where: {
+        tenantId_taxCategory_effectiveFrom: {
+          tenantId: DEFAULT_TENANT_ID,
+          taxCategory,
+          effectiveFrom: new Date('2026-01-01T00:00:00.000Z'),
+        },
+      },
+      update: { rateBps, active: true },
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        taxCategory,
+        rateBps,
+        effectiveFrom: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    });
+  }
 
   await client.brandingProfile.upsert({
     where: { tenantId: DEFAULT_TENANT_ID },

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AgeGateTokenService } from '../../common/security/age-gate-token.service';
-import { CartModule } from '../cart/cart.module';
+import { GuestCartTokenService } from '../cart/guest-cart-token.service';
 import { AgeVerificationController } from './age-verification.controller';
 import { AgeVerificationService } from './age-verification.service';
 import { CheckoutAgeGuardService } from './checkout-age-guard.service';
@@ -10,10 +10,10 @@ import { StubAgeVerificationProvider } from './providers/stub-age-verification.p
 import { YotiAgeVerificationProvider } from './providers/yoti-age-verification.provider';
 
 @Module({
-  imports: [CartModule],
   controllers: [AgeVerificationController],
   providers: [
     AgeGateTokenService,
+    GuestCartTokenService,
     AgeVerificationService,
     CheckoutAgeGuardService,
     PostcodeJurisdictionResolver,

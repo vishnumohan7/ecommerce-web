@@ -14,6 +14,7 @@ import { CartController } from '../src/modules/cart/cart.controller';
 import { AgeVerificationController } from '../src/modules/age-verification/age-verification.controller';
 import { DeliveryController } from '../src/modules/delivery/delivery.controller';
 import { TaxonomyController } from '../src/modules/catalog/taxonomy.controller';
+import { PricingController } from '../src/modules/pricing/pricing.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
@@ -32,6 +33,7 @@ describe('route coverage', () => {
       AgeVerificationController,
       DeliveryController,
       TaxonomyController,
+      PricingController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
         (name) => name !== 'constructor',

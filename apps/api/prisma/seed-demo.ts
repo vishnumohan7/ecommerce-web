@@ -12,6 +12,7 @@ import {
   RefundStatus,
   RestrictionReason,
   ReturnPolicy,
+  TaxCategory,
   UserRole,
 } from '@prisma/client';
 import { DEFAULT_TENANT_ID, seedMinimal } from './seed-minimal.js';
@@ -101,6 +102,7 @@ async function seedDemo(): Promise<void> {
       priceMinor: BigInt(75 + (index % 40) * 25),
       currency: 'GBP',
       vatRateBps: index % 3 === 0 ? 2000 : 0,
+      taxCategory: index % 3 === 0 ? TaxCategory.STANDARD_20 : TaxCategory.ZERO,
       pricingMode: variable ? PricingMode.WEIGHT_ESTIMATED : PricingMode.UNIT,
       pricePerKgMinor: variable ? BigInt(350 + index * 5) : null,
       estimatedWeightGrams: variable ? 500 + index * 20 : null,
@@ -131,6 +133,7 @@ async function seedDemo(): Promise<void> {
     priceMinor: BigInt(250 + (index % 30) * 55),
     currency: 'GBP',
     vatRateBps: 2000,
+    taxCategory: TaxCategory.STANDARD_20,
     pricingMode: PricingMode.UNIT,
     isAlcohol: true,
     abv: `${String(4 + (index % 36))}.00`,

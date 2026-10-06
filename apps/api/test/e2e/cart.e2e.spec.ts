@@ -12,6 +12,8 @@ import { ForbiddenFieldsPipe } from '../../src/common/pipes/forbidden-fields.pip
 import { TenantContext } from '../../src/common/tenancy/tenant-context';
 import { CartController } from '../../src/modules/cart/cart.controller';
 import { CartService } from '../../src/modules/cart/cart.service';
+import { PricingService } from '../../src/modules/pricing/pricing.service';
+import { TaxRuleService } from '../../src/modules/pricing/tax-rule.service';
 import { GuestCartTokenService } from '../../src/modules/cart/guest-cart-token.service';
 
 const tenantId = '00000000-0000-4000-8000-000000000001';
@@ -156,11 +158,12 @@ describe('combined cart HTTP E2E', () => {
     uniqueUserId = uniqueUser.id;
     userIds.push(...users.map((user) => user.id));
     const scoped = new TenantScopedPrismaService(prisma);
+    const pricing = new PricingService(scoped, {} as never, new TaxRuleService(scoped));
     const config = new AppConfigService();
     const moduleRef = await Test.createTestingModule({
       controllers: [CartController],
       providers: [
-        { provide: CartService, useValue: new CartService(scoped) },
+        { provide: CartService, useValue: new CartService(scoped, pricing) },
         { provide: GuestCartTokenService, useValue: new GuestCartTokenService(config) },
         { provide: AppConfigService, useValue: config },
       ],
@@ -342,7 +345,7 @@ describe('combined cart HTTP E2E', () => {
       data: { tenantId, userId: uniqueUserId, updatedAt: new Date('2020-01-01T00:00:00.000Z') },
     });
     cartIds.add(cart.id);
-    const service = new CartService(new TenantScopedPrismaService(prisma));
+    const service = new CartService(new TenantScopedPrismaService(prisma), {} as never);
     await TenantContext.run({ tenantId, requestId: 'cart-abandonment' }, async () => {
       await service.abandonInactive(new Date('2021-01-01T00:00:00.000Z'));
     });

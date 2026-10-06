@@ -99,14 +99,17 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 9 — Pricing, VAT, coupons, and promotion evaluation
 
-- [ ] `POST /api/v1/pricing/quote`
-- [ ] `POST /api/v1/coupons/validate`
-- [ ] `GET /api/v1/admin/coupons`
-- [ ] `POST /api/v1/admin/coupons`
-- [ ] `PATCH /api/v1/admin/coupons/:id`
-- [ ] `GET /api/v1/admin/influencers`
-- [ ] `POST /api/v1/admin/influencers`
-- [ ] `GET /api/v1/admin/influencers/:id/report`
+- [x] `POST /api/v1/pricing/quote` — authoritative promotion, coupon, delivery, VAT, and total pipeline
+- [x] `POST /api/v1/coupons/validate` — validate the current cart against the shared coupon engine
+- [x] `POST /api/v1/coupons/redeem` — atomically consume usage and record optional order/influencer attribution
+- [x] `GET /api/v1/admin/coupons`
+- [x] `POST /api/v1/admin/coupons`
+- [x] `PATCH /api/v1/admin/coupons/:id`
+- [x] `GET /api/v1/admin/influencers`
+- [x] `POST /api/v1/admin/influencers`
+- [x] `GET /api/v1/admin/influencers/:id/report`
+- [x] `GET /api/v1/admin/tax-rules`
+- [x] `POST /api/v1/admin/tax-rules`
 
 ### Milestone 10 — Checkout orchestration
 

@@ -127,6 +127,26 @@ Status: COMPLETE — middleware/browser/accessibility and live Supabase security
 
 Status: COMPLETE — live Supabase rule, CRUD, and 30-way capacity gates verified on 2026-10-06.
 
+## Milestone 9 — Pricing, VAT, coupons, and promotions
+
+- [x] `PricingService.calculate` is the single pricing arithmetic entry point and an ESLint rule prevents direct helper imports elsewhere
+- [x] Cart totals now consume the same authoritative pricing breakdown instead of recomputing money
+- [x] The pipeline is fixed as base → promotions → allocated coupon → delivery → line VAT → totals
+- [x] Basket discounts use `Money.allocate`; the £10 across three equal lines assertion yields £3.34, £3.33, and £3.33
+- [x] Products have an explicit tax category and effective-dated, admin-editable VAT rules
+- [x] VAT is extracted from inclusive discounted line totals without hard-coded decimal rates
+- [x] Customer-credit, site-wide, and influencer coupons share fixed/percentage, spend, cap, expiry, usage, customer, first-order, catalogue, and grocery/alcohol scope rules
+- [x] `NONE`, `BEST_ONLY`, and `STACK` policies are tenant-configurable
+- [x] Multibuy, threshold, fixed, percentage, and free-delivery promotion evaluation is implemented
+- [x] Coupon create/edit operations are audited and redemption uses a row lock before incrementing usage
+- [x] Influencer coupon redemptions can attribute an order and calculate commission on the configured basis
+- [x] Sixty independent golden JSON baskets match their expected penny-level breakdowns
+- [x] Twenty simultaneous contenders against a one-use coupon persist exactly one redemption in Supabase
+- [x] Nine migrations are deployed and Supabase reports the schema up to date
+- [x] API lint, strict typecheck, production build, route boot smoke, and full 31-file/145-test regression pass
+
+Status: COMPLETE — live Supabase pricing/concurrency gates and the complete regression suite verified on 2026-10-06.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets

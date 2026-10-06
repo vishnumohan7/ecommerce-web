@@ -78,6 +78,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@app/money':
+        specifier: workspace:*
+        version: link:../../packages/money
       '@app/ports':
         specifier: workspace:*
         version: link:../../packages/ports

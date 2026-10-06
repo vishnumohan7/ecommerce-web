@@ -1,0 +1,61 @@
+{
+  "name": "discount-exceeds-subtotal",
+  "metadata": {
+    "couponClass": "INFLUENCER",
+    "variableWeightEstimate": false,
+    "promotion": null
+  },
+  "input": {
+    "currency": "GBP",
+    "taxRates": {
+      "STANDARD_20": 2000,
+      "REDUCED_5": 500,
+      "ZERO": 0,
+      "EXEMPT": 0
+    },
+    "lines": [
+      {
+        "id": "standard",
+        "productId": "p-standard",
+        "categoryId": "c-1",
+        "brandId": "b-1",
+        "quantity": 2,
+        "unitPriceMinor": "234",
+        "promotionDiscountMinor": "0",
+        "taxCategory": "STANDARD_20",
+        "isAlcohol": false
+      },
+      {
+        "id": "zero",
+        "productId": "p-zero",
+        "categoryId": "c-2",
+        "brandId": null,
+        "quantity": 3,
+        "unitPriceMinor": "98",
+        "taxCategory": "ZERO",
+        "isAlcohol": false
+      }
+    ],
+    "coupon": {
+      "type": "FIXED",
+      "valueBps": null,
+      "valueMinor": "999999",
+      "maximumDiscountMinor": null,
+      "appliesTo": "BOTH",
+      "productIds": [],
+      "categoryIds": [],
+      "brandIds": []
+    },
+    "deliveryFeeMinor": "0"
+  },
+  "expected": {
+    "subtotalMinor": "762",
+    "couponDiscountMinor": "762",
+    "promotionDiscountMinor": "0",
+    "deliveryFeeMinor": "0",
+    "taxMinor": "0",
+    "totalMinor": "0",
+    "lineCouponDiscounts": ["468", "294"],
+    "lineTotals": ["0", "0"]
+  }
+}
