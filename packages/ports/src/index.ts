@@ -35,7 +35,31 @@ export const TOKENS: Readonly<Record<ProviderName, InjectionToken>> = Object.fre
     InjectionToken
   >,
 );
-export type PaymentProvider = ProviderContract;
+export interface PaymentIntentRequest {
+  idempotencyKey: string;
+  amountMinor: bigint;
+  currency: string;
+  manualCapture: boolean;
+  metadata: Record<string, string>;
+}
+export interface PaymentIntentResult {
+  id: string;
+  clientSecret: string;
+  status: string;
+}
+export interface PaymentCaptureResult {
+  status: string;
+  capturedAmountMinor: bigint;
+}
+export interface PaymentProvider extends ProviderContract {
+  createIntent(request: PaymentIntentRequest): Promise<PaymentIntentResult>;
+  captureIntent(
+    providerPaymentIntentId: string,
+    amountMinor: bigint,
+    idempotencyKey: string,
+  ): Promise<PaymentCaptureResult>;
+  cancelIntent(providerPaymentIntentId: string, idempotencyKey: string): Promise<void>;
+}
 export type WalletProvider = ProviderContract;
 export type AgeVerificationOutcome = 'PENDING' | 'PASSED' | 'FAILED' | 'CANCELLED';
 export interface AgeVerificationContext {

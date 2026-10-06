@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppConfigService } from '../../src/common/config/app-config.service';
 import { PrismaService } from '../../src/common/database/prisma.service';
@@ -14,6 +14,8 @@ import { CheckoutService } from '../../src/modules/checkout/checkout.service';
 import { DeliveryService } from '../../src/modules/delivery/delivery.service';
 import { PricingService } from '../../src/modules/pricing/pricing.service';
 import { TaxRuleService } from '../../src/modules/pricing/tax-rule.service';
+import { StubPaymentProvider } from '../../src/modules/payments/payment.providers';
+import { PaymentService } from '../../src/modules/payments/payment.service';
 
 const tenantId = '00000000-0000-4000-8000-000000000001';
 const prisma = new PrismaService();
@@ -33,8 +35,14 @@ let cartId = '';
 let guestCartId = '';
 let groceryGuestCartId = '';
 let guestUserId = '';
+let completedOrderId = '';
+let webhookEventId = '';
+let failedWebhookEventId = '';
 const sessionIds: string[] = [];
 let checkout: CheckoutService;
+let payments: PaymentService;
+const paymentProvider = new StubPaymentProvider();
+const webhookSecret = 'whsec_checkout_e2e';
 
 const address = {
   line1: '1 Checkout Way',
@@ -172,9 +180,43 @@ describe('checkout orchestration E2E', () => {
       new CheckoutAgeGuardService(scoped, jurisdictions),
       new AppConfigService(),
     );
+    payments = new PaymentService(
+      scoped,
+      checkout,
+      { values: { STRIPE_WEBHOOK_SECRET: webhookSecret } } as never,
+      paymentProvider,
+    );
   }, 60_000);
 
   afterAll(async () => {
+    if (completedOrderId) {
+      await prisma.outboxMessage.deleteMany({
+        where: {
+          tenantId,
+          OR: [
+            { payload: { path: ['orderId'], equals: completedOrderId } },
+            { payload: { path: ['webhookEventId'], equals: webhookEventId } },
+            { payload: { path: ['webhookEventId'], equals: failedWebhookEventId } },
+          ],
+        },
+      });
+      await prisma.invoice.deleteMany({ where: { orderId: completedOrderId } });
+      await prisma.payment.deleteMany({ where: { orderId: completedOrderId } });
+      await prisma.priceCapEvent.deleteMany({ where: { orderId: completedOrderId } });
+      await prisma.orderFulfilmentGroup.deleteMany({ where: { orderId: completedOrderId } });
+      await prisma.adminTask.deleteMany({ where: { orderId: completedOrderId } });
+      await prisma.orderItem.deleteMany({ where: { orderId: completedOrderId } });
+      await prisma.order.deleteMany({ where: { id: completedOrderId } });
+    }
+    await prisma.webhookEvent.deleteMany({
+      where: { id: { in: [webhookEventId, failedWebhookEventId].filter(Boolean) } },
+    });
+    await prisma.idempotencyKey.deleteMany({
+      where: { tenantId, key: { in: sessionIds }, scope: 'checkout.payment-intent' },
+    });
+    await prisma.checkoutPaymentIntent.deleteMany({
+      where: { tenantId, checkoutSessionId: { in: sessionIds } },
+    });
     await prisma.stockReservation.deleteMany({ where: { checkoutSessionId: { in: sessionIds } } });
     await prisma.checkoutSession.deleteMany({ where: { id: { in: sessionIds } } });
     await prisma.inventoryTransaction.deleteMany({
@@ -265,7 +307,7 @@ describe('checkout orchestration E2E', () => {
     expect(await prisma.checkoutSession.count({ where: { cartId: guestCartId } })).toBe(before);
   }, 30_000);
 
-  it('creates a non-login tombstone user for an eligible guest checkout', async () => {
+  it('creates one intent, order, payment and invoice for an eligible guest checkout', async () => {
     const session = await inTenant(() =>
       checkout.create(
         { guestSessionId: groceryGuestToken },
@@ -287,8 +329,110 @@ describe('checkout orchestration E2E', () => {
     const tombstone = await prisma.user.findUniqueOrThrow({ where: { id: guestUserId } });
     expect(tombstone.active).toBe(false);
     expect(tombstone.tombstonedAt).toBeInstanceOf(Date);
-    await inTenant(() => checkout.cancel({ guestSessionId: groceryGuestToken }, session.id));
-  }, 30_000);
+
+    const intents = await inTenant(() =>
+      Promise.all(
+        Array.from({ length: 5 }, () =>
+          payments.createIntent({ guestSessionId: groceryGuestToken }, session.id),
+        ),
+      ),
+    );
+    expect(paymentProvider.calls).toBe(1);
+    expect(new Set(intents.map((intent) => intent.providerPaymentIntentId))).toHaveLength(1);
+    const providerPaymentIntentId = intents[0]?.providerPaymentIntentId;
+    expect(providerPaymentIntentId).toBeTruthy();
+    const storedIntent = await prisma.checkoutPaymentIntent.findFirstOrThrow({
+      where: { tenantId, checkoutSessionId: session.id },
+    });
+    expect(storedIntent.amountMinor).toBe(879n);
+    expect(storedIntent.checkoutTotalMinor).toBe(799n);
+
+    const failedEventId = `evt_checkout_bad_${suffix}`;
+    const failedPayload = Buffer.from(
+      JSON.stringify({
+        id: failedEventId,
+        type: 'payment_intent.amount_capturable_updated',
+        data: {
+          object: {
+            id: providerPaymentIntentId,
+            amount_capturable: 1,
+            currency: 'gbp',
+            metadata: {
+              tenantId,
+              checkoutSessionId: session.id,
+              orderNumberReserved: storedIntent.reservedOrderNumber.toString(),
+            },
+          },
+        },
+      }),
+    );
+    await inTenant(() => payments.webhook(failedPayload, stripeSignature(failedPayload)));
+    const failedEvent = await eventually(() =>
+      prisma.webhookEvent.findFirst({
+        where: { provider: 'stripe', providerEventId: failedEventId, status: 'FAILED' },
+      }),
+    );
+    failedWebhookEventId = failedEvent.id;
+    expect(await prisma.order.count({ where: { idempotencyKey: session.id } })).toBe(0);
+    expect(
+      await prisma.outboxMessage.count({
+        where: {
+          tenantId,
+          topic: 'alert.payment-webhook-failed',
+          payload: { path: ['webhookEventId'], equals: failedWebhookEventId },
+        },
+      }),
+    ).toBe(1);
+
+    const eventId = `evt_checkout_${suffix}`;
+    const payload = Buffer.from(
+      JSON.stringify({
+        id: eventId,
+        type: 'payment_intent.amount_capturable_updated',
+        data: {
+          object: {
+            id: providerPaymentIntentId,
+            amount_capturable: 879,
+            currency: 'gbp',
+            metadata: {
+              tenantId,
+              checkoutSessionId: session.id,
+              orderNumberReserved: storedIntent.reservedOrderNumber.toString(),
+            },
+          },
+        },
+      }),
+    );
+    const signature = stripeSignature(payload);
+    const first = await inTenant(() => payments.webhook(payload, signature));
+    expect(first).toEqual({ received: true, duplicate: false });
+    const duplicates = await inTenant(() =>
+      Promise.all(Array.from({ length: 4 }, () => payments.webhook(payload, signature))),
+    );
+    expect(duplicates.every((result) => result.duplicate)).toBe(true);
+
+    const order = await eventually(() =>
+      prisma.order.findFirst({ where: { tenantId, idempotencyKey: session.id } }),
+    );
+    completedOrderId = order.id;
+    webhookEventId = (
+      await prisma.webhookEvent.findUniqueOrThrow({
+        where: { provider_providerEventId: { provider: 'stripe', providerEventId: eventId } },
+      })
+    ).id;
+    expect(await prisma.order.count({ where: { idempotencyKey: session.id } })).toBe(1);
+    expect(await prisma.payment.count({ where: { orderId: order.id } })).toBe(1);
+    expect(await prisma.invoice.count({ where: { orderId: order.id } })).toBe(1);
+    expect(await prisma.orderFulfilmentGroup.count({ where: { orderId: order.id } })).toBe(1);
+    expect(order.paymentStatus).toBe('AUTHORISED');
+    expect((await prisma.inventory.findUniqueOrThrow({ where: { id: inventoryId } })).onHand).toBe(
+      9,
+    );
+    const captured = await inTenant(() => payments.captureAtPickCompletion(order.id, 999n));
+    expect(captured.capturedAmountMinor).toBe(879n);
+    expect(paymentProvider.captureCalls).toBe(1);
+    expect(await prisma.priceCapEvent.count({ where: { orderId: order.id } })).toBe(1);
+  }, 60_000);
 });
 
 function productData(sku: string, slug: string, alcohol: boolean) {
@@ -323,4 +467,22 @@ function productData(sku: string, slug: string, alcohol: boolean) {
 
 function inTenant<T>(work: () => T): T {
   return TenantContext.run({ tenantId, requestId: `checkout-${suffix}` }, work);
+}
+
+async function eventually<T>(work: () => Promise<T | null>, timeoutMs = 15_000): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const result = await work();
+    if (result) return result;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error('Timed out waiting for asynchronous payment processing');
+}
+
+function stripeSignature(payload: Buffer): string {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const digest = createHmac('sha256', webhookSecret)
+    .update(`${String(timestamp)}.${payload.toString('utf8')}`)
+    .digest('hex');
+  return `t=${String(timestamp)},v1=${digest}`;
 }

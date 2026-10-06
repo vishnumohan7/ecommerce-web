@@ -21,6 +21,7 @@ import { AgeVerificationModule } from './modules/age-verification/age-verificati
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
+import { PaymentModule } from './modules/payments/payment.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CheckoutModule } from './modules/checkout/checkout.module';
     DeliveryModule,
     PricingModule,
     CheckoutModule,
+    PaymentModule,
   ],
   controllers: [HealthController],
   providers: [

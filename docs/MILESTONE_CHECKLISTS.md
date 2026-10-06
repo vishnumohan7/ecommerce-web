@@ -164,6 +164,25 @@ Status: COMPLETE — live Supabase pricing/concurrency gates and the complete re
 
 Status: COMPLETE — focused functionality and live Supabase reservation gates verified on 2026-10-06. Full regression intentionally deferred per user request.
 
+## Milestone 11 — Stripe payments and webhooks
+
+- [x] One PaymentIntent is created per checkout session under five concurrent callers
+- [x] Amount, currency, basket type, checkout session, tenant, and reserved order number are derived server-side
+- [x] Manual-capture baskets include the configured 10% authorisation buffer
+- [x] Stripe uses automatic payment methods and exposes `requires_action` state/client secret for 3DS clients
+- [x] Raw-body signatures are checked before webhook persistence or processing
+- [x] Webhooks are persisted uniquely, queued durably, acknowledged, and processed asynchronously
+- [x] Success and capturable events atomically create one order, payment, invoice, category fulfilment groups, inventory deductions, and outbox messages
+- [x] Five deliveries of one event create exactly one commercial transaction
+- [x] Amount/currency/metadata mismatch rolls back order promotion and raises an alert
+- [x] Manual capture is capped at the authorisation and records `PriceCapEvent` on overflow
+- [x] Expiring uncaptured authorisations have a scheduled cancellation path
+- [x] Failed-payment, refund-reconciliation, and dispute webhook paths are handled; disputes freeze refunds and create an admin task
+- [x] Twelve migrations are deployed and Supabase reports the schema up to date
+- [x] Focused payment/route tests pass 3/3 and live checkout/payment E2E passes 5/5
+
+Status: COMPLETE — implementation and live Supabase transaction gates verified on 2026-10-06. Real Stripe test-card/CLI activation remains credential-dependent and is isolated behind the verified provider adapter. Full regression intentionally deferred per user request.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets

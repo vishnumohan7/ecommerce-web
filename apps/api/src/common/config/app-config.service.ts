@@ -15,6 +15,7 @@ const schema = z.object({
   AGE_VERIFY_PROVIDER: z.enum(['stub', 'yoti', 'manual']).default('stub'),
   AGE_VERIFICATION_TTL_DAYS: z.coerce.number().int().positive().default(365),
   CHECKOUT_RESERVATION_TTL_MINUTES: z.coerce.number().int().positive().default(20),
+  PAYMENT_WEIGHT_VARIANCE_BUFFER_BPS: z.coerce.number().int().min(0).max(10_000).default(1000),
   YOTI_API_BASE_URL: z.string().url().default('https://api.yoti.com'),
   YOTI_CLIENT_SDK_ID: z.string().optional(),
   YOTI_KEY_FILE_PATH: z.string().optional(),
@@ -26,6 +27,8 @@ const schema = z.object({
   SEARCH_PROVIDER: z.enum(['postgres', 'meilisearch']).default('postgres'),
   MEILI_HOST: z.string().url().default('http://localhost:7700'),
   MEILI_MASTER_KEY: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
 });
 export type AppConfig = z.infer<typeof schema>;
 @Injectable()

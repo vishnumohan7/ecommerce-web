@@ -120,9 +120,11 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 11 — Payments and Stripe webhooks
 
-- [ ] `POST /api/v1/payments/intent`
-- [ ] `GET /api/v1/payments/:id`
-- [ ] `POST /api/v1/webhooks/stripe`
+- [x] `POST /api/v1/checkout/payment-intent` — one server-priced, SCA-ready intent per checkout session
+- [x] `POST /api/v1/payments/intent` — compatibility alias with identical idempotency guarantees
+- [x] `GET /api/v1/payments/:id` — owner-scoped intent state
+- [x] `POST /api/v1/webhooks/stripe` — raw-body signature verification, durable enqueue, idempotent processing
+- [x] `POST /api/v1/admin/payments/:orderId/capture` — capped manual capture after pick recomputation
 
 ### Milestone 12 — Orders, fulfilment, invoices, and tracking
 

@@ -14,6 +14,7 @@
 | 8   | Delivery zones, slots, and charges     | COMPLETE    | PASS    | `main`    | Basket-aware zone/slot rules, four fee strategies, CRUD, and 30-way capacity-five race pass                       |
 | 9   | Pricing, VAT, coupons, promotions      | COMPLETE    | PASS    | `main`    | Authoritative cart pricing, 60 golden baskets, live 20-way coupon race, and 145-test regression pass              |
 | 10  | Checkout orchestration                 | COMPLETE    | PASS    | `main`    | Hashed snapshots, ordered validation, guest tombstones, stock TTL/reservation release, and 25 focused tests       |
+| 11  | Stripe payments and webhooks           | COMPLETE    | PASS    | `main`    | One intent, signed durable webhooks, atomic order promotion, buffered/capped manual capture, and 5/5 live E2E     |
 | 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Read-only Larkon-inspired shell, live catalogue/search/health views, production build, and HTTP smoke pass        |
 
 ## Implemented modules
@@ -31,7 +32,8 @@
 - api/delivery — COMPLETE (postcode zones, tiered fees, basket rules, filtered slots, transactional reservations, and admin CRUD)
 - api/pricing — COMPLETE (authoritative cart pipeline, effective tax rules, scoped coupons, promotion stacking, influencer attribution, and live concurrency proof)
 - api/checkout — COMPLETE (full authoritative summary, hashed session snapshots, transactional stock TTL, guest tombstones, and mutation invalidation)
-- admin/dashboard — IN PROGRESS (verified read-only preview; secure write workflows and reporting APIs remain)
+- api/payments — COMPLETE (Stripe PaymentIntents, server-only totals, durable signed webhooks, atomic one-order promotion, manual capture caps, dispute freeze, and expiry cancellation)
+- admin/dashboard — IN PROGRESS (catalogue, delivery, pricing, and VAT operations are wired; secure interactive login and later milestone workflows remain)
 
 ## Known deviations from BUILD_CONTRACT.md
 
@@ -45,6 +47,7 @@
 
 ## Deferred-with-adapter (integration boundary built, live provider not wired)
 
-| Capability           | Interface                 | Dev impl             | Live impl    | Blocked on                                                                                                      |
-| -------------------- | ------------------------- | -------------------- | ------------ | --------------------------------------------------------------------------------------------------------------- |
-| Digital proof of age | `AgeVerificationProvider` | Stub + manual review | Yoti adapter | Merchant Yoti credentials and confirmation that the selected service is registered for alcohol proof-of-age use |
+| Capability           | Interface                 | Dev impl             | Live impl      | Blocked on                                                                                                      |
+| -------------------- | ------------------------- | -------------------- | -------------- | --------------------------------------------------------------------------------------------------------------- |
+| Digital proof of age | `AgeVerificationProvider` | Stub + manual review | Yoti adapter   | Merchant Yoti credentials and confirmation that the selected service is registered for alcohol proof-of-age use |
+| Card payments        | `PaymentProvider`         | Deterministic stub   | Stripe adapter | Merchant Stripe test/live keys, webhook secret, and alcohol-category onboarding disclosure                      |
