@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { archiveProduct } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
+import { ConfirmSubmitButton } from '../components/confirm-submit-button';
 import { Currency } from '../components/currency';
 import { fetchProducts, fetchSearch, type Product } from '../lib/api';
 
@@ -101,7 +102,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                       <div className="product-cell">
                         <span>{product.name.slice(0, 1).toUpperCase()}</span>
                         <div>
-                          <strong>{product.name}</strong>
+                          <Link href={`/products/${product.id}`}><strong>{product.name}</strong></Link>
                           <small>{product.description || product.unitPriceDisplay}</small>
                         </div>
                       </div>
@@ -139,11 +140,12 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                       </span>
                     </td>
                     <td>
+                      <Link className="text-action" href={`/products/${product.id}`}>Edit</Link>
                       <form action={archiveProduct}>
                         <input type="hidden" name="id" value={product.id} />
-                        <button className="text-action danger" type="submit">
+                        <ConfirmSubmitButton message={`Archive ${product.name}? It will disappear from the storefront.`}>
                           Archive
-                        </button>
+                        </ConfirmSubmitButton>
                       </form>
                     </td>
                   </tr>

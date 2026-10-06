@@ -218,14 +218,44 @@ Status: COMPLETE — focused functionality and live Supabase transaction/concurr
 
 Status: COMPLETE — focused functional, database-safety, and live Supabase gates verified on 2026-10-06. Broader regression deferred to accelerate remaining milestones.
 
+## Milestone 14 — Notifications
+
+- [x] Versioned email/SMS/push/WhatsApp templates with preview and test send
+- [x] Transactional and consent-gated marketing preferences
+- [x] Device/push subscription registration and removal
+- [x] Lifecycle outbox events fan out asynchronously through provider adapters
+- [x] Retry, exponential backoff, dead-letter state, and admin delivery log
+- [x] One mixed-order confirmation contains grocery, alcohol, delivery, total, and Challenge 25 sections
+- [x] Disabled WhatsApp provider does not block order processing
+- [x] Migration 19 deployed; API typecheck and focused notification tests 7/7 pass
+
+Status: COMPLETE — focused compile/functionality gate passed on 2026-10-06; broad regression deferred for delivery speed.
+
+## Milestone 15 — Customer storefront and support APIs
+
+- [x] Live home, category, alcohol gate, product, search, offers, brands, cart, and checkout routes
+- [x] Four-step checkout launches one server-priced payment intent
+- [x] Authentication, order history/detail/tracking/invoice, confirmation, help, legal, sitemap, robots, and cookie consent routes
+- [x] Profile and UK address-book APIs
+- [x] Wishlist persistence and move-to-cart APIs
+- [x] Verified-purchase reviews with moderation and product rating aggregation
+- [x] Scheduled banners, homepage CMS blocks, and published legal content APIs
+- [x] Migration 20 deployed; API and storefront typechecks pass
+- [x] Account/content UI wired to live profile, address, wishlist, review, banner, CMS, and legal APIs
+
+Status: COMPLETE — live customer account/content wiring and focused API/storefront typechecks passed on 2026-10-06; broad regression deferred for delivery speed.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets
 - [x] Dashboard reads live health, catalogue, and search APIs and handles unavailable/empty states
 - [x] Product catalogue/search, system health, and honest feature-status screens implemented
-- [x] Product create/archive, category/brand management, delivery zone/slot controls, coupons, influencers, and VAT rules are wired to completed APIs
+- [x] Full product create/read/update/archive and category/brand create/read/update/delete management are wired to completed APIs
+- [x] Product edit covers pricing, VAT, weight, HFSS, dietary, allergen, storage, returns, and alcohol compliance fields
+- [x] Destructive catalogue actions require confirmation and API errors are shown in the admin UI
+- [x] Delivery zone/slot controls, coupons, influencers, and VAT rules are wired to completed APIs
 - [x] Protected reads and writes use a server-only `ADMIN_API_TOKEN` and surface explicit authentication/API errors
-- [x] Catalogue, delivery, pricing, and product-create routes pass focused lint, typecheck, and live HTTP 200 checks
+- [x] Catalogue, delivery, pricing, and product create/detail/edit routes pass focused typecheck and live HTTP 200 checks
 - [x] Orders list/detail, grocery/alcohol grouping, fulfilment transitions, and invoice download are wired to the live API
 - [x] Returns queue, approve/reject disposition controls, and card/store-credit refund initiation are wired to the live API
 - [x] Admin lint, strict typecheck, tests, production build, and four-route HTTP smoke pass

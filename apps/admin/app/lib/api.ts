@@ -6,6 +6,8 @@ const API_BASE_URL = (
 
 export interface Product {
   id: string;
+  categoryId: string;
+  brandId: string | null;
   sku: string;
   slug: string;
   name: string;
@@ -13,13 +15,30 @@ export interface Product {
   status: string;
   priceMinor: string;
   currency: string;
+  vatRateBps: number;
+  taxCategory: 'STANDARD_20' | 'REDUCED_5' | 'ZERO' | 'EXEMPT';
+  pricingMode: 'UNIT' | 'WEIGHT_ESTIMATED';
+  pricePerKgMinor: string | null;
+  estimatedWeightGrams: number | null;
+  weightToleranceBps: number | null;
   unitPriceDisplay: string;
   storageType: string;
   dietaryTags: string[];
   allergens: string[];
   isAlcohol: boolean;
   abv: string | null;
+  alcoholType: 'BEER' | 'WINE' | 'SPIRITS' | 'CIDER' | 'OTHER' | null;
+  ageRestriction: number;
   restrictionReason: string;
+  returnPolicy:
+    | 'STANDARD_14_DAY'
+    | 'PERISHABLE_EXEMPT'
+    | 'AGE_RESTRICTED_RESTRICTED'
+    | 'NON_RETURNABLE';
+  hfssStatus: 'NOT_IN_SCOPE' | 'IN_SCOPE';
+  hfssCategory: string | null;
+  countryOfOrigin: string;
+  shelfLifeDays: number | null;
   ratingAverageBps: number;
   ratingCount: number;
 }
@@ -269,6 +288,9 @@ export function fetchHealth(kind: 'health' | 'ready' = 'health') {
 }
 export function fetchProducts() {
   return get<Product[]>('/api/v1/products');
+}
+export function fetchProduct(id: string) {
+  return get<Product>(`/api/v1/products/${encodeURIComponent(id)}`, true);
 }
 export function fetchCategories() {
   return get<PageResult<Category>>('/api/v1/categories?limit=100');

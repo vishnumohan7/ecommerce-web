@@ -1,28 +1,16 @@
-const messages = {
-  heading: 'Storefront',
-  description: 'Your local grocery and drinks shop.',
-  declined: 'Alcohol browsing was closed. ',
-  dismiss: 'Dismiss',
-  alcohol: 'Browse alcohol',
-};
+import Link from 'next/link';
+import { ProductGrid } from '../components/product-card';
+import { serverApi, type Category, type Product } from '../lib/store-api';
 
-export default async function Page({
-  searchParams,
-}: Readonly<{ searchParams: Promise<{ ageGate?: string | string[] }> }>) {
-  const params = await searchParams;
-  return (
-    <main className="store-page">
-      {params.ageGate === 'declined' && (
-        <aside className="gate-notice" role="status">
-          {messages.declined}
-          <a href="/">{messages.dismiss}</a>
-        </aside>
-      )}
-      <h1>{messages.heading}</h1>
-      <p>{messages.description}</p>
-      <a className="store-link" href="/alcohol">
-        {messages.alcohol}
-      </a>
-    </main>
-  );
+export default async function Home({ searchParams }: Readonly<{ searchParams: Promise<{ ageGate?: string }> }>) {
+  const [{ ageGate }, products, categories, content] = await Promise.all([searchParams, serverApi<Product[]>('/api/v1/products'), serverApi<{ items: Category[] }>('/api/v1/categories'), serverApi<{ banners: Array<{ id: string; title: string; subtitle?: string | null; imageUrl: string; linkUrl?: string | null }>; blocks: Array<{ id: string; type: string; title?: string | null; content: unknown }> }>('/api/v1/content/home')]);
+  return <main>
+    {ageGate === 'declined' && <aside className="gate-notice" role="status">Alcohol browsing was closed. <Link href="/">Dismiss</Link></aside>}
+    {content?.banners.length ? <section className="banner-strip" aria-label="Current promotions">{content.banners.map((banner) => <a key={banner.id} href={banner.linkUrl ?? '/offers'} style={{ backgroundImage: `linear-gradient(90deg, rgb(6 63 50 / 88%), rgb(6 63 50 / 30%)), url(${banner.imageUrl})` }}><h1>{banner.title}</h1>{banner.subtitle && <p>{banner.subtitle}</p>}</a>)}</section> : <section className="hero"><div><p className="eyebrow">Local favourites, delivered</p><h1>The good stuff for tonight, tomorrow and the week ahead.</h1><p>Fresh groceries, cupboard essentials and responsibly sold drinks in one basket.</p><div className="hero-actions"><Link className="button" href="/category/all">Shop groceries</Link><Link className="button secondary" href="/alcohol">Browse drinks</Link></div></div><div className="hero-stamp"><strong>One basket</strong><span>Simple local delivery</span></div></section>}
+    {content?.blocks.length ? <section className="section cms-blocks">{content.blocks.map((block) => <article key={block.id}><p className="eyebrow">{block.type.replaceAll('_', ' ')}</p>{block.title && <h2>{block.title}</h2>}<CmsBody content={block.content} /></article>)}</section> : null}
+    <section className="section"><div className="section-heading"><div><p className="eyebrow">Browse the aisles</p><h2>Shop by category</h2></div></div><div className="category-grid">{(categories?.items ?? []).map((category) => <Link key={category.id} href={`/category/${category.slug}?id=${category.id}`}><span>{category.name.slice(0, 1)}</span><strong>{category.name}</strong></Link>)}</div></section>
+    <section className="section"><div className="section-heading"><div><p className="eyebrow">From the live catalogue</p><h2>Popular picks</h2></div><Link href="/search">View all</Link></div>{products ? <ProductGrid products={products.slice(0, 8)} /> : <div className="error-state"><h2>Catalogue unavailable</h2><p>We could not reach the commerce API. Please try again shortly.</p></div>}</section>
+  </main>;
 }
+
+function CmsBody({ content }: Readonly<{ content: unknown }>) { if (typeof content === 'string') return <p>{content}</p>; if (content && typeof content === 'object') { const record = content as Record<string, unknown>; const text = [record.description, record.text, record.body].find((value) => typeof value === 'string'); if (typeof text === 'string') return <p>{text}</p>; } return null; }

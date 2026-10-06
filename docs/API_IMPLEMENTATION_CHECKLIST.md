@@ -164,23 +164,23 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 15 — Notifications and customer communications
 
-- [ ] `POST /api/v1/devices`
-- [ ] `DELETE /api/v1/devices/:id`
-- [ ] `GET /api/v1/notification-preferences`
-- [ ] `PATCH /api/v1/notification-preferences`
-- [ ] `GET /api/v1/notifications`
-- [ ] `GET /api/v1/admin/notification-templates`
-- [ ] `PATCH /api/v1/admin/notification-templates/:id`
-- [ ] `POST /api/v1/admin/notification-templates/:id/test`
+- [x] `POST /api/v1/devices`
+- [x] `DELETE /api/v1/devices/:id`
+- [x] `GET /api/v1/notification-preferences`
+- [x] `PATCH /api/v1/notification-preferences`
+- [x] `GET /api/v1/notifications`
+- [x] `GET /api/v1/admin/notification-templates`
+- [x] `PATCH /api/v1/admin/notification-templates/:id`
+- [x] `POST /api/v1/admin/notification-templates/:id/test`
 
 ### Milestone 16 — Customer storefront support APIs
 
-- [ ] `GET /api/v1/profile`
-- [ ] `PATCH /api/v1/profile`
-- [ ] Address book CRUD under `/api/v1/addresses`
-- [ ] Wishlist CRUD and move-to-cart under `/api/v1/wishlist`
-- [ ] Reviews CRUD under `/api/v1/reviews`
-- [ ] Public banners/CMS/legal content under `/api/v1/content`
+- [x] `GET /api/v1/profile`
+- [x] `PATCH /api/v1/profile`
+- [x] Address book CRUD under `/api/v1/addresses`
+- [x] Wishlist CRUD and move-to-cart under `/api/v1/wishlist`
+- [x] Reviews CRUD under `/api/v1/reviews`
+- [x] Public banners/CMS/legal content under `/api/v1/content`
 
 ### Milestone 17 — Admin dashboard and reporting APIs
 

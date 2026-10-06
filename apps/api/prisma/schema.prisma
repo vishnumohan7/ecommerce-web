@@ -221,6 +221,18 @@ enum CmsPageType {
   DELIVERY_POLICY
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ContentBlockType {
+  FEATURED_PRODUCTS
+  CATEGORY_TILES
+  PROMO_BLOCK
+}
+
 enum JurisdictionCode {
   ENGLAND_WALES
   SCOTLAND
@@ -314,6 +326,40 @@ model CmsPage {
   @@index([tenantId])
 }
 
+model Banner {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @db.Uuid
+  title          String
+  subtitle       String?
+  imageUrl       String
+  mobileImageUrl String?
+  linkUrl        String?
+  position       Int       @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([tenantId, active, position])
+}
+
+model CmsContentBlock {
+  id        String           @id @default(uuid()) @db.Uuid
+  tenantId  String           @db.Uuid
+  type      ContentBlockType
+  title     String?
+  content   Json
+  position  Int              @default(0)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  active    Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([tenantId, active, type, position])
+}
+
 model User {
   id           String    @id @default(uuid()) @db.Uuid
   tenantId     String    @db.Uuid
@@ -348,6 +394,29 @@ model Address {
 
   @@index([tenantId, userId])
   @@index([tenantId, postcode])
+}
+
+model Wishlist {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, userId])
+  @@index([tenantId, userId])
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid
+  wishlistId String   @db.Uuid
+  productId  String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  @@unique([tenantId, wishlistId, productId])
+  @@index([tenantId, wishlistId, createdAt(sort: Desc)])
+  @@index([tenantId, productId])
 }
 
 model Jurisdiction {
@@ -469,6 +538,28 @@ model ProductImage {
 
   @@index([tenantId, productId, variantId, position])
   @@index([tenantId, productId])
+}
+
+model Review {
+  id               String       @id @default(uuid()) @db.Uuid
+  tenantId         String       @db.Uuid
+  userId           String       @db.Uuid
+  productId        String       @db.Uuid
+  orderId          String       @db.Uuid
+  rating           Int
+  title            String?
+  body             String
+  imageUrls        String[]
+  status           ReviewStatus @default(PENDING)
+  moderationReason String?
+  moderatedById    String?      @db.Uuid
+  moderatedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([tenantId, userId, productId])
+  @@index([tenantId, productId, status, createdAt(sort: Desc)])
+  @@index([tenantId, userId, createdAt(sort: Desc)])
 }
 
 model Inventory {
@@ -1330,13 +1421,61 @@ model NotificationPreference {
   userId             String    @db.Uuid
   transactionalEmail Boolean   @default(true)
   transactionalSms   Boolean   @default(true)
+  transactionalPush  Boolean   @default(true)
   marketingEmail     Boolean   @default(false)
   marketingSms       Boolean   @default(false)
+  marketingPush      Boolean   @default(false)
   consentVersion     String?
   consentedAt        DateTime?
   updatedAt          DateTime  @updatedAt
 
   @@unique([tenantId, userId])
+}
+
+model NotificationTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  event       String
+  channel     String
+  locale      String   @default("en-GB")
+  subject     String?
+  body        String
+  mjml        String?
+  version     Int
+  active      Boolean  @default(true)
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, event, channel, locale, version])
+  @@index([tenantId, event, channel, locale, active])
+}
+
+model NotificationDelivery {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @db.Uuid
+  sourceMessageId   String?   @db.Uuid
+  userId            String?   @db.Uuid
+  templateId        String?   @db.Uuid
+  event             String
+  channel           String
+  recipient         String
+  transactional     Boolean   @default(true)
+  status            String    @default("QUEUED")
+  subject           String?
+  body              String
+  payload           Json
+  attempts          Int       @default(0)
+  maxAttempts       Int       @default(5)
+  availableAt       DateTime  @default(now())
+  providerMessageId String?
+  lastError         String?
+  sentAt            DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([tenantId, sourceMessageId, channel, recipient])
+  @@index([tenantId, status, availableAt])
+  @@index([tenantId, userId, createdAt(sort: Desc)])
 }
 
 model Influencer {

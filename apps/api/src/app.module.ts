@@ -24,6 +24,8 @@ import { CheckoutModule } from './modules/checkout/checkout.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { OrderModule } from './modules/orders/order.module';
 import { ReturnModule } from './modules/returns/return.module';
+import { CustomerModule } from './modules/customer/customer.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { ReturnModule } from './modules/returns/return.module';
     PaymentModule,
     OrderModule,
     ReturnModule,
+    CustomerModule,
+    NotificationModule,
   ],
   controllers: [HealthController],
   providers: [

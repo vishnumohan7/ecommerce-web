@@ -34,9 +34,15 @@ export async function createBrand(data: FormData) {
   finish('/catalogue', result, 'Brand created.');
 }
 
-export async function createProduct(data: FormData) {
+function optionalNumber(data: FormData, key: string) {
+  const value = textValue(data, key);
+  return value ? Number(value) : null;
+}
+
+function productInput(data: FormData) {
   const alcohol = data.get('isAlcohol') === 'on';
-  const result = await adminMutation('/api/v1/products', 'POST', {
+  const pricingMode = textValue(data, 'pricingMode') || 'UNIT';
+  return {
     categoryId: textValue(data, 'categoryId'),
     brandId: textValue(data, 'brandId') || null,
     sku: textValue(data, 'sku'),
@@ -47,20 +53,47 @@ export async function createProduct(data: FormData) {
     currency: 'GBP',
     vatRateBps: alcohol ? 2000 : Number(textValue(data, 'vatRateBps')),
     taxCategory: alcohol ? 'STANDARD_20' : textValue(data, 'taxCategory'),
-    pricingMode: 'UNIT',
+    pricingMode,
+    pricePerKgMinor:
+      pricingMode === 'WEIGHT_ESTIMATED' ? textValue(data, 'pricePerKgMinor') || null : null,
+    estimatedWeightGrams:
+      pricingMode === 'WEIGHT_ESTIMATED' ? optionalNumber(data, 'estimatedWeightGrams') : null,
+    weightToleranceBps:
+      pricingMode === 'WEIGHT_ESTIMATED' ? optionalNumber(data, 'weightToleranceBps') : null,
     abv: alcohol ? textValue(data, 'abv') : null,
     alcoholType: alcohol ? textValue(data, 'alcoholType') : null,
     ageRestriction: alcohol ? 18 : 0,
     restrictionReason: alcohol ? 'ALCOHOL' : 'NONE',
-    returnPolicy: alcohol ? 'AGE_RESTRICTED_RESTRICTED' : 'STANDARD_14_DAY',
+    returnPolicy: alcohol
+      ? 'AGE_RESTRICTED_RESTRICTED'
+      : textValue(data, 'returnPolicy') || 'STANDARD_14_DAY',
     unitPriceDisplay: textValue(data, 'unitPriceDisplay'),
-    hfssStatus: 'NOT_IN_SCOPE',
-    dietaryTags: [],
-    allergens: [],
+    hfssStatus: textValue(data, 'hfssStatus') || 'NOT_IN_SCOPE',
+    hfssCategory:
+      textValue(data, 'hfssStatus') === 'IN_SCOPE' ? textValue(data, 'hfssCategory') || null : null,
+    dietaryTags: textValue(data, 'dietaryTags')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
+    allergens: textValue(data, 'allergens')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
     countryOfOrigin: textValue(data, 'countryOfOrigin').toUpperCase(),
     storageType: textValue(data, 'storageType'),
-  });
+    shelfLifeDays: optionalNumber(data, 'shelfLifeDays'),
+  };
+}
+
+export async function createProduct(data: FormData) {
+  const result = await adminMutation('/api/v1/products', 'POST', productInput(data));
   finish('/products', result, 'Product created.');
+}
+
+export async function updateProduct(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/products/${encodeURIComponent(id)}`, 'PATCH', productInput(data));
+  finish(`/products/${encodeURIComponent(id)}`, result, 'Product updated.');
 }
 
 export async function archiveProduct(data: FormData) {
@@ -72,6 +105,29 @@ export async function removeTaxonomy(data: FormData) {
   const kind = textValue(data, 'kind') === 'brand' ? 'brands' : 'categories';
   const result = await adminMutation(`/api/v1/${kind}/${textValue(data, 'id')}`, 'DELETE');
   finish('/catalogue', result, kind === 'brands' ? 'Brand deleted.' : 'Category archived.');
+}
+
+export async function updateCategory(data: FormData) {
+  const result = await adminMutation(
+    `/api/v1/categories/${encodeURIComponent(textValue(data, 'id'))}`,
+    'PATCH',
+    {
+      name: textValue(data, 'name'),
+      slug: textValue(data, 'slug'),
+      parentId: textValue(data, 'parentId') || null,
+      position: Number(textValue(data, 'position') || '0'),
+    },
+  );
+  finish('/catalogue', result, 'Category updated.');
+}
+
+export async function updateBrand(data: FormData) {
+  const result = await adminMutation(
+    `/api/v1/brands/${encodeURIComponent(textValue(data, 'id'))}`,
+    'PATCH',
+    { name: textValue(data, 'name'), slug: textValue(data, 'slug') },
+  );
+  finish('/catalogue', result, 'Brand updated.');
 }
 
 export async function createDeliveryZone(data: FormData) {

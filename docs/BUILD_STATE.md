@@ -17,7 +17,9 @@
 | 11  | Stripe payments and webhooks           | COMPLETE    | PASS    | `main`    | One intent, signed durable webhooks, atomic order promotion, buffered/capped manual capture, and 5/5 live E2E     |
 | 12  | Orders, invoices, fulfilment, picking  | COMPLETE    | PASS    | `d5ebd40` | Gapless yearly numbers, grouped orders, PDF invoices, picking, age handover, and immutable day-book exports      |
 | 13  | Returns and refunds                    | COMPLETE    | PASS    | `main`    | Audited returns, partial card/store-credit refunds, policy snapshots, restock/write-off, and 20-way guard         |
-| 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Live catalogue, delivery, pricing, order operations, invoice download, and health views                           |
+| 14  | Notifications                          | COMPLETE    | PASS    | `main`    | Versioned templates, preferences, provider adapters, outbox fan-out, retries, dead letters, and delivery logs     |
+| 15  | Customer storefront                    | COMPLETE    | PASS    | `main`    | Live browse-to-order journey plus profile, addresses, wishlist, reviews, banners, CMS, and legal content          |
+| 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Full product/category/brand CRUD plus delivery, pricing, orders, returns/refunds, invoices, and health views      |
 
 ## Implemented modules
 
@@ -37,7 +39,10 @@
 - api/payments — COMPLETE (Stripe PaymentIntents, server-only totals, durable signed webhooks, atomic one-order promotion, manual capture caps, dispute freeze, and expiry cancellation)
 - api/orders — COMPLETE (one grouped order/invoice, gapless numbering, guarded fulfilment, picking/weight/substitution, tracking, proof-of-age, and day-book PDF/CSV)
 - api/returns — COMPLETE (customer/admin workflow, exact discount/VAT unwind, idempotent card/store-credit refunds, refusal automation, and captured-payment guard)
-- admin/dashboard — IN PROGRESS (catalogue, delivery, pricing, VAT, orders, fulfilment, returns/refunds, and invoices are wired; secure interactive login and later milestone workflows remain)
+- api/notifications — COMPLETE (versioned templates, channel preferences, device subscriptions, provider adapters, outbox fan-out, retries, and dead-letter logs)
+- api/customer — COMPLETE (profile, addresses, wishlist, verified-purchase reviews, banners, CMS blocks, and legal content)
+- web/storefront — COMPLETE (browse-to-order, account, addresses, wishlist, reviews, banners, CMS, legal, help, tracking, and order history are wired to live APIs)
+- admin/dashboard — IN PROGRESS (full product/category/brand CRUD, delivery, pricing, VAT, orders, fulfilment, returns/refunds, and invoices are wired; secure interactive login and later milestone workflows remain)
 
 ## Known deviations from BUILD_CONTRACT.md
 

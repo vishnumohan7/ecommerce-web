@@ -1,17 +1,5 @@
-export const metadata = { title: 'Alcohol — Denes' };
-const messages = {
-  eyebrow: 'Age-gated catalogue',
-  heading: 'Beer, wine and spirits',
-  description:
-    'Your browsing confirmation is valid. Product merchandising arrives with Milestone 16.',
-};
-
-export default function AlcoholPage() {
-  return (
-    <main className="store-page">
-      <p className="eyebrow">{messages.eyebrow}</p>
-      <h1>{messages.heading}</h1>
-      <p>{messages.description}</p>
-    </main>
-  );
-}
+import { ProductGrid } from '../../components/product-card';
+import { serverApi, type Product } from '../../lib/store-api';
+import { cookies } from 'next/headers';
+export const metadata = { title: 'Beer, wine and spirits' };
+export default async function AlcoholPage() { const jar = await cookies(); const token = jar.get('age_gate')?.value; const session = jar.get('age_gate_session')?.value; const headers = new Headers(); if (token) headers.set('x-age-gate-token', token); if (session) headers.set('x-session-id', session); const products = await serverApi<Product[]>('/api/v1/products?alcohol=true', headers); return <main className="section"><div className="alcohol-heading"><span className="age-badge">18+</span><div><p className="eyebrow">Age-gated catalogue</p><h1>Beer, wine and spirits</h1><p>Challenge 25 applies at delivery. Have valid photo ID ready; age-restricted orders cannot be left unattended.</p></div></div>{products ? <ProductGrid products={products} empty="No alcohol products are currently available." /> : <div className="error-state">Catalogue unavailable.</div>}</main>; }
