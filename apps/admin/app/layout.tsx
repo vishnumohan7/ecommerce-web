@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 const navigation = [
   { href: '/', label: 'Overview', icon: 'grid' },
   { href: '/products', label: 'Products', icon: 'box' },
+  { href: '/catalogue', label: 'Categories & brands', icon: 'layers' },
+  { href: '/delivery', label: 'Delivery', icon: 'truck' },
+  { href: '/pricing', label: 'Pricing & tax', icon: 'promo' },
   { href: '/system', label: 'System health', icon: 'pulse' },
   { href: '/feature-status', label: 'Feature status', icon: 'check' },
 ] as const;
@@ -49,10 +52,6 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
               <span className="nav-disabled">
                 <NavIcon name="users" />
                 Customers <em>Planned</em>
-              </span>
-              <span className="nav-disabled">
-                <NavIcon name="promo" />
-                Promotions <em>API only</em>
               </span>
             </nav>
             <div className="sidebar-foot">

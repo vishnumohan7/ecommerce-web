@@ -1,6 +1,8 @@
 /* eslint-disable local/no-jsx-literals -- Milestone 17 preview copy is English-only until the localisation catalogue lands. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { archiveProduct } from '../actions';
+import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { Currency } from '../components/currency';
 import { fetchProducts, fetchSearch, type Product } from '../lib/api';
@@ -9,7 +11,7 @@ export const metadata: Metadata = { title: 'Products' };
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string | string[] }>;
+  searchParams: Promise<{ q?: string | string[]; success?: string; error?: string }>;
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
@@ -33,14 +35,11 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           <h1>Products</h1>
           <p>Inspect live product, compliance and pricing data from the commerce API.</p>
         </div>
-        <button
-          className="button button-disabled"
-          disabled
-          title="Requires admin authentication and write workflow"
-        >
+        <Link className="button button-primary" href="/products/new">
           + Add product
-        </button>
+        </Link>
       </section>
+      <ActionMessage success={params.success} error={params.error} />
       <article className="panel">
         <div className="catalog-toolbar">
           <form action="/products" role="search">
@@ -92,6 +91,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                   <th>Rating</th>
                   <th>Price</th>
                   <th>Status</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -137,6 +137,14 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                         <span />
                         {product.status.toLowerCase()}
                       </span>
+                    </td>
+                    <td>
+                      <form action={archiveProduct}>
+                        <input type="hidden" name="id" value={product.id} />
+                        <button className="text-action danger" type="submit">
+                          Archive
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 ))}

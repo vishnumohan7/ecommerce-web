@@ -1,0 +1,145 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+import { adminMutation } from './lib/api';
+
+function textValue(data: FormData, key: string) {
+  const value = data.get(key);
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function finish(path: string, result: { ok: boolean; error?: string }, success: string): never {
+  const params = new URLSearchParams(
+    result.ok ? { success } : { error: result.error ?? 'The operation failed.' },
+  );
+  redirect(`${path}?${params.toString()}`);
+}
+
+export async function createCategory(data: FormData) {
+  const result = await adminMutation('/api/v1/categories', 'POST', {
+    name: textValue(data, 'name'),
+    slug: textValue(data, 'slug'),
+    parentId: textValue(data, 'parentId') || null,
+    position: Number(textValue(data, 'position') || '0'),
+    active: true,
+  });
+  finish('/catalogue', result, 'Category created.');
+}
+
+export async function createBrand(data: FormData) {
+  const result = await adminMutation('/api/v1/brands', 'POST', {
+    name: textValue(data, 'name'),
+    slug: textValue(data, 'slug'),
+  });
+  finish('/catalogue', result, 'Brand created.');
+}
+
+export async function createProduct(data: FormData) {
+  const alcohol = data.get('isAlcohol') === 'on';
+  const result = await adminMutation('/api/v1/products', 'POST', {
+    categoryId: textValue(data, 'categoryId'),
+    brandId: textValue(data, 'brandId') || null,
+    sku: textValue(data, 'sku'),
+    slug: textValue(data, 'slug'),
+    name: textValue(data, 'name'),
+    description: textValue(data, 'description'),
+    priceMinor: textValue(data, 'priceMinor'),
+    currency: 'GBP',
+    vatRateBps: alcohol ? 2000 : Number(textValue(data, 'vatRateBps')),
+    taxCategory: alcohol ? 'STANDARD_20' : textValue(data, 'taxCategory'),
+    pricingMode: 'UNIT',
+    abv: alcohol ? textValue(data, 'abv') : null,
+    alcoholType: alcohol ? textValue(data, 'alcoholType') : null,
+    ageRestriction: alcohol ? 18 : 0,
+    restrictionReason: alcohol ? 'ALCOHOL' : 'NONE',
+    returnPolicy: alcohol ? 'AGE_RESTRICTED_RESTRICTED' : 'STANDARD_14_DAY',
+    unitPriceDisplay: textValue(data, 'unitPriceDisplay'),
+    hfssStatus: 'NOT_IN_SCOPE',
+    dietaryTags: [],
+    allergens: [],
+    countryOfOrigin: textValue(data, 'countryOfOrigin').toUpperCase(),
+    storageType: textValue(data, 'storageType'),
+  });
+  finish('/products', result, 'Product created.');
+}
+
+export async function archiveProduct(data: FormData) {
+  const result = await adminMutation(`/api/v1/products/${textValue(data, 'id')}`, 'DELETE');
+  finish('/products', result, 'Product archived.');
+}
+
+export async function removeTaxonomy(data: FormData) {
+  const kind = textValue(data, 'kind') === 'brand' ? 'brands' : 'categories';
+  const result = await adminMutation(`/api/v1/${kind}/${textValue(data, 'id')}`, 'DELETE');
+  finish('/catalogue', result, kind === 'brands' ? 'Brand deleted.' : 'Category archived.');
+}
+
+export async function createDeliveryZone(data: FormData) {
+  const fee = Number(textValue(data, 'feeMinor'));
+  const result = await adminMutation('/api/v1/admin/delivery/zones', 'POST', {
+    code: textValue(data, 'code').toUpperCase(),
+    name: textValue(data, 'name'),
+    postcodePatterns: textValue(data, 'postcodePatterns')
+      .split(',')
+      .map((value) => value.trim().toUpperCase())
+      .filter(Boolean),
+    groceryFeeMinor: fee,
+    alcoholFeeMinor: fee,
+    supportedStorageTypes: ['AMBIENT', 'CHILLED', 'FROZEN'],
+    alcoholDeliveryAllowed: true,
+    active: true,
+  });
+  finish('/delivery', result, 'Delivery zone created.');
+}
+
+export async function toggleDelivery(data: FormData) {
+  const kind = textValue(data, 'kind');
+  const result = await adminMutation(
+    `/api/v1/admin/delivery/${kind}/${textValue(data, 'id')}`,
+    'PATCH',
+    { active: textValue(data, 'active') !== 'true' },
+  );
+  finish('/delivery', result, 'Delivery record updated.');
+}
+
+export async function createCoupon(data: FormData) {
+  const type = textValue(data, 'type');
+  const amount = Number(textValue(data, 'amount'));
+  const result = await adminMutation('/api/v1/admin/coupons', 'POST', {
+    code: textValue(data, 'code'),
+    type,
+    ...(type === 'PERCENTAGE' ? { valueBps: amount } : { valueMinor: String(amount) }),
+    startsAt: textValue(data, 'startsAt'),
+    endsAt: textValue(data, 'endsAt'),
+    appliesTo: textValue(data, 'appliesTo'),
+    couponClass: 'SITE_WIDE',
+  });
+  finish('/pricing', result, 'Coupon created.');
+}
+
+export async function toggleCoupon(data: FormData) {
+  const result = await adminMutation(`/api/v1/admin/coupons/${textValue(data, 'id')}`, 'PATCH', {
+    active: textValue(data, 'active') !== 'true',
+  });
+  finish('/pricing', result, 'Coupon updated.');
+}
+
+export async function createInfluencer(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/influencers', 'POST', {
+    code: textValue(data, 'code'),
+    displayName: textValue(data, 'displayName'),
+    commissionBps: Number(textValue(data, 'commissionBps')),
+    active: true,
+  });
+  finish('/pricing', result, 'Influencer created.');
+}
+
+export async function createTaxRule(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/tax-rules', 'POST', {
+    taxCategory: textValue(data, 'taxCategory'),
+    rateBps: Number(textValue(data, 'rateBps')),
+    effectiveFrom: textValue(data, 'effectiveFrom'),
+    active: true,
+  });
+  finish('/pricing', result, 'Tax rule created.');
+}

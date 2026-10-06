@@ -169,7 +169,9 @@ Status: COMPLETE — focused functionality and live Supabase reservation gates v
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets
 - [x] Dashboard reads live health, catalogue, and search APIs and handles unavailable/empty states
 - [x] Product catalogue/search, system health, and honest feature-status screens implemented
-- [x] Write actions remain disabled until secure admin authentication and role checks are available
+- [x] Product create/archive, category/brand management, delivery zone/slot controls, coupons, influencers, and VAT rules are wired to completed APIs
+- [x] Protected reads and writes use a server-only `ADMIN_API_TOKEN` and surface explicit authentication/API errors
+- [x] Catalogue, delivery, pricing, and product-create routes pass focused lint, typecheck, and live HTTP 200 checks
 - [x] Admin lint, strict typecheck, tests, production build, and four-route HTTP smoke pass
 - [ ] Secure admin authentication and RBAC session flow
 - [ ] Product, inventory, promotion, order, refund, customer, settings, and audit management workflows
