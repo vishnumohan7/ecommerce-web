@@ -76,6 +76,32 @@ export class CatalogService {
       return { variant, inventory };
     });
   }
+  async archive(id: string) {
+    const current = await this.byId(id);
+    return this.db.transaction(async (tx, tenantId) => {
+      const product = await tx.product.update({
+        where: { id, tenantId },
+        data: { status: 'INACTIVE' },
+      });
+      await tx.outboxMessage.create({
+        data: { tenantId, topic: 'search.product.remove', payload: { productId: id } },
+      });
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          actorId: TenantContext.get()?.userId ?? null,
+          actorType: TenantContext.get()?.userId ? 'USER' : 'SYSTEM',
+          action: 'PRODUCT_ARCHIVED',
+          entity: 'Product',
+          entityId: id,
+          before: { status: current.status },
+          after: { status: product.status },
+          requestId: TenantContext.get()?.requestId ?? id,
+        },
+      });
+      return { archived: true, id, status: product.status };
+    });
+  }
   private data(input: ProductInput) {
     return {
       tenantId: TenantContext.requireTenantId(),

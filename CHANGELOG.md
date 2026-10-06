@@ -13,4 +13,6 @@ All notable changes follow Keep a Changelog and Semantic Versioning.
 - Live Supabase verification for schema constraints, catalog persistence, 50-way inventory concurrency, multipart import, and 10,000-row rollback behavior.
 - Session 5 PostgreSQL/Meilisearch search providers, weighted typo-tolerant ranking, autocomplete, editable synonyms, filters/facets, keyset pagination, search analytics, age-gated alcohol visibility, and outbox index synchronization.
 - Session 6 signed guest and authenticated combined carts, server-derived price/category/age snapshots, live cart revalidation, stock-capped cart merging, coupons, substitution preferences, grouped totals, and abandonment tracking.
+- Completed product archive plus category, brand, and attribute-set CRUD with hierarchy and in-use protections.
+- Session 7 middleware-enforced alcohol browsing gate, session-bound signed cookies, accessible interstitial, purchase age verification, Stub/Yoti/manual provider adapters, postcode jurisdiction rules, and checkout age/sale-window enforcement.
 - Parallel Session 17 preview with a responsive Larkon-inspired admin shell plus live catalogue, search, health, and feature-readiness views.

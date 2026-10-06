@@ -11,6 +11,8 @@ import { InventoryController } from '../src/modules/inventory/inventory.controll
 import { PromotionsController } from '../src/modules/promotions/promotions.controller';
 import { SearchController } from '../src/modules/search/search.controller';
 import { CartController } from '../src/modules/cart/cart.controller';
+import { AgeVerificationController } from '../src/modules/age-verification/age-verification.controller';
+import { TaxonomyController } from '../src/modules/catalog/taxonomy.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
@@ -26,6 +28,8 @@ describe('route coverage', () => {
       PromotionsController,
       SearchController,
       CartController,
+      AgeVerificationController,
+      TaxonomyController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
         (name) => name !== 'constructor',

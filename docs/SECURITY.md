@@ -6,7 +6,9 @@ The API is authoritative for price, tax, discounts, eligibility, stock, totals, 
 
 Authentication uses Argon2id with at least 19,456 KiB memory, two iterations, and one lane. Access tokens expire after 15 minutes. Refresh tokens are random, stored only as SHA-256 digests, rotate on use, and belong to a family. Reuse revokes the whole family and creates an audit record. Email verification and password-reset tokens are single-use; password-reset tokens expire after 30 minutes.
 
-Identity-document images and document numbers must never be stored. Age-verification records contain outcomes and provider references only. Driver handover images must depict the handover location, never an identity document.
+Identity-document images and document numbers must never be stored. Digital-provider verification records contain outcomes, an age threshold, and provider references only. A directly declared DOB may be stored on the private age-verification record, but it is excluded from API results, audit payloads, and logs. Driver handover images must depict the handover location, never an identity document.
+
+The alcohol category cookie is only a browsing gate. It is HMAC-signed, bound to a separate random session identifier, HTTP-only, SameSite Lax, and expires after 30 days. Checkout never treats that cookie as purchase eligibility; it requires an independently persisted, non-expired purchase-verification result.
 
 ## HTTP controls
 

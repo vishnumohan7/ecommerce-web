@@ -21,7 +21,12 @@ export async function seedMinimal(client = prisma): Promise<void> {
         locale: 'en-GB',
         currency: 'GBP',
         timezone: 'Europe/London',
-        alcohol: { acceptDigitalProofOfAge: false },
+        alcohol: {
+          acceptDigitalProofOfAge: false,
+          digitalProofHelpText:
+            'Confirm the selected provider is currently certified and listed on the statutory GOV.UK DVS register before enabling.',
+          verificationValidityDays: 365,
+        },
         payment: { weightVarianceBufferBps: 1000 },
         fulfilment: { substitutionsEnabled: true },
       },
@@ -164,6 +169,7 @@ export async function seedMinimal(client = prisma): Promise<void> {
       dayBook: false,
       manifest: false,
       digital: true,
+      postcodeAreas: [] as string[],
     },
     {
       code: JurisdictionCode.SCOTLAND,
@@ -174,6 +180,24 @@ export async function seedMinimal(client = prisma): Promise<void> {
       dayBook: true,
       manifest: true,
       digital: false,
+      postcodeAreas: [
+        'AB',
+        'DD',
+        'DG',
+        'EH',
+        'FK',
+        'G',
+        'HS',
+        'IV',
+        'KA',
+        'KW',
+        'KY',
+        'ML',
+        'PA',
+        'PH',
+        'TD',
+        'ZE',
+      ],
     },
     {
       code: JurisdictionCode.NORTHERN_IRELAND,
@@ -184,13 +208,19 @@ export async function seedMinimal(client = prisma): Promise<void> {
       dayBook: false,
       manifest: false,
       digital: false,
+      postcodeAreas: ['BT'],
     },
   ];
   for (const seed of jurisdictionSeeds) {
     const jurisdiction = await client.jurisdiction.upsert({
       where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: seed.code } },
       update: { name: seed.name },
-      create: { tenantId: DEFAULT_TENANT_ID, code: seed.code, name: seed.name },
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        code: seed.code,
+        name: seed.name,
+        postcodeAreas: seed.postcodeAreas,
+      },
     });
     await client.jurisdictionRuleset.upsert({
       where: {

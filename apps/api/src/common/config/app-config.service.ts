@@ -12,6 +12,12 @@ const schema = z.object({
   JWT_ISSUER: z.string().default('denes-commerce'),
   AGE_GATE_SECRET: z.string().min(32).optional(),
   GUEST_CART_SECRET: z.string().min(32).optional(),
+  AGE_VERIFY_PROVIDER: z.enum(['stub', 'yoti', 'manual']).default('stub'),
+  AGE_VERIFICATION_TTL_DAYS: z.coerce.number().int().positive().default(365),
+  YOTI_API_BASE_URL: z.string().url().default('https://api.yoti.com'),
+  YOTI_CLIENT_SDK_ID: z.string().optional(),
+  YOTI_KEY_FILE_PATH: z.string().optional(),
+  YOTI_WEBHOOK_SECRET: z.string().min(32).optional(),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3001,http://localhost:3002,http://localhost:3003'),

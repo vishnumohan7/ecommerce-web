@@ -12,3 +12,5 @@ coverage
 .pnpm-bin
 *.log
 *.tsbuildinfo
+playwright-report
+test-results

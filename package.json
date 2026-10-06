@@ -1,46 +1,48 @@
 {
-    "name": "denes-commerce",
-    "private": true,
-    "version": "0.1.0",
-    "packageManager": "pnpm@9.15.9",
-    "scripts": {
-        "dev": "turbo dev",
-        "lint": "turbo lint && pnpm schema:lint",
-        "schema:lint": "tsx scripts/lint-prisma-money.ts",
-        "typecheck": "turbo typecheck",
-        "build": "turbo build",
-        "test": "turbo test",
-        "e2e:api": "pnpm --filter=@app/api e2e",
-        "licenses:audit": "tsx scripts/license-audit.ts",
-        "check:env": "tsx scripts/check-env.ts",
-        "db:reset": "pnpm --filter=@app/api prisma migrate reset --force",
-        "db:migrate:deploy": "pnpm --filter=@app/api prisma migrate deploy",
-        "db:seed:minimal": "pnpm --filter=@app/api seed:minimal",
-        "db:seed:demo": "pnpm --filter=@app/api seed:demo",
-        "prisma": "pnpm --filter=@app/api prisma",
-        "prepare": "husky || true"
-    },
-    "devDependencies": {
-        "@commitlint/cli": "^19.8.1",
-        "@commitlint/config-conventional": "^19.8.1",
-        "@types/node": "^22.15.29",
-        "eslint": "^9.28.0",
-        "eslint-plugin-react": "^7.37.5",
-        "globals": "^16.2.0",
-        "husky": "^9.1.7",
-        "license-checker-rseidelsohn": "^4.4.2",
-        "lint-staged": "^16.1.0",
-        "prettier": "^3.5.3",
-        "tsx": "^4.19.4",
-        "turbo": "^2.5.4",
-        "typescript": "^5.8.3",
-        "typescript-eslint": "^8.33.0",
-        "zod": "^3.25.42"
-    },
-    "lint-staged": {
-        "*.{ts,tsx,js,mjs,json,md}": [
-            "prettier --write",
-            "eslint --fix"
-        ]
-    }
+  "name": "denes-commerce",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "turbo dev",
+    "lint": "turbo lint && pnpm schema:lint",
+    "schema:lint": "tsx scripts/lint-prisma-money.ts",
+    "typecheck": "turbo typecheck",
+    "build": "turbo build",
+    "test": "turbo test",
+    "e2e:api": "pnpm --filter=@app/api e2e",
+    "e2e:web": "pnpm --filter=@app/web e2e",
+    "a11y": "pnpm --filter=@app/web e2e -- --grep accessibility",
+    "licenses:audit": "tsx scripts/license-audit.ts",
+    "check:env": "tsx scripts/check-env.ts",
+    "db:reset": "pnpm --filter=@app/api prisma migrate reset --force",
+    "db:migrate:deploy": "pnpm --filter=@app/api prisma migrate deploy",
+    "db:seed:minimal": "pnpm --filter=@app/api seed:minimal",
+    "db:seed:demo": "pnpm --filter=@app/api seed:demo",
+    "prisma": "pnpm --filter=@app/api prisma",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/node": "^22.15.29",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.2.0",
+    "husky": "^9.1.7",
+    "license-checker-rseidelsohn": "^4.4.2",
+    "lint-staged": "^16.1.0",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.4",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "zod": "^3.25.42"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,json,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
 }

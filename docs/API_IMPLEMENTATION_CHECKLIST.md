@@ -1,6 +1,6 @@
 # API Implementation Checklist
 
-Last audited: 2026-10-05. This checklist distinguishes **route implemented** from **milestone fully verified**. The live OpenAPI document is available while the API is running at `http://localhost:3000/api/docs` and `http://localhost:3000/api/docs-json`.
+Last audited: 2026-10-06. This checklist distinguishes **route implemented** from **milestone fully verified**. The live OpenAPI document is available while the API is running at `http://localhost:3000/api/docs` and `http://localhost:3000/api/docs-json`.
 
 ## Implemented routes
 
@@ -31,8 +31,12 @@ Last audited: 2026-10-05. This checklist distinguishes **route implemented** fro
 - [x] `GET /api/v1/products/:id` — product detail
 - [x] `POST /api/v1/products` — permission-protected product creation
 - [x] `PATCH /api/v1/products/:id` — permission-protected product update
+- [x] `DELETE /api/v1/products/:id` — permission-protected product archive and search-index removal
 - [x] `POST /api/v1/products/:id/variants` — create variant and its inventory record
 - [x] `POST /api/v1/products/:id/images` — secure image upload and responsive re-encode
+- [x] Category CRUD under `/api/v1/categories` — public reads; permission-protected create/update/archive
+- [x] Brand CRUD under `/api/v1/brands` — public reads; permission-protected writes
+- [x] Attribute-set CRUD under `/api/v1/attribute-sets` — permission-protected reads and writes
 - [x] `POST /api/v1/promotions` — create promotion with HFSS multibuy blocking
 
 ### Inventory
@@ -72,12 +76,14 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 7 — Age gate and purchase verification
 
-- [ ] `POST /api/v1/age-gate/confirm`
-- [ ] `POST /api/v1/age-gate/decline`
-- [ ] `GET /api/v1/age-verification`
-- [ ] `POST /api/v1/age-verification/dob`
-- [ ] `POST /api/v1/age-verification/provider-session`
-- [ ] `POST /api/v1/age-verification/provider-webhook`
+- [x] `POST /api/v1/age-gate/confirm` — issue the browsing-only signed gate cookie
+- [x] `POST /api/v1/age-gate/decline` — clear the gate and return a safe redirect
+- [x] `GET /api/v1/age-verification` — return reusable purchase-verification status without DOB/provider evidence
+- [x] `POST /api/v1/age-verification/dob` — declare DOB and persist only the private direct declaration
+- [x] `POST /api/v1/age-verification/provider-session` — start Stub, Yoti, or manual-review verification
+- [x] `GET /api/v1/age-verification/provider-session/:provider/:sessionId` — refresh provider result
+- [x] `POST /api/v1/age-verification/provider-webhook/:provider` — verify and consume provider webhook
+- [x] `POST /api/v1/checkout/validate` — authoritative age and jurisdiction validation delivered early from Milestone 10
 
 ### Milestone 8 — Delivery zones, slots, and charges
 
@@ -104,7 +110,7 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 10 — Checkout orchestration
 
-- [ ] `POST /api/v1/checkout/validate`
+- [x] `POST /api/v1/checkout/validate` — age/jurisdiction portion complete in Milestone 7; remaining validations join this route in Milestone 10
 - [ ] `POST /api/v1/checkout/session`
 - [ ] `GET /api/v1/checkout/session/:id`
 - [ ] `DELETE /api/v1/checkout/session/:id`
@@ -190,6 +196,6 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ## Counts
 
-- Implemented HTTP routes: **41** (including health, metrics, and OpenAPI endpoints)
-- Pending route groups: **Milestones 7–18**
-- Fully completed API milestones: **Milestones 4–6**
+- Implemented HTTP routes: **65** (including health, metrics, and OpenAPI endpoints)
+- Pending route groups: **Milestones 8–18**
+- Fully completed API milestones: **Milestones 4–7**

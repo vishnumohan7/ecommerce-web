@@ -131,6 +131,12 @@ enum VerificationOutcome {
   CANCELLED
 }
 
+enum AgeVerificationMethod {
+  DOB_DECLARATION
+  DVS
+  MANUAL_REVIEW
+}
+
 enum PromotionType {
   PERCENTAGE
   FIXED
@@ -311,13 +317,14 @@ model Address {
 }
 
 model Jurisdiction {
-  id        String           @id @default(uuid()) @db.Uuid
-  tenantId  String           @db.Uuid
-  code      JurisdictionCode
-  name      String
-  active    Boolean          @default(true)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id            String           @id @default(uuid()) @db.Uuid
+  tenantId      String           @db.Uuid
+  code          JurisdictionCode
+  name          String
+  postcodeAreas String[]         @default([])
+  active        Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -615,23 +622,25 @@ model CartItem {
 }
 
 model AgeVerification {
-  id                String              @id @default(uuid()) @db.Uuid
-  tenantId          String              @db.Uuid
-  userId            String?             @db.Uuid
-  guestToken        String?
-  provider          String
-  providerSessionId String
-  outcome           VerificationOutcome
-  verifiedAgeOver   Int?
-  method            String?
-  providerReference String?
-  expiresAt         DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id                  String                @id @default(uuid()) @db.Uuid
+  tenantId            String                @db.Uuid
+  userId              String?               @db.Uuid
+  guestToken          String?
+  provider            String
+  providerSessionId   String
+  status              AgeVerificationStatus @default(PENDING)
+  verifiedAgeOver     Int?
+  method              AgeVerificationMethod
+  providerRef         String?
+  verifiedAt          DateTime?
+  expiresAt           DateTime?
+  declaredDateOfBirth DateTime?             @db.Date
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 
   @@unique([tenantId, provider, providerSessionId])
-  @@index([tenantId, userId, outcome])
-  @@index([tenantId, guestToken, outcome])
+  @@index([tenantId, userId, status, expiresAt])
+  @@index([tenantId, guestToken, status, expiresAt])
 }
 
 model DeliveryZone {

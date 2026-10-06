@@ -38,7 +38,10 @@ Status: IN PROGRESS — external PostgreSQL and Redis services required.
 
 ## Milestone 4 — Catalog, inventory, and bulk import
 
-- [x] Product/category/brand/attribute and variant APIs implemented
+- [x] Product create/read/update/archive APIs implemented
+- [x] Category CRUD maintains materialised descendant paths, blocks hierarchy cycles, and prevents archiving in-use parents
+- [x] Brand CRUD and attribute-set CRUD prevent deletion while referenced by products
+- [x] Variant APIs and variant-owned inventory implemented
 - [x] Age restriction is modelled independently from alcohol flag and ABV
 - [x] Secure image magic-byte validation, limits, EXIF-stripping re-encode, WebP/AVIF variants, and deterministic names
 - [x] Transactional inventory mutation uses `SELECT ... FOR UPDATE`, an immutable ledger, and low-stock outbox alerts
@@ -90,6 +93,23 @@ Status: COMPLETE — live Supabase and HTTP gates verified on 2026-10-05. Cold c
 - [x] API build, lint, strict typecheck, migration status, route coverage, and focused suites pass
 
 Status: COMPLETE — live Supabase cart and database-constraint gates verified on 2026-10-05.
+
+## Milestone 7 — Age gate and purchase verification
+
+- [x] Next.js middleware gates direct, refreshed, nested, shared, product, and alcohol-filtered URLs
+- [x] Browsing token is HMAC-signed, session-bound, HTTP-only, SameSite Lax, and expires after 30 days
+- [x] Decline and Escape return home with a dismissible notice; keyboard focus is trapped in the accessible alert dialog
+- [x] axe-core reports zero serious or critical violations on the alcohol gate
+- [x] Stub, Yoti, and manual-review implementations satisfy the `AgeVerificationProvider` contract
+- [x] Purchase verification has exactly one user or guest owner, a configurable expiry, and a separate status from the browsing gate
+- [x] Direct DOB is stored privately but omitted from public results and audit payloads; DVS document data is never persisted
+- [x] Scottish and Northern Irish postcode areas are seeded in admin-editable jurisdiction rules
+- [x] Checkout independently enforces purchase verification, jurisdiction sale hours, and prohibited delivery windows
+- [x] Forged and valid browsing cookies alone cannot bypass purchase verification
+- [x] The required Scotland 22:30/02:00, 0.4% ABV, and policy-restricted 0.0% assertions pass against Supabase
+- [x] API/web lint, strict typecheck, builds, unit/contract/live E2E suites, route coverage, and migration status pass
+
+Status: COMPLETE — middleware/browser/accessibility and live Supabase security gates verified on 2026-10-06. Live Yoti activation remains a credential/configuration task behind the verified provider adapter.
 
 ## Milestone 17 — Admin dashboard (parallel preview)
 

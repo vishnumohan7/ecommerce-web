@@ -37,7 +37,27 @@ export const TOKENS: Readonly<Record<ProviderName, InjectionToken>> = Object.fre
 );
 export type PaymentProvider = ProviderContract;
 export type WalletProvider = ProviderContract;
-export type AgeVerificationProvider = ProviderContract;
+export type AgeVerificationOutcome = 'PENDING' | 'PASSED' | 'FAILED' | 'CANCELLED';
+export interface AgeVerificationContext {
+  requiredAge: number;
+  dateOfBirth?: string;
+  returnUrl?: string;
+  postcode?: string;
+}
+export interface AgeVerificationResult {
+  sessionId: string;
+  outcome: AgeVerificationOutcome;
+  verifiedAgeOver?: number;
+  method: 'DOB_DECLARATION' | 'DVS' | 'MANUAL_REVIEW';
+  providerRef?: string;
+  redirectUrl?: string;
+}
+export interface AgeVerificationProvider extends ProviderContract {
+  readonly name: string;
+  initiate(subjectId: string, context: AgeVerificationContext): Promise<AgeVerificationResult>;
+  getResult(sessionId: string): Promise<AgeVerificationResult>;
+  handleWebhook(payload: Uint8Array, signature: string): Promise<AgeVerificationResult>;
+}
 export type AddressLookupProvider = ProviderContract;
 export type EmailProvider = ProviderContract;
 export type SmsProvider = ProviderContract;

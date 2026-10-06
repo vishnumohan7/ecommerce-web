@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Headers, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public, RequirePermissions } from '../../common/auth/auth.decorators';
 import { CatalogService } from './catalog.service';
@@ -47,6 +58,13 @@ export class CatalogController {
   @ApiOperation({ summary: 'Update a product' })
   update(@Param('id') id: string, @Body() input: ProductInput) {
     return this.catalog.update(id, input);
+  }
+  @Delete(':id')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Archive a product without destroying order history' })
+  archive(@Param('id') id: string) {
+    return this.catalog.archive(id);
   }
   @Post(':id/variants')
   @RequirePermissions('catalog.write')
