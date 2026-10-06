@@ -14,6 +14,7 @@ const schema = z.object({
   GUEST_CART_SECRET: z.string().min(32).optional(),
   AGE_VERIFY_PROVIDER: z.enum(['stub', 'yoti', 'manual']).default('stub'),
   AGE_VERIFICATION_TTL_DAYS: z.coerce.number().int().positive().default(365),
+  CHECKOUT_RESERVATION_TTL_MINUTES: z.coerce.number().int().positive().default(20),
   YOTI_API_BASE_URL: z.string().url().default('https://api.yoti.com'),
   YOTI_CLIENT_SDK_ID: z.string().optional(),
   YOTI_KEY_FILE_PATH: z.string().optional(),

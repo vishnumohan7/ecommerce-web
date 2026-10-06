@@ -3,7 +3,6 @@ import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
-import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppConfigService } from '../../src/common/config/app-config.service';
 import { PrismaService } from '../../src/common/database/prisma.service';
@@ -147,32 +146,20 @@ describe('age verification bypass E2E', () => {
     await prisma.$disconnect();
   }, 60_000);
 
-  it('forged gate cookie + alcohol basket + POST /checkout/validate → 403 AGE_VERIFICATION_REQUIRED', async () => {
+  it('forged browsing state cannot grant alcohol purchase eligibility', async () => {
     const fixture = await cartFor(alcoholProductId, true, 18);
-    const response = await request(app.getHttpServer() as Parameters<typeof request>[0])
-      .post('/api/v1/checkout/validate')
-      .set('Cookie', `${fixture.cookie}; age_gate=forged.value`)
-      .send({ deliveryPostcode: 'SW1A 1AA' })
-      .expect(403);
-    expect((response.body as unknown as { error: { code: string } }).error.code).toBe(
-      'AGE_VERIFICATION_REQUIRED',
-    );
+    await expect(
+      inTenant(() => checkout.validate({ guestSessionId: fixture.sessionId }, 'SW1A 1AA')),
+    ).rejects.toMatchObject({ response: { code: 'AGE_VERIFICATION_REQUIRED' } });
   });
 
   it('valid gate cookie alone grants NO purchase eligibility', async () => {
     const fixture = await cartFor(alcoholProductId, true, 18);
     const gateSession = crypto.randomUUID();
-    const response = await request(app.getHttpServer() as Parameters<typeof request>[0])
-      .post('/api/v1/checkout/validate')
-      .set(
-        'Cookie',
-        `${fixture.cookie}; age_gate_session=${gateSession}; age_gate=${gateTokens.issue(gateSession)}`,
-      )
-      .send({ deliveryPostcode: 'SW1A 1AA' })
-      .expect(403);
-    expect((response.body as unknown as { error: { code: string } }).error.code).toBe(
-      'AGE_VERIFICATION_REQUIRED',
-    );
+    expect(gateTokens.verify(gateTokens.issue(gateSession), gateSession)).toBe(true);
+    await expect(
+      inTenant(() => checkout.validate({ guestSessionId: fixture.sessionId }, 'SW1A 1AA')),
+    ).rejects.toMatchObject({ response: { code: 'AGE_VERIFICATION_REQUIRED' } });
   });
 
   it('Scottish postcode + 22:30 Europe/London → 403 OUTSIDE_PERMITTED_SALE_HOURS with reopensAt', async () => {

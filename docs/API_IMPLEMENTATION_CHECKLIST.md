@@ -113,10 +113,10 @@ The exact request/response DTOs are finalized when each milestone is implemented
 
 ### Milestone 10 — Checkout orchestration
 
-- [x] `POST /api/v1/checkout/validate` — age/jurisdiction portion complete in Milestone 7; remaining validations join this route in Milestone 10
-- [ ] `POST /api/v1/checkout/session`
-- [ ] `GET /api/v1/checkout/session/:id`
-- [ ] `DELETE /api/v1/checkout/session/:id`
+- [x] `POST /api/v1/checkout/validate` — side-effect-free authoritative cart, stock, price, delivery, coupon, age, VAT, and manual-capture summary
+- [x] `POST /api/v1/checkout/session` — hashed short-lived snapshot plus transactional stock reservation
+- [x] `GET /api/v1/checkout/session/:id` — ownership, expiry, basket, catalogue, totals, slot, and age revalidation
+- [x] `DELETE /api/v1/checkout/session/:id` — cancellation and transactional stock release
 
 ### Milestone 11 — Payments and Stripe webhooks
 

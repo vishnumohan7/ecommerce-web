@@ -147,6 +147,23 @@ Status: COMPLETE — live Supabase rule, CRUD, and 30-way capacity gates verifie
 
 Status: COMPLETE — live Supabase pricing/concurrency gates and the complete regression suite verified on 2026-10-06.
 
+## Milestone 10 — Checkout orchestration
+
+- [x] One side-effect-free validation summary groups grocery/alcohol lines and returns one authoritative total
+- [x] Validation orders cart, product, stock, price, address/zone, slot, coupon, age, jurisdiction window, and recomputed-total checks
+- [x] Client-supplied price, subtotal, discount, tax, total, stock, category, and alcohol fields are rejected
+- [x] Short-lived checkout sessions persist a deterministic SHA-256 snapshot hash
+- [x] Basket version, live catalogue price/status, pricing, coupon, selected slot, and age state are revalidated before reuse
+- [x] Basket mutation invalidates the snapshot and releases reserved inventory
+- [x] Session creation locks inventory rows and reserves stock atomically for a configurable 20-minute TTL
+- [x] The scheduled expiry path and explicit cancellation both release stock transactionally
+- [x] Variable-weight baskets set `requiresManualCapture=true`
+- [x] Eligible guest checkout creates a disabled, non-login tombstone user
+- [x] Guest alcohol checkout without purchase verification returns `AGE_VERIFICATION_REQUIRED` and creates no session
+- [x] Checkout/age/security focused suite passes 25/25; API lint, strict typecheck, build, and ten-migration status pass
+
+Status: COMPLETE — focused functionality and live Supabase reservation gates verified on 2026-10-06. Full regression intentionally deferred per user request.
+
 ## Milestone 17 — Admin dashboard (parallel preview)
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets

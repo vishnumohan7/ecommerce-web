@@ -58,12 +58,12 @@ describe('pricing golden files', () => {
       const result = calculatePricing({
         ...fixture.input,
         deliveryFeeMinor: BigInt(fixture.input.deliveryFeeMinor),
-        lines: fixture.input.lines.map((line) => ({
+        lines: fixture.input.lines.map(({ promotionDiscountMinor, ...line }) => ({
           ...line,
           unitPriceMinor: BigInt(line.unitPriceMinor),
-          ...(line.promotionDiscountMinor === undefined
+          ...(promotionDiscountMinor === undefined
             ? {}
-            : { promotionDiscountMinor: BigInt(line.promotionDiscountMinor) }),
+            : { promotionDiscountMinor: BigInt(promotionDiscountMinor) }),
         })),
         coupon: {
           ...fixture.input.coupon,

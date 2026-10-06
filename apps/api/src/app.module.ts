@@ -20,6 +20,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { AgeVerificationModule } from './modules/age-verification/age-verification.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { PricingModule } from './modules/pricing/pricing.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PricingModule } from './modules/pricing/pricing.module';
     AgeVerificationModule,
     DeliveryModule,
     PricingModule,
+    CheckoutModule,
   ],
   controllers: [HealthController],
   providers: [

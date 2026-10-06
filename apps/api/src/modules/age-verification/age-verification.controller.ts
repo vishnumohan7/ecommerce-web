@@ -8,8 +8,6 @@ import { AgeGateTokenService } from '../../common/security/age-gate-token.servic
 import { TenantContext } from '../../common/tenancy/tenant-context';
 import { GuestCartTokenService } from '../cart/guest-cart-token.service';
 import { AgeIdentity, AgeVerificationService } from './age-verification.service';
-import { checkoutValidationSchema } from './age-verification.schemas';
-import { CheckoutAgeGuardService } from './checkout-age-guard.service';
 
 const monthMilliseconds = 30 * 24 * 60 * 60 * 1000;
 
@@ -18,7 +16,6 @@ const monthMilliseconds = 30 * 24 * 60 * 60 * 1000;
 export class AgeVerificationController {
   constructor(
     @Inject(AgeVerificationService) private readonly verification: AgeVerificationService,
-    @Inject(CheckoutAgeGuardService) private readonly checkout: CheckoutAgeGuardService,
     @Inject(GuestCartTokenService) private readonly guestTokens: GuestCartTokenService,
     @Inject(AgeGateTokenService) private readonly gateTokens: AgeGateTokenService,
     @Inject(AppConfigService) private readonly config: AppConfigService,
@@ -96,18 +93,6 @@ export class AgeVerificationController {
   ) {
     const payload = request.rawBody ?? Buffer.from(JSON.stringify(request.body));
     return this.verification.webhook(provider.toUpperCase(), payload, signature);
-  }
-
-  @Public()
-  @Post('checkout/validate')
-  @ApiOperation({ summary: 'Validate authoritative cart age and jurisdiction eligibility' })
-  validateCheckout(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-    @Body() body: unknown,
-  ) {
-    const input = checkoutValidationSchema.parse(body);
-    return this.checkout.validate(this.identity(request, response), input.deliveryPostcode);
   }
 
   private identity(request: Request, response: Response): AgeIdentity {
