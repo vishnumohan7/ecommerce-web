@@ -213,6 +213,39 @@ export function ProductForm({
       {!product && (
         <>
           <div className="form-section-heading wide-field">
+            <span>Product images</span>
+            <small>
+              Add the primary listing image and optional gallery images. JPEG, PNG, WebP and AVIF
+              files are supported up to 10 MB each.
+            </small>
+          </div>
+          <label className="product-image-upload">
+            Featured image
+            <input
+              name="featuredImage"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              required
+            />
+          </label>
+          <label>
+            Featured image description
+            <input name="featuredImageAltText" placeholder="Defaults to the product name" />
+          </label>
+          <label className="product-gallery-upload wide-field">
+            Gallery images
+            <input
+              name="galleryImages"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              multiple
+            />
+            <small>
+              Select multiple images together. They appear after the featured image in selection
+              order.
+            </small>
+          </label>
+          <div className="form-section-heading wide-field">
             <span>Opening stock</span>
             <small>Create the first warehouse stock record with this product.</small>
           </div>

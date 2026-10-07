@@ -1918,6 +1918,19 @@ td code {
 .product-form textarea {
   resize: vertical;
 }
+.product-form .product-image-upload {
+  grid-column: span 2;
+}
+.product-form .product-gallery-upload small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 500;
+}
+.product-form input[type='file'] {
+  height: auto;
+  min-height: 41px;
+  padding: 7px;
+}
 .product-form .wide-field {
   grid-column: 1/-1;
 }
@@ -1941,6 +1954,9 @@ td code {
 @media (max-width: 560px) {
   .product-form {
     grid-template-columns: 1fr;
+  }
+  .product-form .product-image-upload {
+    grid-column: 1;
   }
 }
 .button-danger {

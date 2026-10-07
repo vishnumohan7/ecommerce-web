@@ -106,12 +106,38 @@ function productInput(data: FormData) {
 }
 
 export async function createProduct(data: FormData) {
+  const featuredImage = data.get('featuredImage');
+  if (!(featuredImage instanceof File) || featuredImage.size === 0)
+    finish('/products/new', { ok: false, error: 'Choose a featured product image.' }, '');
   const result = await adminMutation<{ id: string }>(
     '/api/v1/products',
     'POST',
     productInput(data),
   );
   if (!result.ok) finish('/products/new', result, '');
+  const imageUpload = new FormData();
+  imageUpload.set('file', featuredImage);
+  imageUpload.set('altText', textValue(data, 'featuredImageAltText') || textValue(data, 'name'));
+  const imageResult = await adminFormMutation(
+    `/api/v1/products/${encodeURIComponent(result.data.id)}/images`,
+    imageUpload,
+  );
+  if (!imageResult.ok) finish(`/products/${result.data.id}`, imageResult, '');
+  const galleryImages = data
+    .getAll('galleryImages')
+    .filter((value): value is File => value instanceof File && value.size > 0);
+  for (let index = 0; index < galleryImages.length; index += 1) {
+    const galleryImage = galleryImages[index];
+    if (!galleryImage) continue;
+    const galleryUpload = new FormData();
+    galleryUpload.set('file', galleryImage);
+    galleryUpload.set('altText', `${textValue(data, 'name')} gallery image ${index + 1}`);
+    const galleryResult = await adminFormMutation(
+      `/api/v1/products/${encodeURIComponent(result.data.id)}/images`,
+      galleryUpload,
+    );
+    if (!galleryResult.ok) finish(`/products/${result.data.id}`, galleryResult, '');
+  }
   const stockResult = await adminMutation('/api/v1/inventory', 'POST', {
     productId: result.data.id,
     warehouseId: textValue(data, 'warehouseId'),
@@ -155,8 +181,8 @@ export async function createProduct(data: FormData) {
     `/products/${result.data.id}`,
     { ok: true },
     names.length
-      ? `Product, opening stock and ${names.length} variant${names.length === 1 ? '' : 's'} created.`
-      : 'Product and opening stock created.',
+      ? `Product, ${galleryImages.length + 1} image${galleryImages.length === 0 ? '' : 's'}, opening stock and ${names.length} variant${names.length === 1 ? '' : 's'} created.`
+      : `Product, ${galleryImages.length + 1} image${galleryImages.length === 0 ? '' : 's'} and opening stock created.`,
   );
 }
 
