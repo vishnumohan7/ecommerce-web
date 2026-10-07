@@ -14,6 +14,7 @@ export class MediaController {
     if (!asset) throw new NotFoundException('Media asset not found');
     response.setHeader('Content-Type', asset.contentType);
     response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     response.setHeader('Content-Length', String(asset.body.byteLength));
     response.send(Buffer.from(asset.body));
   }
