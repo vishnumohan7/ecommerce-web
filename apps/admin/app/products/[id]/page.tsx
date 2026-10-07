@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Admin preview is English-only. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { archiveProduct, updateProduct } from '../../actions';

@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Milestone 17 preview copy is English-only until the localisation catalogue lands. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import { ApiNotice } from '../components/api-notice';
 import { API_BASE_URL, fetchHealth } from '../lib/api';
@@ -51,13 +51,6 @@ export default async function SystemPage() {
           )}
         </article>
       </section>
-      <article className="panel info-panel">
-        <h2>What this page proves</h2>
-        <p>
-          This is live operational feedback, not sample dashboard data. A failed dependency is
-          surfaced here without breaking the rest of the admin preview.
-        </p>
-      </article>
     </>
   );
 }

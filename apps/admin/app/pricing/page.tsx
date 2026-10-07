@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Milestone 17 admin preview is English-only. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import { createCoupon, createInfluencer, createTaxRule, toggleCoupon } from '../actions';
 import { ActionMessage } from '../components/action-message';
@@ -208,10 +208,6 @@ export default async function PricingPage({ searchParams }: PageProps) {
           </div>
         </article>
       </section>
-      <p className="page-note">
-        Pricing controls are fetched from protected Milestone 9 endpoints using the server-side
-        admin token.
-      </p>
     </>
   );
 }

@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Milestone 13 admin operations copy is English-only. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { reviewReturn } from '../actions';

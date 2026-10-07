@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Milestone 17 admin preview is English-only. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import { createDeliveryZone, toggleDelivery } from '../actions';
 import { ActionMessage } from '../components/action-message';

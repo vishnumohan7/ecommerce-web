@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Milestone 17 preview copy is English-only until the localisation catalogue lands. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 export function ApiNotice({
   message,
   compact = false,
@@ -8,10 +8,7 @@ export function ApiNotice({
       <span aria-hidden="true">!</span>
       <div>
         <strong>Live data is temporarily unavailable</strong>
-        <p>
-          {message} Start the API service and refresh this page; the admin preview itself remains
-          usable.
-        </p>
+        <p>{message} Refresh the page or check System health for dependency status.</p>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-/* eslint-disable local/no-jsx-literals -- Milestone 17 preview copy is English-only until the localisation catalogue lands. */
+/* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { archiveProduct } from '../actions';
