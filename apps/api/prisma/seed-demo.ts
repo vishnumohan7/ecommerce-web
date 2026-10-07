@@ -354,6 +354,21 @@ async function seedDemo(): Promise<void> {
       products.find((entry) =>
         basketType === BasketType.ALCOHOL ? entry.isAlcohol : !entry.isAlcohol,
       ) ?? products[0]!;
+    await prisma.invoice.upsert({
+      where: { orderId: order.id },
+      update: {},
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        orderId: order.id,
+        invoiceNumber: order.orderNumber,
+        invoiceNumberYear: order.orderNumberYear,
+        subtotalMinor: order.subtotalMinor,
+        taxMinor: order.taxMinor,
+        totalMinor: order.totalMinor,
+        currency: order.currency,
+        issuedAt: order.createdAt,
+      },
+    });
     await prisma.orderItem.createMany({
       data: [
         {
