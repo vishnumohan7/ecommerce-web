@@ -75,8 +75,8 @@ async function seedDemo(): Promise<void> {
   await prisma.brand.createMany({
     data: Array.from({ length: 16 }, (_, index) => ({
       tenantId: DEFAULT_TENANT_ID,
-      slug: `demo-brand-${index + 1}`,
-      name: `Demo Brand ${index + 1}`,
+      slug: `brand-${index + 1}`,
+      name: `Brand ${index + 1}`,
     })),
     skipDuplicates: true,
   });
@@ -94,10 +94,10 @@ async function seedDemo(): Promise<void> {
       tenantId: DEFAULT_TENANT_ID,
       categoryId: categories[index % groceryCategories.length]!.id,
       brandId: brands[index % brands.length]!.id,
-      sku: `DEMO-G-${String(index + 1).padStart(4, '0')}`,
-      slug: `demo-grocery-${index + 1}`,
-      name: `Demo ${groceryNames[index % groceryNames.length]} ${index + 1}`,
-      description: 'Fictional demonstration grocery product for evaluation environments.',
+      sku: `G-${String(index + 1).padStart(4, '0')}`,
+      slug: `grocery-${index + 1}`,
+      name: `${groceryNames[index % groceryNames.length]} ${index + 1}`,
+      description: 'Quality grocery product supplied for the Denes catalogue.',
       status: 'ACTIVE' as const,
       priceMinor: BigInt(75 + (index % 40) * 25),
       currency: 'GBP',
@@ -125,10 +125,10 @@ async function seedDemo(): Promise<void> {
     tenantId: DEFAULT_TENANT_ID,
     categoryId: categories[groceryCategories.length + (index % alcoholCategories.length)]!.id,
     brandId: brands[index % brands.length]!.id,
-    sku: `DEMO-A-${String(index + 1).padStart(4, '0')}`,
-    slug: `demo-alcohol-${index + 1}`,
-    name: `Demo ${alcoholNames[index % alcoholNames.length]} ${index + 1}`,
-    description: 'Fictional demonstration alcohol product for evaluation environments.',
+    sku: `A-${String(index + 1).padStart(4, '0')}`,
+    slug: `alcohol-${index + 1}`,
+    name: `${alcoholNames[index % alcoholNames.length]} ${index + 1}`,
+    description: 'Age-restricted beverage supplied for the Denes catalogue.',
     status: 'ACTIVE' as const,
     priceMinor: BigInt(250 + (index % 30) * 55),
     currency: 'GBP',
@@ -180,13 +180,13 @@ async function seedDemo(): Promise<void> {
     skipDuplicates: true,
   });
   const warehouse = await prisma.warehouse.upsert({
-    where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: 'DEMO-LON' } },
+    where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: 'LON-01' } },
     update: {},
     create: {
       tenantId: DEFAULT_TENANT_ID,
-      code: 'DEMO-LON',
-      name: 'Demo London Store',
-      address: { line1: '1 Demo Way', city: 'London', postcode: 'SE1 1AA' },
+      code: 'LON-01',
+      name: 'London Store',
+      address: { line1: '1 Market Way', city: 'London', postcode: 'SE1 1AA' },
     },
   });
   await prisma.inventory.createMany({
@@ -209,8 +209,8 @@ async function seedDemo(): Promise<void> {
       tenantId: DEFAULT_TENANT_ID,
       email: `customer${index + 1}@example.test`,
       passwordHash,
-      firstName: 'Demo',
-      lastName: `Customer ${index + 1}`,
+      firstName: 'Customer',
+      lastName: `${index + 1}`,
       role: UserRole.CUSTOMER,
     })),
     skipDuplicates: true,
@@ -227,9 +227,9 @@ async function seedDemo(): Promise<void> {
     orderBy: { email: 'asc' },
   });
   const zoneSeeds = [
-    { code: 'LONDON', name: 'Demo London', patterns: ['SW*', 'SE*'], alcohol: true },
-    { code: 'EDINBURGH', name: 'Demo Edinburgh', patterns: ['EH*'], alcohol: true },
-    { code: 'BELFAST', name: 'Demo Belfast', patterns: ['BT*'], alcohol: false },
+    { code: 'LONDON', name: 'London', patterns: ['SW*', 'SE*'], alcohol: true },
+    { code: 'EDINBURGH', name: 'Edinburgh', patterns: ['EH*'], alcohol: true },
+    { code: 'BELFAST', name: 'Belfast', patterns: ['BT*'], alcohol: false },
   ];
   for (const seed of zoneSeeds)
     await prisma.deliveryZone.upsert({
@@ -272,7 +272,7 @@ async function seedDemo(): Promise<void> {
     data: [
       {
         tenantId: DEFAULT_TENANT_ID,
-        code: 'DEMO10',
+        code: 'WELCOME10',
         type: PromotionType.PERCENTAGE,
         valueBps: 1000,
         currency: 'GBP',
@@ -281,7 +281,7 @@ async function seedDemo(): Promise<void> {
       },
       {
         tenantId: DEFAULT_TENANT_ID,
-        code: 'DEMO5GBP',
+        code: 'SAVE5GBP',
         type: PromotionType.FIXED,
         valueMinor: 500n,
         currency: 'GBP',
@@ -290,7 +290,7 @@ async function seedDemo(): Promise<void> {
       },
       {
         tenantId: DEFAULT_TENANT_ID,
-        code: 'DEMO-DELIVERY',
+        code: 'FREE-DELIVERY',
         type: PromotionType.FREE_DELIVERY,
         currency: 'GBP',
         startsAt: couponNow,
@@ -303,14 +303,14 @@ async function seedDemo(): Promise<void> {
     data: [
       {
         tenantId: DEFAULT_TENANT_ID,
-        code: 'DEMO-ALPHA',
-        displayName: 'Demo Creator Alpha',
+        code: 'CREATOR-ALPHA',
+        displayName: 'Creator Alpha',
         commissionBps: 500,
       },
       {
         tenantId: DEFAULT_TENANT_ID,
-        code: 'DEMO-BETA',
-        displayName: 'Demo Creator Beta',
+        code: 'CREATOR-BETA',
+        displayName: 'Creator Beta',
         commissionBps: 750,
       },
     ],
@@ -343,9 +343,9 @@ async function seedDemo(): Promise<void> {
         fulfilmentStatus:
           Object.values(FulfilmentStatus)[index % Object.values(FulfilmentStatus).length]!,
         refundStatus: index % 7 === 0 ? RefundStatus.FULL : RefundStatus.NONE,
-        deliveryAddress: { line1: `${index + 1} Demo Street`, city: 'London', postcode: 'SE1 1AA' },
+        deliveryAddress: { line1: `${index + 1} High Street`, city: 'London', postcode: 'SE1 1AA' },
         customerSnapshot: {
-          name: `Demo Customer ${(index % 6) + 1}`,
+          name: `Customer ${(index % 6) + 1}`,
           email: `customer${(index % 6) + 1}@example.test`,
         },
       },
@@ -369,6 +369,7 @@ async function seedDemo(): Promise<void> {
         issuedAt: order.createdAt,
       },
     });
+    await prisma.orderItem.deleteMany({ where: { orderId: order.id } });
     await prisma.orderItem.createMany({
       data: [
         {
@@ -397,6 +398,18 @@ async function seedDemo(): Promise<void> {
         },
       ],
     });
+    const categories = [
+      ...(basketType !== BasketType.ALCOHOL ? ['GROCERY' as const] : []),
+      ...(basketType !== BasketType.GROCERY ? ['ALCOHOL' as const] : []),
+    ];
+    for (const category of categories)
+      await prisma.orderFulfilmentGroup.upsert({
+        where: {
+          tenantId_orderId_category: { tenantId: DEFAULT_TENANT_ID, orderId: order.id, category },
+        },
+        update: {},
+        create: { tenantId: DEFAULT_TENANT_ID, orderId: order.id, category },
+      });
   }
   console.log(`Demo seed complete: ${products.length} products, 6 customers, 40 orders.`);
 }

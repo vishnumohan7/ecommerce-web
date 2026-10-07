@@ -1,12 +1,28 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public, RequirePermissions } from '../../common/auth/auth.decorators';
 import { TaxonomyService } from './taxonomy.service';
+import { ImageService } from './image.service';
 
 @ApiTags('Categories, brands, and attributes')
 @Controller('api/v1')
 export class TaxonomyController {
-  constructor(private readonly taxonomy: TaxonomyService) {}
+  constructor(
+    private readonly taxonomy: TaxonomyService,
+    private readonly images: ImageService,
+  ) {}
 
   @Public()
   @Get('categories')
@@ -38,6 +54,15 @@ export class TaxonomyController {
   deleteCategory(@Param('id') id: string) {
     return this.taxonomy.deleteCategory(id);
   }
+  @Post('categories/:id/image')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024, files: 1 } }))
+  uploadCategoryImage(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new Error('Category image is required');
+    return this.images.uploadTaxonomy('category', id, file.buffer);
+  }
 
   @Public()
   @Get('brands')
@@ -68,6 +93,15 @@ export class TaxonomyController {
   @ApiBearerAuth()
   deleteBrand(@Param('id') id: string) {
     return this.taxonomy.deleteBrand(id);
+  }
+  @Post('brands/:id/image')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024, files: 1 } }))
+  uploadBrandImage(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new Error('Brand image is required');
+    return this.images.uploadTaxonomy('brand', id, file.buffer);
   }
 
   @Get('attribute-sets')

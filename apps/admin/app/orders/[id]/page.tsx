@@ -2,7 +2,14 @@
 import type { Metadata } from 'next';
 import { randomUUID } from 'node:crypto';
 import Link from 'next/link';
-import { captureAgeCheck, completePickList, createPickList, initiateRefund, recordPick, transitionFulfilment } from '../../actions';
+import {
+  captureAgeCheck,
+  completePickList,
+  createPickList,
+  initiateRefund,
+  recordPick,
+  transitionFulfilment,
+} from '../../actions';
 import { ActionMessage } from '../../components/action-message';
 import { ApiNotice } from '../../components/api-notice';
 import { Currency } from '../../components/currency';
@@ -55,8 +62,9 @@ function Lines({
                 <th>Product</th>
                 <th>SKU</th>
                 <th>Qty</th>
+                <th>Unit price</th>
                 <th>VAT</th>
-                <th>Total</th>
+                <th>Line total</th>
               </tr>
             </thead>
             <tbody>
@@ -73,6 +81,9 @@ function Lines({
                     <code>{line.sku}</code>
                   </td>
                   <td>{line.quantity}</td>
+                  <td>
+                    <Currency minor={line.unitPriceMinor} currency={line.currency} />
+                  </td>
                   <td>{(line.vatRateBps / 100).toFixed(0)}%</td>
                   <td>
                     <strong>
@@ -127,7 +138,11 @@ function Fulfilment({ orderId, group }: Readonly<{ orderId: string; group: Fulfi
 
 export default async function OrderDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const [query, result, pickResult] = await Promise.all([searchParams, fetchOrder(id), fetchPickList(id)]);
+  const [query, result, pickResult] = await Promise.all([
+    searchParams,
+    fetchOrder(id),
+    fetchPickList(id),
+  ]);
   if (!result.ok) {
     return (
       <>
@@ -146,6 +161,19 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
     );
   }
   const order = result.data;
+  const orderLines = [...order.sections.grocery, ...order.sections.alcohol];
+  const calculatedSubtotal = orderLines.reduce(
+    (sum, line) => sum + BigInt(line.unitPriceMinor) * BigInt(line.quantity),
+    0n,
+  );
+  const calculatedNetItems = orderLines.reduce(
+    (sum, line) => sum + BigInt(line.lineTotalMinor),
+    0n,
+  );
+  const calculationMismatch =
+    calculatedSubtotal !== BigInt(order.subtotalMinor) ||
+    calculatedNetItems !== BigInt(order.subtotalMinor) - BigInt(order.discountMinor) ||
+    calculatedNetItems + BigInt(order.deliveryFeeMinor) !== BigInt(order.totalMinor);
   return (
     <>
       <section className="page-heading compact-heading">
@@ -163,7 +191,11 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
           </Link>
           {order.invoice && (
             <>
-              <Link className="button button-muted" href={`/orders/${id}/invoice?view=1`} target="_blank">
+              <Link
+                className="button button-muted"
+                href={`/orders/${id}/invoice?view=1`}
+                target="_blank"
+              >
                 View invoice
               </Link>
               <Link className="button button-primary" href={`/orders/${id}/invoice`}>
@@ -174,6 +206,15 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
         </div>
       </section>
       <ActionMessage success={query.success} error={query.error} />
+      {calculationMismatch && (
+        <div className="calculation-warning">
+          <strong>Order total requires review</strong>
+          <span>
+            The saved quantities and line amounts do not reconcile with the order summary.
+            Fulfilment and refunds should remain paused until the data is corrected.
+          </span>
+        </div>
+      )}
       <section className="order-summary-grid">
         <article>
           <span>Total</span>
@@ -268,32 +309,138 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
       </section>
       <section className="order-workflow-grid">
         <article className="panel">
-          <header className="panel-header"><div><p className="eyebrow">Warehouse workflow</p><h2>Picking</h2><p>Record picked, short or substituted quantities before dispatch.</p></div>{pickResult.ok && <span className="status-badge status-active"><span />{pickResult.data.status.replaceAll('_', ' ')}</span>}</header>
-          {!pickResult.ok ? <div className="workflow-empty"><p>No pick list is open for this order.</p><form action={createPickList}><input type="hidden" name="orderId" value={order.id} /><button className="button button-primary" type="submit">Open pick list</button></form></div> : <>
-            <div className="pick-lines">{pickResult.data.items.map((item) => <form action={recordPick} className="pick-line" key={item.id}>
-              <input type="hidden" name="orderId" value={order.id} /><input type="hidden" name="itemId" value={item.id} />
-              <div><strong>{item.orderItem?.productName ?? 'Order line'}</strong><small>{item.storageType.toLowerCase()} · requested {item.requested}</small></div>
-              <select name="outcome" defaultValue={item.outcome ?? 'PICKED'} aria-label="Pick outcome"><option value="PICKED">Picked</option><option value="SHORT">Short</option><option value="SUBSTITUTED">Substituted</option></select>
-              <input name="picked" type="number" min="0" max={item.requested} defaultValue={item.picked || item.requested} aria-label="Picked quantity" />
-              <input name="actualWeightGrams" type="number" min="1" placeholder="Actual g" aria-label="Actual weight in grams" />
-              <input name="substituteProductId" placeholder="Substitute product ID" aria-label="Substitute product ID" />
-              <button className="button button-muted" type="submit">{item.completedAt ? 'Update' : 'Record'}</button>
-            </form>)}</div>
-            {pickResult.data.status === 'IN_PROGRESS' && <div className="panel-actions"><form action={completePickList}><input type="hidden" name="orderId" value={order.id} /><button className="button button-primary" type="submit">Complete picking</button></form></div>}
-          </>}
+          <header className="panel-header">
+            <div>
+              <p className="eyebrow">Warehouse workflow</p>
+              <h2>Picking</h2>
+              <p>Record picked, short or substituted quantities before dispatch.</p>
+            </div>
+            {pickResult.ok && (
+              <span className="status-badge status-active">
+                <span />
+                {pickResult.data.status.replaceAll('_', ' ')}
+              </span>
+            )}
+          </header>
+          {!pickResult.ok ? (
+            <div className="workflow-empty">
+              <p>No pick list is open for this order.</p>
+              <form action={createPickList}>
+                <input type="hidden" name="orderId" value={order.id} />
+                <button className="button button-primary" type="submit">
+                  Open pick list
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
+              <div className="pick-lines">
+                {pickResult.data.items.map((item) => (
+                  <form action={recordPick} className="pick-line" key={item.id}>
+                    <input type="hidden" name="orderId" value={order.id} />
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <div>
+                      <strong>{item.orderItem?.productName ?? 'Order line'}</strong>
+                      <small>
+                        {item.storageType.toLowerCase()} · requested {item.requested}
+                      </small>
+                    </div>
+                    <select
+                      name="outcome"
+                      defaultValue={item.outcome ?? 'PICKED'}
+                      aria-label="Pick outcome"
+                    >
+                      <option value="PICKED">Picked</option>
+                      <option value="SHORT">Short</option>
+                      <option value="SUBSTITUTED">Substituted</option>
+                    </select>
+                    <input
+                      name="picked"
+                      type="number"
+                      min="0"
+                      max={item.requested}
+                      defaultValue={item.picked || item.requested}
+                      aria-label="Picked quantity"
+                    />
+                    <input
+                      name="actualWeightGrams"
+                      type="number"
+                      min="1"
+                      placeholder="Actual g"
+                      aria-label="Actual weight in grams"
+                    />
+                    <input
+                      name="substituteProductId"
+                      placeholder="Substitute product ID"
+                      aria-label="Substitute product ID"
+                    />
+                    <button className="button button-muted" type="submit">
+                      {item.completedAt ? 'Update' : 'Record'}
+                    </button>
+                  </form>
+                ))}
+              </div>
+              {pickResult.data.status === 'IN_PROGRESS' && (
+                <div className="panel-actions">
+                  <form action={completePickList}>
+                    <input type="hidden" name="orderId" value={order.id} />
+                    <button className="button button-primary" type="submit">
+                      Complete picking
+                    </button>
+                  </form>
+                </div>
+              )}
+            </>
+          )}
         </article>
-        {order.sections.alcohol.length > 0 && <article className="panel">
-          <header className="panel-header"><div><p className="eyebrow">Challenge 25</p><h2>Proof of age outcome</h2><p>Record only the verification result and ID type—never an ID number.</p></div></header>
-          <form action={captureAgeCheck} className="age-check-form">
-            <input type="hidden" name="orderId" value={order.id} />
-            <label>Outcome<select name="outcome" defaultValue="PASSED"><option value="PASSED">Passed</option><option value="FAILED">Failed</option><option value="REFUSED">Delivery refused</option></select></label>
-            <label>ID type<select name="idType" defaultValue="DRIVING_LICENCE"><option value="DRIVING_LICENCE">Driving licence</option><option value="PASSPORT">Passport</option><option value="PASS_CARD">PASS card</option><option value="DIGITAL_DVS">Digital DVS</option><option value="OTHER">Other</option></select></label>
-            <label className="inline-checkbox"><input name="recipientPresent" type="checkbox" defaultChecked /> Recipient present</label>
-            <label className="wide-field">Refusal reason<input name="refusalReason" /></label>
-            <label className="wide-field">Operational note<textarea name="note" rows={3} /></label>
-            <div className="form-actions"><button className="button button-primary" type="submit">Record outcome</button></div>
-          </form>
-        </article>}
+        {order.sections.alcohol.length > 0 && (
+          <article className="panel">
+            <header className="panel-header">
+              <div>
+                <p className="eyebrow">Challenge 25</p>
+                <h2>Proof of age outcome</h2>
+                <p>Record only the verification result and ID type—never an ID number.</p>
+              </div>
+            </header>
+            <form action={captureAgeCheck} className="age-check-form">
+              <input type="hidden" name="orderId" value={order.id} />
+              <label>
+                Outcome
+                <select name="outcome" defaultValue="PASSED">
+                  <option value="PASSED">Passed</option>
+                  <option value="FAILED">Failed</option>
+                  <option value="REFUSED">Delivery refused</option>
+                </select>
+              </label>
+              <label>
+                ID type
+                <select name="idType" defaultValue="DRIVING_LICENCE">
+                  <option value="DRIVING_LICENCE">Driving licence</option>
+                  <option value="PASSPORT">Passport</option>
+                  <option value="PASS_CARD">PASS card</option>
+                  <option value="DIGITAL_DVS">Digital DVS</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </label>
+              <label className="inline-checkbox">
+                <input name="recipientPresent" type="checkbox" defaultChecked /> Recipient present
+              </label>
+              <label className="wide-field">
+                Refusal reason
+                <input name="refusalReason" />
+              </label>
+              <label className="wide-field">
+                Operational note
+                <textarea name="note" rows={3} />
+              </label>
+              <div className="form-actions">
+                <button className="button button-primary" type="submit">
+                  Record outcome
+                </button>
+              </div>
+            </form>
+          </article>
+        )}
       </section>
       <article className="panel refund-panel">
         <header className="panel-header">

@@ -29,6 +29,23 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 20px;
 }
+.calculation-warning {
+  background: #fff4e8;
+  border: 1px solid #f3c99e;
+  border-radius: 8px;
+  color: #7d461d;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+}
+.calculation-warning strong {
+  color: #9b4d19;
+}
+.calculation-warning span {
+  font-size: 10px;
+  line-height: 1.5;
+}
 .order-summary-grid article {
   background: #fff;
   border: 1px solid var(--line);

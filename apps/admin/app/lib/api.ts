@@ -60,7 +60,12 @@ export interface Product {
   }>;
 }
 
-export interface Warehouse { id: string; code: string; name: string; active: boolean }
+export interface Warehouse {
+  id: string;
+  code: string;
+  name: string;
+  active: boolean;
+}
 
 export interface SearchResponse {
   items: Array<
@@ -86,6 +91,7 @@ export interface Category {
   parentId: string | null;
   slug: string;
   name: string;
+  imageUrl: string | null;
   path: string;
   position: number;
   active: boolean;
@@ -95,6 +101,7 @@ export interface Brand {
   id: string;
   slug: string;
   name: string;
+  imageUrl: string | null;
 }
 
 export interface DeliveryZone {
@@ -302,9 +309,34 @@ export interface CustomerSummary {
 }
 export interface CustomerDetail extends Omit<CustomerSummary, 'orderCount' | 'spendMinor'> {
   updatedAt: string;
-  addresses: Array<{ id: string; label: string; line1: string; line2: string | null; city: string; postcode: string; country: string; isDefault: boolean }>;
-  orders: Array<{ id: string; orderNumber: number; orderNumberYear: number; totalMinor: string; paymentStatus: string; fulfilmentStatus: string; createdAt: string }>;
-  reviews: Array<{ id: string; productId: string; rating: number; title: string | null; body: string; status: string; createdAt: string }>;
+  addresses: Array<{
+    id: string;
+    label: string;
+    line1: string;
+    line2: string | null;
+    city: string;
+    postcode: string;
+    country: string;
+    isDefault: boolean;
+  }>;
+  orders: Array<{
+    id: string;
+    orderNumber: number;
+    orderNumberYear: number;
+    totalMinor: string;
+    paymentStatus: string;
+    fulfilmentStatus: string;
+    createdAt: string;
+  }>;
+  reviews: Array<{
+    id: string;
+    productId: string;
+    rating: number;
+    title: string | null;
+    body: string;
+    status: string;
+    createdAt: string;
+  }>;
 }
 export interface InventoryRow {
   id: string;
@@ -561,8 +593,14 @@ export function fetchProduct(id: string) {
 export function fetchCategories() {
   return get<PageResult<Category>>('/api/v1/categories?limit=100');
 }
+export function fetchCategory(id: string) {
+  return get<Category>(`/api/v1/categories/${encodeURIComponent(id)}`);
+}
 export function fetchBrands() {
   return get<PageResult<Brand>>('/api/v1/brands?limit=100');
+}
+export function fetchBrand(id: string) {
+  return get<Brand>(`/api/v1/brands/${encodeURIComponent(id)}`);
 }
 export function fetchDeliveryZones() {
   return get<DeliveryZone[]>('/api/v1/admin/delivery/zones', true);
@@ -625,7 +663,13 @@ export function fetchCustomerReport(filters: ReportFilters = {}) {
   return get<{
     customers: number;
     repeatCustomers: number;
-    topCustomers: Array<{ userId: string; email: string | null; name: string | null; orders: number; spendMinor: string }>;
+    topCustomers: Array<{
+      userId: string;
+      email: string | null;
+      name: string | null;
+      orders: number;
+      spendMinor: string;
+    }>;
   }>(`/api/v1/admin/reports/customers${reportQuery(filters)}`, true);
 }
 export function fetchProductReport(filters: ReportFilters = {}) {
@@ -640,10 +684,18 @@ export function fetchCouponReport(filters: ReportFilters = {}) {
   );
 }
 export function fetchCategoryReport(filters: ReportFilters = {}) {
-  return get<Array<{ categoryId: string; name: string; units: number; revenueMinor: string }>>(`/api/v1/admin/reports/categories${reportQuery(filters)}`, true);
+  return get<Array<{ categoryId: string; name: string; units: number; revenueMinor: string }>>(
+    `/api/v1/admin/reports/categories${reportQuery(filters)}`,
+    true,
+  );
 }
 export function fetchInfluencerReport(id: string) {
-  return get<{ orders: number; revenueMinor: string | null; commissionMinor: string | null; currency: string }>(`/api/v1/admin/influencers/${encodeURIComponent(id)}/report`, true);
+  return get<{
+    orders: number;
+    revenueMinor: string | null;
+    commissionMinor: string | null;
+    currency: string;
+  }>(`/api/v1/admin/influencers/${encodeURIComponent(id)}/report`, true);
 }
 export function fetchCustomers(query = '') {
   return get<CustomerSummary[]>(
@@ -654,8 +706,11 @@ export function fetchCustomers(query = '') {
 export function fetchCustomer(id: string) {
   return get<CustomerDetail>(`/api/v1/admin/customers/${encodeURIComponent(id)}`, true);
 }
-export function fetchInventory() {
-  return get<InventoryRow[]>('/api/v1/inventory', true);
+export function fetchInventory(productId = '') {
+  return get<InventoryRow[]>(
+    `/api/v1/inventory${productId ? `?productId=${encodeURIComponent(productId)}` : ''}`,
+    true,
+  );
 }
 export function fetchWarehouses() {
   return get<Warehouse[]>('/api/v1/inventory/warehouses', true);

@@ -32,7 +32,8 @@ const groups: Array<{ label: string; items: Item[] }> = [
     items: [
       { href: '/', label: 'Dashboard', icon: 'dashboard' },
       { href: '/products', label: 'Products', icon: 'product' },
-      { href: '/catalogue', label: 'Categories & brands', icon: 'catalogue' },
+      { href: '/categories', label: 'Categories', icon: 'catalogue' },
+      { href: '/brands', label: 'Brands', icon: 'catalogue' },
       { href: '/inventory', label: 'Inventory', icon: 'inventory' },
       { href: '/promotions', label: 'Promotions', icon: 'promotion' },
       { href: '/orders', label: 'Orders', icon: 'orders' },
@@ -108,15 +109,29 @@ function TablePaginationManager() {
         const pages = Math.max(1, Math.ceil(rows.length / pageSize));
         page = Math.min(page, pages);
         const start = (page - 1) * pageSize;
-        rows.forEach((row, index) => { row.hidden = index < start || index >= start + pageSize; });
+        rows.forEach((row, index) => {
+          row.hidden = index < start || index >= start + pageSize;
+        });
         summary.textContent = `Showing ${start + 1}–${Math.min(start + pageSize, rows.length)} of ${rows.length}`;
         current.textContent = `${page} / ${pages}`;
         previous.disabled = page === 1;
         next.disabled = page === pages;
       };
-      previous.addEventListener('click', () => { page -= 1; render(); table.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-      next.addEventListener('click', () => { page += 1; render(); table.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-      size.addEventListener('change', () => { pageSize = Number(size.value); page = 1; render(); });
+      previous.addEventListener('click', () => {
+        page -= 1;
+        render();
+        table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      next.addEventListener('click', () => {
+        page += 1;
+        render();
+        table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      size.addEventListener('change', () => {
+        pageSize = Number(size.value);
+        page = 1;
+        render();
+      });
       render();
     };
     const scan = () => document.querySelectorAll<HTMLTableElement>('.content table').forEach(setup);
@@ -225,7 +240,9 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
                     <NavIcon name={entry.icon} />
                   </span>
                   <span>{entry.label}</span>
-                  {navigatingTo === entry.href && <span className="nav-loading" aria-hidden="true" />}
+                  {navigatingTo === entry.href && (
+                    <span className="nav-loading" aria-hidden="true" />
+                  )}
                   <i aria-hidden="true" />
                 </Link>
               ))}

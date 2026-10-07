@@ -454,6 +454,7 @@ model Category {
   parentId  String?  @db.Uuid
   slug      String
   name      String
+  imageUrl  String?
   path      String
   position  Int      @default(0)
   active    Boolean  @default(true)
@@ -469,6 +470,7 @@ model Brand {
   tenantId  String   @db.Uuid
   slug      String
   name      String
+  imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

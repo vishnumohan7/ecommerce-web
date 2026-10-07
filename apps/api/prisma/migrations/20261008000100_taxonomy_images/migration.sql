@@ -1,0 +1,2 @@
+ALTER TABLE "Category" ADD COLUMN "imageUrl" TEXT;
+ALTER TABLE "Brand" ADD COLUMN "imageUrl" TEXT;

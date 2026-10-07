@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 const forbidden = new Set([
   'price',
-  'priceMinor',
   'subtotal',
   'discount',
   'tax',
@@ -9,7 +8,6 @@ const forbidden = new Set([
   'deliveryFee',
   'isAlcohol',
   'orderCategory',
-  'ageRestriction',
   'ageVerified',
   'stock',
 ]);

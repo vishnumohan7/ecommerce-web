@@ -9,7 +9,7 @@ export async function seedMinimal(client = prisma): Promise<void> {
   await client.tenant.upsert({
     where: { id: DEFAULT_TENANT_ID },
     update: { active: true },
-    create: { id: DEFAULT_TENANT_ID, slug: 'default', name: 'Demo Merchant', active: true },
+    create: { id: DEFAULT_TENANT_ID, slug: 'default', name: 'Denes Commerce', active: true },
   });
 
   await client.tenantSettings.upsert({
@@ -83,8 +83,8 @@ export async function seedMinimal(client = prisma): Promise<void> {
     update: {},
     create: {
       tenantId: DEFAULT_TENANT_ID,
-      brandName: 'Demo Merchant',
-      legalEntityName: 'Demo Merchant Limited',
+      brandName: 'Denes Commerce',
+      legalEntityName: 'Denes Commerce Limited',
       companyNumber: '00000000',
       registeredAddress: { line1: '1 Example Street', city: 'London', postcode: 'SW1A 1AA' },
       assets: {},
@@ -99,7 +99,7 @@ export async function seedMinimal(client = prisma): Promise<void> {
         onSurface: 'rgb(20 24 23)',
       },
       typography: { heading: 'Inter', body: 'Inter' },
-      emailBranding: { footer: 'Demo Merchant Limited' },
+      emailBranding: { footer: 'Denes Commerce Limited' },
     },
   });
 

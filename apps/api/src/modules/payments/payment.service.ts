@@ -329,6 +329,24 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       > = snapshot.summary.groups.flatMap((group) =>
         group.lines.map((line) => ({ ...line, orderCategory: group.category })),
       );
+      const lineSubtotal = lines.reduce(
+        (sum, line) =>
+          sum + BigInt(String(line['unitPriceMinor'])) * BigInt(Number(line['quantity'])),
+        0n,
+      );
+      const lineNet = lines.reduce((sum, line) => sum + BigInt(String(line['totalMinor'])), 0n);
+      const quotedSubtotal = BigInt(snapshot.summary.subtotalMinor);
+      const quotedDiscount = BigInt(snapshot.summary.discountMinor);
+      const quotedDelivery = BigInt(snapshot.summary.delivery.deliveryFeeMinor);
+      if (
+        lineSubtotal !== quotedSubtotal ||
+        lineNet !== quotedSubtotal - quotedDiscount ||
+        lineNet + quotedDelivery !== intent.checkoutTotalMinor
+      )
+        throw new ConflictException({
+          code: 'ORDER_TOTAL_MISMATCH',
+          message: 'Checkout line quantities and order totals do not reconcile',
+        });
       const hasGrocery = lines.some((line) => line.orderCategory === 'GROCERY');
       const hasAlcohol = lines.some((line) => line.orderCategory === 'ALCOHOL');
       const numberYear = new Date().getUTCFullYear();

@@ -8,6 +8,10 @@ function textValue(data: FormData, key: string) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function textValues(data: FormData, key: string) {
+  return data.getAll(key).map((value) => (typeof value === 'string' ? value.trim() : ''));
+}
+
 function finish(path: string, result: { ok: boolean; error?: string }, success: string): never {
   const params = new URLSearchParams(
     result.ok ? { success } : { error: result.error ?? 'The operation failed.' },
@@ -16,22 +20,38 @@ function finish(path: string, result: { ok: boolean; error?: string }, success: 
 }
 
 export async function createCategory(data: FormData) {
-  const result = await adminMutation('/api/v1/categories', 'POST', {
+  const result = await adminMutation<{ id: string }>('/api/v1/categories', 'POST', {
     name: textValue(data, 'name'),
     slug: textValue(data, 'slug'),
     parentId: textValue(data, 'parentId') || null,
     position: Number(textValue(data, 'position') || '0'),
     active: true,
   });
-  finish('/catalogue', result, 'Category created.');
+  if (!result.ok) finish('/categories', result, '');
+  const upload = await uploadTaxonomyImage('categories', result.data.id, data.get('image'));
+  finish('/categories', upload, 'Category created.');
 }
 
 export async function createBrand(data: FormData) {
-  const result = await adminMutation('/api/v1/brands', 'POST', {
+  const result = await adminMutation<{ id: string }>('/api/v1/brands', 'POST', {
     name: textValue(data, 'name'),
     slug: textValue(data, 'slug'),
   });
-  finish('/catalogue', result, 'Brand created.');
+  if (!result.ok) finish('/brands', result, '');
+  const upload = await uploadTaxonomyImage('brands', result.data.id, data.get('image'));
+  finish('/brands', upload, 'Brand created.');
+}
+
+async function uploadTaxonomyImage(
+  kind: 'categories' | 'brands',
+  id: string,
+  value: FormDataEntryValue | null,
+) {
+  if (!(value instanceof File) || value.size === 0)
+    return { ok: false, error: 'Choose an image file.' };
+  const upload = new FormData();
+  upload.set('file', value);
+  return adminFormMutation(`/api/v1/${kind}/${encodeURIComponent(id)}/image`, upload);
 }
 
 function optionalNumber(data: FormData, key: string) {
@@ -86,8 +106,58 @@ function productInput(data: FormData) {
 }
 
 export async function createProduct(data: FormData) {
-  const result = await adminMutation('/api/v1/products', 'POST', productInput(data));
-  finish('/products', result, 'Product created.');
+  const result = await adminMutation<{ id: string }>(
+    '/api/v1/products',
+    'POST',
+    productInput(data),
+  );
+  if (!result.ok) finish('/products/new', result, '');
+  const stockResult = await adminMutation('/api/v1/inventory', 'POST', {
+    productId: result.data.id,
+    warehouseId: textValue(data, 'warehouseId'),
+    onHand: Number(textValue(data, 'stockOnHand') || '0'),
+    lowStockThreshold: Number(textValue(data, 'lowStockThreshold') || '5'),
+  });
+  if (!stockResult.ok) finish(`/products/${result.data.id}`, stockResult, '');
+
+  const names = textValues(data, 'variantName');
+  const skus = textValues(data, 'variantSku');
+  const prices = textValues(data, 'variantPriceMinor');
+  const packSizes = textValues(data, 'variantPackSize');
+  const weights = textValues(data, 'variantWeightGrams');
+  const flavours = textValues(data, 'variantFlavour');
+  const warehouseIds = textValues(data, 'variantWarehouseId');
+  const stock = textValues(data, 'variantStockOnHand');
+  const thresholds = textValues(data, 'variantLowStockThreshold');
+  const abv = textValues(data, 'variantAbv');
+  for (let index = 0; index < names.length; index += 1) {
+    const variantResult = await adminMutation(
+      `/api/v1/products/${encodeURIComponent(result.data.id)}/variants`,
+      'POST',
+      {
+        sku: skus[index],
+        name: names[index],
+        priceMinor: prices[index],
+        currency: 'GBP',
+        packSize: packSizes[index] || null,
+        weightGrams: weights[index] ? Number(weights[index]) : null,
+        abv: abv[index] || null,
+        flavour: flavours[index] || null,
+        attributes: {},
+        warehouseId: warehouseIds[index],
+        stockOnHand: Number(stock[index] || '0'),
+        lowStockThreshold: Number(thresholds[index] || '5'),
+      },
+    );
+    if (!variantResult.ok) finish(`/products/${result.data.id}`, variantResult, '');
+  }
+  finish(
+    `/products/${result.data.id}`,
+    { ok: true },
+    names.length
+      ? `Product, opening stock and ${names.length} variant${names.length === 1 ? '' : 's'} created.`
+      : 'Product and opening stock created.',
+  );
 }
 
 export async function updateProduct(data: FormData) {
@@ -131,7 +201,10 @@ export async function uploadProductImage(data: FormData) {
   const upload = new FormData();
   upload.set('file', file);
   upload.set('altText', textValue(data, 'altText'));
-  const result = await adminFormMutation(`/api/v1/products/${encodeURIComponent(id)}/images`, upload);
+  const result = await adminFormMutation(
+    `/api/v1/products/${encodeURIComponent(id)}/images`,
+    upload,
+  );
   finish(`/products/${id}`, result, 'Product image uploaded and optimised.');
 }
 
@@ -139,31 +212,41 @@ export async function createProductVariant(data: FormData) {
   const id = textValue(data, 'id');
   let attributes: Record<string, string> = {};
   try {
-    attributes = textValue(data, 'attributes') ? JSON.parse(textValue(data, 'attributes')) as Record<string, string> : {};
+    attributes = textValue(data, 'attributes')
+      ? (JSON.parse(textValue(data, 'attributes')) as Record<string, string>)
+      : {};
   } catch {
     finish(`/products/${id}`, { ok: false, error: 'Variant attributes must be valid JSON.' }, '');
   }
-  const result = await adminMutation(`/api/v1/products/${encodeURIComponent(id)}/variants`, 'POST', {
-    sku: textValue(data, 'sku'),
-    name: textValue(data, 'name'),
-    priceMinor: textValue(data, 'priceMinor'),
-    currency: 'GBP',
-    packSize: textValue(data, 'packSize') || null,
-    weightGrams: optionalNumber(data, 'weightGrams'),
-    abv: textValue(data, 'abv') || null,
-    flavour: textValue(data, 'flavour') || null,
-    attributes,
-    warehouseId: textValue(data, 'warehouseId'),
-    stockOnHand: Number(textValue(data, 'stockOnHand') || '0'),
-    lowStockThreshold: Number(textValue(data, 'lowStockThreshold') || '5'),
-  });
+  const result = await adminMutation(
+    `/api/v1/products/${encodeURIComponent(id)}/variants`,
+    'POST',
+    {
+      sku: textValue(data, 'sku'),
+      name: textValue(data, 'name'),
+      priceMinor: textValue(data, 'priceMinor'),
+      currency: 'GBP',
+      packSize: textValue(data, 'packSize') || null,
+      weightGrams: optionalNumber(data, 'weightGrams'),
+      abv: textValue(data, 'abv') || null,
+      flavour: textValue(data, 'flavour') || null,
+      attributes,
+      warehouseId: textValue(data, 'warehouseId'),
+      stockOnHand: Number(textValue(data, 'stockOnHand') || '0'),
+      lowStockThreshold: Number(textValue(data, 'lowStockThreshold') || '5'),
+    },
+  );
   finish(`/products/${id}`, result, 'Variant created with opening stock.');
 }
 
 export async function removeTaxonomy(data: FormData) {
   const kind = textValue(data, 'kind') === 'brand' ? 'brands' : 'categories';
   const result = await adminMutation(`/api/v1/${kind}/${textValue(data, 'id')}`, 'DELETE');
-  finish('/catalogue', result, kind === 'brands' ? 'Brand deleted.' : 'Category archived.');
+  finish(
+    kind === 'brands' ? '/brands' : '/categories',
+    result,
+    kind === 'brands' ? 'Brand deleted.' : 'Category archived.',
+  );
 }
 
 export async function updateCategory(data: FormData) {
@@ -177,7 +260,13 @@ export async function updateCategory(data: FormData) {
       position: Number(textValue(data, 'position') || '0'),
     },
   );
-  finish('/catalogue', result, 'Category updated.');
+  if (!result.ok) finish('/categories', result, '');
+  const image = data.get('image');
+  const upload =
+    image instanceof File && image.size > 0
+      ? await uploadTaxonomyImage('categories', textValue(data, 'id'), image)
+      : { ok: true };
+  finish('/categories', upload, 'Category updated.');
 }
 
 export async function updateBrand(data: FormData) {
@@ -186,7 +275,13 @@ export async function updateBrand(data: FormData) {
     'PATCH',
     { name: textValue(data, 'name'), slug: textValue(data, 'slug') },
   );
-  finish('/catalogue', result, 'Brand updated.');
+  if (!result.ok) finish('/brands', result, '');
+  const image = data.get('image');
+  const upload =
+    image instanceof File && image.size > 0
+      ? await uploadTaxonomyImage('brands', textValue(data, 'id'), image)
+      : { ok: true };
+  finish('/brands', upload, 'Brand updated.');
 }
 
 export async function createDeliveryZone(data: FormData) {
@@ -247,8 +342,12 @@ export async function createCoupon(data: FormData) {
     maxUses: optionalNumber(data, 'maxUses'),
     perCustomerLimit: optionalNumber(data, 'perCustomerLimit'),
     firstOrderOnly: data.get('firstOrderOnly') === 'on',
-    productIds: data.getAll('productIds').filter((value): value is string => typeof value === 'string'),
-    categoryIds: data.getAll('categoryIds').filter((value): value is string => typeof value === 'string'),
+    productIds: data
+      .getAll('productIds')
+      .filter((value): value is string => typeof value === 'string'),
+    categoryIds: data
+      .getAll('categoryIds')
+      .filter((value): value is string => typeof value === 'string'),
     influencerId: textValue(data, 'influencerId') || null,
     lockedUserId: textValue(data, 'lockedUserId') || null,
     attributionWindowDays: Number(textValue(data, 'attributionWindowDays') || '30'),
@@ -304,12 +403,20 @@ export async function recordPick(data: FormData) {
   const orderId = textValue(data, 'orderId');
   const itemId = textValue(data, 'itemId');
   const outcome = textValue(data, 'outcome');
-  const result = await adminMutation(`/api/v1/admin/orders/${orderId}/pick-list/items/${itemId}`, 'PATCH', {
-    outcome,
-    picked: Number(textValue(data, 'picked')),
-    ...(textValue(data, 'actualWeightGrams') ? { actualWeightGrams: Number(textValue(data, 'actualWeightGrams')) } : {}),
-    ...(outcome === 'SUBSTITUTED' ? { substituteProductId: textValue(data, 'substituteProductId') } : {}),
-  });
+  const result = await adminMutation(
+    `/api/v1/admin/orders/${orderId}/pick-list/items/${itemId}`,
+    'PATCH',
+    {
+      outcome,
+      picked: Number(textValue(data, 'picked')),
+      ...(textValue(data, 'actualWeightGrams')
+        ? { actualWeightGrams: Number(textValue(data, 'actualWeightGrams')) }
+        : {}),
+      ...(outcome === 'SUBSTITUTED'
+        ? { substituteProductId: textValue(data, 'substituteProductId') }
+        : {}),
+    },
+  );
   finish(`/orders/${orderId}`, result, 'Pick line recorded.');
 }
 
@@ -328,7 +435,9 @@ export async function captureAgeCheck(data: FormData) {
     challengeAge: 25,
     recipientPresent: data.get('recipientPresent') === 'on',
     ...(outcome === 'PASSED' ? { idType: textValue(data, 'idType') } : {}),
-    ...(textValue(data, 'refusalReason') ? { refusalReason: textValue(data, 'refusalReason') } : {}),
+    ...(textValue(data, 'refusalReason')
+      ? { refusalReason: textValue(data, 'refusalReason') }
+      : {}),
     ...(textValue(data, 'note') ? { note: textValue(data, 'note') } : {}),
   });
   finish(`/orders/${orderId}`, result, 'Challenge 25 outcome recorded.');
@@ -376,7 +485,39 @@ export async function adjustInventory(data: FormData) {
       reference: textValue(data, 'reference') || undefined,
     },
   );
-  finish('/inventory', result, 'Inventory adjusted.');
+  const productId = textValue(data, 'productId');
+  finish(
+    productId ? `/products/${encodeURIComponent(productId)}` : '/inventory',
+    result,
+    'Inventory adjusted.',
+  );
+}
+
+export async function createProductInventory(data: FormData) {
+  const productId = textValue(data, 'productId');
+  const result = await adminMutation('/api/v1/inventory', 'POST', {
+    productId,
+    warehouseId: textValue(data, 'warehouseId'),
+    onHand: Number(textValue(data, 'stockOnHand') || '0'),
+    lowStockThreshold: Number(textValue(data, 'lowStockThreshold') || '5'),
+  });
+  finish(`/products/${encodeURIComponent(productId)}`, result, 'Stock location added.');
+}
+
+export async function updateProductInventory(data: FormData) {
+  const productId = textValue(data, 'productId');
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/inventory/${encodeURIComponent(id)}`, 'PATCH', {
+    lowStockThreshold: Number(textValue(data, 'lowStockThreshold') || '0'),
+  });
+  finish(`/products/${encodeURIComponent(productId)}`, result, 'Stock settings updated.');
+}
+
+export async function deleteProductInventory(data: FormData) {
+  const productId = textValue(data, 'productId');
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/inventory/${encodeURIComponent(id)}`, 'DELETE');
+  finish(`/products/${encodeURIComponent(productId)}`, result, 'Empty stock location deleted.');
 }
 
 export async function toggleCustomer(data: FormData) {
@@ -447,8 +588,14 @@ export async function saveRolePermissions(data: FormData) {
 
 export async function saveUserRoles(data: FormData) {
   const id = textValue(data, 'id');
-  const roleKeys = data.getAll('roleKeys').filter((value): value is string => typeof value === 'string');
-  const result = await adminMutation(`/api/v1/admin/rbac/users/${encodeURIComponent(id)}`, 'PATCH', { roleKeys });
+  const roleKeys = data
+    .getAll('roleKeys')
+    .filter((value): value is string => typeof value === 'string');
+  const result = await adminMutation(
+    `/api/v1/admin/rbac/users/${encodeURIComponent(id)}`,
+    'PATCH',
+    { roleKeys },
+  );
   finish('/access', result, 'Staff role assignments updated.');
 }
 
@@ -510,13 +657,16 @@ export async function updateNotificationTemplate(data: FormData) {
 
 function jsonValue(data: FormData, key: string) {
   const raw = textValue(data, key);
-  return raw ? JSON.parse(raw) as Record<string, unknown> : {};
+  return raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
 }
 
 export async function createNotificationTemplate(data: FormData) {
   const result = await adminMutation('/api/v1/admin/notification-templates', 'POST', {
-    event: textValue(data, 'event'), channel: textValue(data, 'channel'), locale: textValue(data, 'locale') || 'en-GB',
-    subject: textValue(data, 'subject') || null, body: textValue(data, 'body'),
+    event: textValue(data, 'event'),
+    channel: textValue(data, 'channel'),
+    locale: textValue(data, 'locale') || 'en-GB',
+    subject: textValue(data, 'subject') || null,
+    body: textValue(data, 'body'),
   });
   finish('/notifications', result, 'Notification template created.');
 }
@@ -524,9 +674,15 @@ export async function createNotificationTemplate(data: FormData) {
 export async function testNotification(data: FormData) {
   const id = textValue(data, 'id');
   try {
-    const result = await adminMutation(`/api/v1/admin/notification-templates/${encodeURIComponent(id)}/test-send`, 'POST', { recipient: textValue(data, 'recipient'), data: jsonValue(data, 'data') });
+    const result = await adminMutation(
+      `/api/v1/admin/notification-templates/${encodeURIComponent(id)}/test-send`,
+      'POST',
+      { recipient: textValue(data, 'recipient'), data: jsonValue(data, 'data') },
+    );
     finish('/notifications', result, 'Test notification queued.');
-  } catch { finish('/notifications', { ok: false, error: 'Test data must be valid JSON.' }, ''); }
+  } catch {
+    finish('/notifications', { ok: false, error: 'Test data must be valid JSON.' }, '');
+  }
 }
 
 export async function processNotifications() {
@@ -536,32 +692,50 @@ export async function processNotifications() {
 
 export async function createBanner(data: FormData) {
   const result = await adminMutation('/api/v1/admin/content/banners', 'POST', {
-    title: textValue(data, 'title'), subtitle: textValue(data, 'subtitle') || null, imageUrl: textValue(data, 'imageUrl'),
-    mobileImageUrl: textValue(data, 'mobileImageUrl') || null, linkUrl: textValue(data, 'linkUrl') || null,
-    position: Number(textValue(data, 'position') || '0'), startsAt: textValue(data, 'startsAt') || null, endsAt: textValue(data, 'endsAt') || null, active: true,
+    title: textValue(data, 'title'),
+    subtitle: textValue(data, 'subtitle') || null,
+    imageUrl: textValue(data, 'imageUrl'),
+    mobileImageUrl: textValue(data, 'mobileImageUrl') || null,
+    linkUrl: textValue(data, 'linkUrl') || null,
+    position: Number(textValue(data, 'position') || '0'),
+    startsAt: textValue(data, 'startsAt') || null,
+    endsAt: textValue(data, 'endsAt') || null,
+    active: true,
   });
   finish('/content', result, 'Banner created.');
 }
 
 export async function toggleBanner(data: FormData) {
-  const result = await adminMutation(`/api/v1/admin/content/banners/${encodeURIComponent(textValue(data, 'id'))}`, 'PATCH', { active: textValue(data, 'active') !== 'true' });
+  const result = await adminMutation(
+    `/api/v1/admin/content/banners/${encodeURIComponent(textValue(data, 'id'))}`,
+    'PATCH',
+    { active: textValue(data, 'active') !== 'true' },
+  );
   finish('/content', result, 'Banner status updated.');
 }
 
 export async function createContentBlock(data: FormData) {
   try {
     const result = await adminMutation('/api/v1/admin/content/blocks', 'POST', {
-      type: textValue(data, 'type'), title: textValue(data, 'title') || null, content: jsonValue(data, 'content'),
-      position: Number(textValue(data, 'position') || '0'), active: true,
+      type: textValue(data, 'type'),
+      title: textValue(data, 'title') || null,
+      content: jsonValue(data, 'content'),
+      position: Number(textValue(data, 'position') || '0'),
+      active: true,
     });
     finish('/content', result, 'Homepage block created.');
-  } catch { finish('/content', { ok: false, error: 'Block content must be valid JSON.' }, ''); }
+  } catch {
+    finish('/content', { ok: false, error: 'Block content must be valid JSON.' }, '');
+  }
 }
 
 export async function saveCmsPage(data: FormData) {
   const result = await adminMutation('/api/v1/admin/content/pages', 'POST', {
-    type: textValue(data, 'type'), locale: textValue(data, 'locale') || 'en-GB', title: textValue(data, 'title'),
-    content: textValue(data, 'content'), published: data.get('published') === 'on',
+    type: textValue(data, 'type'),
+    locale: textValue(data, 'locale') || 'en-GB',
+    title: textValue(data, 'title'),
+    content: textValue(data, 'content'),
+    published: data.get('published') === 'on',
   });
   finish('/content', result, 'CMS page saved.');
 }
