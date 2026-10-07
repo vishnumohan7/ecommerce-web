@@ -1,4 +1,60 @@
 /* eslint-disable local/no-jsx-literals */
-import { moderateReview } from '../actions'; import { ActionMessage } from '../components/action-message'; import { ApiNotice } from '../components/api-notice'; import { fetchReviews } from '../lib/api';
-export const dynamic='force-dynamic';
-export default async function ReviewsPage({searchParams}:{searchParams:Promise<{status?:string;success?:string;error?:string}>}){const p=await searchParams;const result=await fetchReviews(p.status);return <><section className="page-heading"><div><p className="eyebrow">Trust & content</p><h1>Review moderation</h1><p>Approve or reject verified-purchase reviews.</p></div></section><ActionMessage success={p.success} error={p.error}/>{!result.ok?<ApiNotice message={result.error}/>:<section className="record-list">{result.data.map(review=><article className="panel" key={review.id}><header className="panel-header"><div><strong>{'★'.repeat(review.rating)} {review.title??'Review'}</strong><small>{review.status} · {new Date(review.createdAt).toLocaleString('en-GB')}</small></div></header><p>{review.body}</p><form action={moderateReview} className="row-form"><input type="hidden" name="id" value={review.id}/><input name="reason" placeholder="Moderation note"/><button name="status" value="APPROVED" className="button button-primary">Approve</button><button name="status" value="REJECTED" className="button button-danger">Reject</button></form></article>)}</section>}</>}
+import { moderateReview } from '../actions';
+import { ActionMessage } from '../components/action-message';
+import { ApiNotice } from '../components/api-notice';
+import { fetchReviews } from '../lib/api';
+export const dynamic = 'force-dynamic';
+export default async function ReviewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; success?: string; error?: string }>;
+}) {
+  const p = await searchParams;
+  const result = await fetchReviews(p.status);
+  return (
+    <>
+      <section className="page-heading">
+        <div>
+          <p className="eyebrow">Trust & content</p>
+          <h1>Review moderation</h1>
+          <p>Approve or reject verified-purchase reviews.</p>
+        </div>
+      </section>
+      <ActionMessage success={p.success} error={p.error} />
+      {!result.ok ? (
+        <ApiNotice message={result.error} />
+      ) : result.data.length === 0 ? (
+        <article className="panel">
+          <p className="panel-empty">There are no reviews waiting for moderation.</p>
+        </article>
+      ) : (
+        <section className="moderation-list">
+          {result.data.map((review) => (
+            <article className="panel" key={review.id}>
+              <header className="panel-header">
+                <div>
+                  <strong className="review-rating">{'★'.repeat(review.rating)}</strong>
+                  <h2>{review.title ?? 'Customer review'}</h2>
+                  <small>
+                    {review.status} · {new Date(review.createdAt).toLocaleString('en-GB')}
+                  </small>
+                </div>
+              </header>
+              <p>{review.body}</p>
+              <form action={moderateReview} className="row-form">
+                <input type="hidden" name="id" value={review.id} />
+                <input name="reason" placeholder="Add moderation note" />
+                <button name="status" value="APPROVED" className="button button-primary">
+                  Approve
+                </button>
+                <button name="status" value="REJECTED" className="button button-danger">
+                  Reject
+                </button>
+              </form>
+            </article>
+          ))}
+        </section>
+      )}
+    </>
+  );
+}

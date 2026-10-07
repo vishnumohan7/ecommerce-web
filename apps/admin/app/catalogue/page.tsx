@@ -1,6 +1,12 @@
 /* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
-import { createBrand, createCategory, removeTaxonomy, updateBrand, updateCategory } from '../actions';
+import {
+  createBrand,
+  createCategory,
+  removeTaxonomy,
+  updateBrand,
+  updateCategory,
+} from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { ConfirmSubmitButton } from '../components/confirm-submit-button';
@@ -42,23 +48,35 @@ export default async function CataloguePage({ searchParams }: PageProps) {
             </div>
             <span className="count-pill">{categories.length}</span>
           </header>
-          <form action={createCategory} className="inline-create">
-            <input name="name" placeholder="Category name" required />
-            <input
-              name="slug"
-              placeholder="category-slug"
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-              required
-            />
-            <select name="parentId" defaultValue="">
-              <option value="">Top level</option>
-              {categories.map((item) => (
-                <option value={item.id} key={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <input name="position" type="number" min="0" defaultValue="0" aria-label="Position" />
+          <form action={createCategory} className="taxonomy-create category-create">
+            <label className="form-field">
+              <span>Category name</span>
+              <input name="name" placeholder="e.g. Fresh food" required />
+            </label>
+            <label className="form-field">
+              <span>URL slug</span>
+              <input
+                name="slug"
+                placeholder="fresh-food"
+                pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                required
+              />
+            </label>
+            <label className="form-field">
+              <span>Parent category</span>
+              <select name="parentId" defaultValue="">
+                <option value="">None — top level</option>
+                {categories.map((item) => (
+                  <option value={item.id} key={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="form-field">
+              <span>Display position</span>
+              <input name="position" type="number" min="0" defaultValue="0" />
+            </label>
             <button className="button button-primary" type="submit">
               Add category
             </button>
@@ -75,17 +93,52 @@ export default async function CataloguePage({ searchParams }: PageProps) {
                   <summary className="text-action">Edit</summary>
                   <form action={updateCategory} className="taxonomy-edit-form">
                     <input type="hidden" name="id" value={item.id} />
-                    <input name="name" defaultValue={item.name} aria-label="Category name" required />
-                    <input name="slug" defaultValue={item.slug} aria-label="Category slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required />
-                    <select name="parentId" defaultValue={item.parentId ?? ''} aria-label="Parent category"><option value="">Top level</option>{categories.filter((candidate) => candidate.id !== item.id).map((candidate) => <option value={candidate.id} key={candidate.id}>{candidate.name}</option>)}</select>
-                    <input name="position" type="number" min="0" defaultValue={item.position} aria-label="Position" required />
-                    <button className="button button-primary" type="submit">Save</button>
+                    <input
+                      name="name"
+                      defaultValue={item.name}
+                      aria-label="Category name"
+                      required
+                    />
+                    <input
+                      name="slug"
+                      defaultValue={item.slug}
+                      aria-label="Category slug"
+                      pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                      required
+                    />
+                    <select
+                      name="parentId"
+                      defaultValue={item.parentId ?? ''}
+                      aria-label="Parent category"
+                    >
+                      <option value="">Top level</option>
+                      {categories
+                        .filter((candidate) => candidate.id !== item.id)
+                        .map((candidate) => (
+                          <option value={candidate.id} key={candidate.id}>
+                            {candidate.name}
+                          </option>
+                        ))}
+                    </select>
+                    <input
+                      name="position"
+                      type="number"
+                      min="0"
+                      defaultValue={item.position}
+                      aria-label="Position"
+                      required
+                    />
+                    <button className="button button-primary" type="submit">
+                      Save
+                    </button>
                   </form>
                 </details>
                 <form action={removeTaxonomy}>
                   <input type="hidden" name="kind" value="category" />
                   <input type="hidden" name="id" value={item.id} />
-                  <ConfirmSubmitButton message={`Archive ${item.name}? Child categories and active products must be removed first.`}>
+                  <ConfirmSubmitButton
+                    message={`Archive ${item.name}? Child categories and active products must be removed first.`}
+                  >
                     Archive
                   </ConfirmSubmitButton>
                 </form>
@@ -101,14 +154,20 @@ export default async function CataloguePage({ searchParams }: PageProps) {
             </div>
             <span className="count-pill">{brands.length}</span>
           </header>
-          <form action={createBrand} className="inline-create compact-form">
-            <input name="name" placeholder="Brand name" required />
-            <input
-              name="slug"
-              placeholder="brand-slug"
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-              required
-            />
+          <form action={createBrand} className="taxonomy-create brand-create">
+            <label className="form-field">
+              <span>Brand name</span>
+              <input name="name" placeholder="e.g. Coca-Cola" required />
+            </label>
+            <label className="form-field">
+              <span>URL slug</span>
+              <input
+                name="slug"
+                placeholder="coca-cola"
+                pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                required
+              />
+            </label>
             <button className="button button-primary" type="submit">
               Add brand
             </button>
@@ -125,14 +184,24 @@ export default async function CataloguePage({ searchParams }: PageProps) {
                   <form action={updateBrand} className="taxonomy-edit-form compact">
                     <input type="hidden" name="id" value={item.id} />
                     <input name="name" defaultValue={item.name} aria-label="Brand name" required />
-                    <input name="slug" defaultValue={item.slug} aria-label="Brand slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required />
-                    <button className="button button-primary" type="submit">Save</button>
+                    <input
+                      name="slug"
+                      defaultValue={item.slug}
+                      aria-label="Brand slug"
+                      pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                      required
+                    />
+                    <button className="button button-primary" type="submit">
+                      Save
+                    </button>
                   </form>
                 </details>
                 <form action={removeTaxonomy}>
                   <input type="hidden" name="kind" value="brand" />
                   <input type="hidden" name="id" value={item.id} />
-                  <ConfirmSubmitButton message={`Permanently delete ${item.name}? This only succeeds when no products use it.`}>
+                  <ConfirmSubmitButton
+                    message={`Permanently delete ${item.name}? This only succeeds when no products use it.`}
+                  >
                     Delete
                   </ConfirmSubmitButton>
                 </form>
@@ -141,9 +210,6 @@ export default async function CataloguePage({ searchParams }: PageProps) {
           </div>
         </article>
       </section>
-      <p className="page-note">
-        Write actions require a server-side ADMIN_API_TOKEN with catalog.write permission.
-      </p>
     </>
   );
 }

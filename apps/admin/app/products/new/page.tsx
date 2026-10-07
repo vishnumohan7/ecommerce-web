@@ -119,7 +119,6 @@ export default async function NewProductPage() {
           </button>
         </div>
       </form>
-      <p className="page-note">Requires catalog.write in ADMIN_API_TOKEN.</p>
     </>
   );
 }

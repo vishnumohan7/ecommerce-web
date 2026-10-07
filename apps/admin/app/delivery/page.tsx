@@ -178,9 +178,6 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
           </div>
         )}
       </article>
-      <p className="page-note">
-        Reads require delivery.read and writes require delivery.write in ADMIN_API_TOKEN.
-      </p>
     </>
   );
 }
