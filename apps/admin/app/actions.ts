@@ -100,9 +100,9 @@ export async function updateProduct(data: FormData) {
   finish(`/products/${encodeURIComponent(id)}`, result, 'Product updated.');
 }
 
-export async function archiveProduct(data: FormData) {
+export async function deleteProduct(data: FormData) {
   const result = await adminMutation(`/api/v1/products/${textValue(data, 'id')}`, 'DELETE');
-  finish('/products', result, 'Product archived.');
+  finish('/products', result, 'Product removed from the catalogue.');
 }
 
 export async function importCatalogue(data: FormData) {

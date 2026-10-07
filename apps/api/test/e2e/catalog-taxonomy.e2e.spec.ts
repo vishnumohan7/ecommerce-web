@@ -121,7 +121,7 @@ describe('catalog taxonomy CRUD E2E', () => {
     });
   }, 30_000);
 
-  it('product delete archives the product and emits a search-removal outbox event', async () => {
+  it('deletes an unused product and emits a search-removal outbox event', async () => {
     await inTenant(async () => {
       const category = await taxonomy.createCategory({
         slug: `archive-category-${suffix}`,
@@ -129,13 +129,11 @@ describe('catalog taxonomy CRUD E2E', () => {
       });
       const product = await createProduct(category.id, null, `ARCHIVE-${suffix}`);
       createdIds.push(category.id, product.id);
-      await expect(catalog.archive(product.id)).resolves.toMatchObject({
-        archived: true,
-        status: 'INACTIVE',
+      await expect(catalog.remove(product.id)).resolves.toMatchObject({
+        deleted: true,
+        retainedHistory: false,
       });
-      expect((await prisma.product.findUniqueOrThrow({ where: { id: product.id } })).status).toBe(
-        'INACTIVE',
-      );
+      expect(await prisma.product.findUnique({ where: { id: product.id } })).toBeNull();
       const outbox = await prisma.outboxMessage.findFirstOrThrow({
         where: {
           tenantId,

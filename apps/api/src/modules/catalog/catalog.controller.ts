@@ -62,9 +62,9 @@ export class CatalogController {
   @Delete(':id')
   @RequirePermissions('catalog.write')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Archive a product without destroying order history' })
-  archive(@Param('id') id: string) {
-    return this.catalog.archive(id);
+  @ApiOperation({ summary: 'Delete an unused product or remove a referenced product from sale' })
+  remove(@Param('id') id: string) {
+    return this.catalog.remove(id);
   }
   @Post(':id/variants')
   @RequirePermissions('catalog.write')

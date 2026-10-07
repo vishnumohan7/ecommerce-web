@@ -80,13 +80,32 @@ export class CatalogService {
       return { variant, inventory };
     });
   }
-  async archive(id: string) {
+  async remove(id: string) {
     const current = await this.byId(id);
     return this.db.transaction(async (tx, tenantId) => {
-      const product = await tx.product.update({
-        where: { id, tenantId },
-        data: { status: 'INACTIVE' },
-      });
+      const [orderReferences, substitutionReferences, reviews] = await Promise.all([
+        tx.orderItem.count({ where: { tenantId, productId: id } }),
+        tx.substitution.count({ where: { tenantId, substituteProductId: id } }),
+        tx.review.count({ where: { tenantId, productId: id } }),
+      ]);
+      const retainHistory = orderReferences > 0 || substitutionReferences > 0 || reviews > 0;
+      if (retainHistory) {
+        await tx.product.update({ where: { id, tenantId }, data: { status: 'INACTIVE' } });
+      } else {
+        const inventory = await tx.inventory.findMany({
+          where: { tenantId, productId: id },
+          select: { id: true },
+        });
+        const inventoryIds = inventory.map((item) => item.id);
+        if (inventoryIds.length)
+          await tx.inventoryTransaction.deleteMany({ where: { tenantId, inventoryId: { in: inventoryIds } } });
+        await Promise.all([
+          tx.stockReservation.deleteMany({ where: { tenantId, productId: id } }),
+          tx.cartItem.deleteMany({ where: { tenantId, productId: id } }),
+        ]);
+        await tx.inventory.deleteMany({ where: { tenantId, productId: id } });
+        await tx.product.delete({ where: { id, tenantId } });
+      }
       await tx.outboxMessage.create({
         data: { tenantId, topic: 'search.product.remove', payload: { productId: id } },
       });
@@ -95,15 +114,20 @@ export class CatalogService {
           tenantId,
           actorId: TenantContext.get()?.userId ?? null,
           actorType: TenantContext.get()?.userId ? 'USER' : 'SYSTEM',
-          action: 'PRODUCT_ARCHIVED',
+          action: retainHistory ? 'PRODUCT_REMOVED_HISTORY_RETAINED' : 'PRODUCT_DELETED',
           entity: 'Product',
           entityId: id,
           before: { status: current.status },
-          after: { status: product.status },
+          after: retainHistory ? { status: 'INACTIVE' } : { deleted: true },
           requestId: TenantContext.get()?.requestId ?? id,
         },
       });
-      return { archived: true, id, status: product.status };
+      return {
+        deleted: !retainHistory,
+        retainedHistory: retainHistory,
+        id,
+        status: retainHistory ? 'INACTIVE' : null,
+      };
     });
   }
   private data(input: ProductInput) {

@@ -1,7 +1,7 @@
 /* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { archiveProduct } from '../actions';
+import { deleteProduct } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { ConfirmSubmitButton } from '../components/confirm-submit-button';
@@ -142,10 +142,10 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                     </td>
                     <td>
                       <Link className="text-action" href={`/products/${product.id}`}>Edit</Link>
-                      <form action={archiveProduct}>
+                      <form action={deleteProduct}>
                         <input type="hidden" name="id" value={product.id} />
-                        <ConfirmSubmitButton message={`Archive ${product.name}? It will disappear from the storefront.`}>
-                          Archive
+                        <ConfirmSubmitButton message={`Delete ${product.name}? Products used in previous orders will be retained internally for invoices and reports.`}>
+                          Delete
                         </ConfirmSubmitButton>
                       </form>
                     </td>

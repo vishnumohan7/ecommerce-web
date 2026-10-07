@@ -1,7 +1,7 @@
 /* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { archiveProduct, createProductVariant, updateProduct, uploadProductImage } from '../../actions';
+import { createProductVariant, deleteProduct, updateProduct, uploadProductImage } from '../../actions';
 import { ActionMessage } from '../../components/action-message';
 import { ApiNotice } from '../../components/api-notice';
 import { ConfirmSubmitButton } from '../../components/confirm-submit-button';
@@ -22,7 +22,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   if (!warehouseResult.ok) return <ApiNotice message={warehouseResult.error} />;
   const product = productResult.data;
   return <>
-    <section className="page-heading"><div><p className="eyebrow">Product detail</p><h1>{product.name}</h1><p>Edit catalogue, pricing and compliance fields for {product.sku}.</p></div><div className="heading-actions"><Link className="button button-muted" href="/products">Back</Link><form action={archiveProduct}><input type="hidden" name="id" value={product.id} /><ConfirmSubmitButton className="button button-danger" message={`Archive ${product.name}? It will disappear from the storefront.`}>Archive product</ConfirmSubmitButton></form></div></section>
+    <section className="page-heading"><div><p className="eyebrow">Product detail</p><h1>{product.name}</h1><p>Edit catalogue, pricing and compliance fields for {product.sku}.</p></div><div className="heading-actions"><Link className="button button-muted" href="/products">Back</Link><form action={deleteProduct}><input type="hidden" name="id" value={product.id} /><ConfirmSubmitButton className="button button-danger" message={`Delete ${product.name}? Products used in previous orders will be retained internally for invoices and reports.`}>Delete product</ConfirmSubmitButton></form></div></section>
     <ActionMessage success={query.success} error={query.error} />
     <ProductForm action={updateProduct} categories={categoryResult.data.items} brands={brandResult.data.items} product={product} submitLabel="Save product" />
     <div className="catalogue-ops-grid product-operations">
