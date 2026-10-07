@@ -1,1 +1,45 @@
-{"$schema":"https://turbo.build/schema.json","tasks":{"lint":{},"typecheck":{"dependsOn":["^typecheck"]},"build":{"dependsOn":["^build"],"outputs":["dist/**",".next/**","!.next/cache/**"]},"test":{"dependsOn":["^build"],"outputs":["coverage/**"]},"dev":{"cache":false,"persistent":true}}}
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalEnv": [
+        "API_BASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "REDIS_URL",
+        "STORAGE_ENDPOINT",
+        "DEFAULT_TENANT_ID",
+        "JWT_ACCESS_SECRET",
+        "JWT_ISSUER",
+        "CORS_ORIGINS"
+    ],
+    "tasks": {
+        "lint": {},
+        "typecheck": {
+            "dependsOn": [
+                "^typecheck"
+            ]
+        },
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "dist/**",
+                ".next/**",
+                "!.next/cache/**"
+            ]
+        },
+        "test": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "coverage/**"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        }
+    }
+}

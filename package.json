@@ -15,6 +15,8 @@
     "a11y": "pnpm --filter=@app/web e2e -- --grep accessibility",
     "licenses:audit": "tsx scripts/license-audit.ts",
     "check:env": "tsx scripts/check-env.ts",
+    "setup": "tsx scripts/setup.ts",
+    "openapi:freeze": "tsx scripts/freeze-openapi.ts",
     "db:reset": "pnpm --filter=@app/api prisma migrate reset --force",
     "db:migrate:deploy": "pnpm --filter=@app/api prisma migrate deploy",
     "db:seed:minimal": "pnpm --filter=@app/api seed:minimal",

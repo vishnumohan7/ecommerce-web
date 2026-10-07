@@ -19,6 +19,15 @@ export function assertHfssEligible(
 @Injectable()
 export class PromotionsService {
   constructor(private readonly db: TenantScopedPrismaService) {}
+  list() { return this.db.client.promotion.findMany({ orderBy: { createdAt: 'desc' } }); }
+  async update(id: string, input: { active?: boolean; priority?: number; startsAt?: string; endsAt?: string }) {
+    return this.db.client.promotion.update({ where: { id }, data: {
+      ...(input.active !== undefined ? { active: input.active } : {}),
+      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.startsAt ? { startsAt: new Date(input.startsAt) } : {}),
+      ...(input.endsAt ? { endsAt: new Date(input.endsAt) } : {}),
+    } });
+  }
   async create(input: {
     name: string;
     type: PromotionType;

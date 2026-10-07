@@ -3,25 +3,19 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ApiNotice } from './components/api-notice';
 import { Currency } from './components/currency';
-import { fetchHealth, fetchProducts, fetchSearch } from './lib/api';
+import { fetchDashboard, fetchHealth, fetchProducts } from './lib/api';
 
 export const metadata: Metadata = { title: 'Overview' };
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const [health, products, search] = await Promise.all([
+  const [health, products, dashboard] = await Promise.all([
     fetchHealth('health'),
     fetchProducts(),
-    fetchSearch(''),
+    fetchDashboard(),
   ]);
   const productItems = products.ok ? products.data : [];
-  const searchData = search.ok ? search.data : null;
-  const activeProducts = searchData?.resultCount ?? productItems.length;
-  const alcoholCount = productItems.filter((product) => product.isAlcohol).length;
-  const averagePrice = productItems.length
-    ? productItems.reduce((total, product) => total + Number(product.priceMinor), 0) /
-      productItems.length
-    : 0;
+  const metrics = dashboard.ok ? dashboard.data : null;
 
   return (
     <>
@@ -30,8 +24,7 @@ export default async function DashboardPage() {
           <p className="eyebrow">Operations centre</p>
           <h1>Good morning, Admin</h1>
           <p>
-            Live catalogue visibility with a clear view of what is connected and what is still being
-            built.
+            Live orders, revenue, customers and operational exceptions from Supabase.
           </p>
         </div>
         <div className="heading-actions">
@@ -44,39 +37,38 @@ export default async function DashboardPage() {
         </div>
       </section>
       {!health.ok && <ApiNotice message={health.error} />}
-      <section className="metric-grid" aria-label="Catalogue summary">
+      {!dashboard.ok && <ApiNotice message={dashboard.error} />}
+      <section className="metric-grid" aria-label="Commerce summary">
         <article className="metric-card accent-orange">
           <div className="metric-icon">01</div>
           <div>
-            <p>Active products</p>
-            <strong>{activeProducts.toLocaleString('en-GB')}</strong>
-            <small>From catalogue search</small>
+            <p>Orders</p>
+            <strong>{metrics?.orders.toLocaleString('en-GB') ?? '—'}</strong>
+            <small>Selected period</small>
           </div>
         </article>
         <article className="metric-card accent-blue">
           <div className="metric-icon">02</div>
           <div>
-            <p>Previewed items</p>
-            <strong>{productItems.length}</strong>
-            <small>Current API page</small>
+            <p>Revenue</p>
+            <strong><Currency minor={metrics?.revenueMinor ?? 0} /></strong>
+            <small>VAT-inclusive</small>
           </div>
         </article>
         <article className="metric-card accent-green">
           <div className="metric-icon">03</div>
           <div>
-            <p>Average unit price</p>
-            <strong>
-              <Currency minor={averagePrice} />
-            </strong>
-            <small>Across previewed items</small>
+            <p>Average order</p>
+            <strong><Currency minor={metrics?.averageOrderValueMinor ?? 0} /></strong>
+            <small>{metrics?.unitsSold ?? 0} units sold</small>
           </div>
         </article>
         <article className="metric-card accent-purple">
           <div className="metric-icon">18+</div>
           <div>
-            <p>Alcohol products</p>
-            <strong>{alcoholCount}</strong>
-            <small>Hidden until age gate</small>
+            <p>Low stock</p>
+            <strong>{metrics?.lowStock ?? '—'}</strong>
+            <small>{metrics?.refunds ?? 0} refunds</small>
           </div>
         </article>
       </section>
@@ -150,46 +142,45 @@ export default async function DashboardPage() {
         <aside className="panel progress-panel">
           <header className="panel-header">
             <div>
-              <p className="eyebrow">Build visibility</p>
-              <h2>Admin readiness</h2>
+              <p className="eyebrow">Basket mix</p>
+              <h2>Order composition</h2>
             </div>
           </header>
           <div
             className="readiness-ring"
-            aria-label="Admin preview foundation is 35 percent complete"
+            aria-label="Admin console is connected to live commerce queries"
           >
             <span>
-              35<small>%</small>
+              {metrics?.orders ?? 0}<small> orders</small>
             </span>
           </div>
           <p className="readiness-copy">
-            The visual foundation and public read paths are live. Secure management workflows follow
-            their backend milestones.
+            Orders are counted once while grocery and alcohol operations remain independently visible.
           </p>
           <ul className="readiness-list">
             <li className="done">
               <span />
-              Dashboard shell
+              Grocery: {metrics?.basketSplit.grocery ?? 0}
             </li>
             <li className="done">
               <span />
-              Product catalogue read view
+              Alcohol: {metrics?.basketSplit.alcohol ?? 0}
             </li>
             <li className="done">
               <span />
-              API health visibility
+              Mixed: {metrics?.basketSplit.mixed ?? 0}
             </li>
-            <li>
+            <li className="done">
               <span />
-              Admin authentication and RBAC
+              New customers: {metrics?.newCustomers ?? 0}
             </li>
-            <li>
+            <li className="done">
               <span />
-              Orders, customers and refunds
+              Coupon uses: {metrics?.couponUsage ?? 0}
             </li>
           </ul>
-          <Link className="button button-muted button-full" href="/feature-status">
-            Open feature matrix
+          <Link className="button button-muted button-full" href="/reports">
+            Open reports
           </Link>
         </aside>
       </section>

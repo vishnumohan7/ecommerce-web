@@ -1,0 +1,16 @@
+{
+  "title": "Denes Commerce Operations",
+  "panels": [
+    { "metric": "orders_created_total", "title": "Orders/min" },
+    { "metric": "payment_success_rate", "title": "Payment success" },
+    { "metric": "checkout_funnel_dropoff", "title": "Checkout drop-off" },
+    { "metric": "age_verification_pass_rate", "title": "Age-verification pass rate" },
+    { "metric": "delivery_refusal_rate", "title": "Delivery refusal rate" },
+    { "metric": "notification_queue_depth", "title": "Queue depth" },
+    { "metric": "http_error_rate", "title": "Error rate" }
+  ],
+  "alerts": [
+    { "name": "payment-failure-spike", "expression": "payment_success_rate < 0.95", "for": "5m" },
+    { "name": "webhook-backlog", "expression": "webhook_backlog > 25", "for": "10m" }
+  ]
+}

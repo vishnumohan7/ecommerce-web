@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './theme.css';
 import './orders/orders.css';
+import { adminLogout } from './auth-actions';
 
 export const metadata: Metadata = {
   title: { default: 'Denes Commerce — Admin', template: '%s — Denes Admin' },
@@ -14,10 +15,22 @@ const navigation = [
   { href: '/', label: 'Overview', icon: 'grid' },
   { href: '/products', label: 'Products', icon: 'box' },
   { href: '/catalogue', label: 'Categories & brands', icon: 'layers' },
+  { href: '/inventory', label: 'Inventory', icon: 'box' },
+  { href: '/promotions', label: 'Promotions', icon: 'promo' },
   { href: '/orders', label: 'Orders', icon: 'orders' },
   { href: '/returns', label: 'Returns & refunds', icon: 'returns' },
   { href: '/delivery', label: 'Delivery', icon: 'truck' },
   { href: '/pricing', label: 'Pricing & tax', icon: 'promo' },
+  { href: '/customers', label: 'Customers', icon: 'users' },
+  { href: '/reviews', label: 'Reviews', icon: 'check' },
+  { href: '/content', label: 'Banners & CMS', icon: 'layers' },
+  { href: '/notifications', label: 'Notifications', icon: 'pulse' },
+  { href: '/reports', label: 'Reports', icon: 'grid' },
+  { href: '/access', label: 'Roles & permissions', icon: 'users' },
+  { href: '/settings', label: 'Settings & branding', icon: 'check' },
+  { href: '/audit', label: 'Audit logs', icon: 'orders' },
+  { href: '/privacy', label: 'GDPR requests', icon: 'check' },
+  { href: '/license', label: 'Licence', icon: 'check' },
   { href: '/system', label: 'System health', icon: 'pulse' },
   { href: '/feature-status', label: 'Feature status', icon: 'check' },
 ] as const;
@@ -47,17 +60,12 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
                   {item.label}
                 </Link>
               ))}
-              <p className="nav-caption nav-caption-spaced">Coming online</p>
-              <span className="nav-disabled">
-                <NavIcon name="users" />
-                Customers <em>Planned</em>
-              </span>
             </nav>
             <div className="sidebar-foot">
               <span className="status-dot" />
               <span>
-                <strong>Preview track</strong>
-                <small>Milestone 17 in progress</small>
+                <strong>Live operations</strong>
+                <small>Supabase connected</small>
               </span>
             </div>
           </aside>
@@ -85,14 +93,15 @@ export default function Layout({ children }: Readonly<{ children: ReactNode }>) 
                 <input id="global-search" name="q" placeholder="Search products and SKUs…" />
               </form>
               <div className="topbar-actions">
-                <span className="preview-pill">Read-only preview</span>
+                <span className="preview-pill">Permission enforced</span>
                 <span className="avatar" aria-hidden="true">
                   DA
                 </span>
                 <span className="operator">
-                  <strong>Admin preview</strong>
+                  <strong>Administrator</strong>
                   <small>Operations</small>
                 </span>
+                <form action={adminLogout}><button className="text-action" type="submit">Sign out</button></form>
               </div>
             </header>
             <main className="content">{children}</main>

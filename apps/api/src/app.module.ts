@@ -26,6 +26,8 @@ import { OrderModule } from './modules/orders/order.module';
 import { ReturnModule } from './modules/returns/return.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { NotificationModule } from './modules/notifications/notification.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { PrivacyModule } from './modules/privacy/privacy.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { NotificationModule } from './modules/notifications/notification.module'
     ReturnModule,
     CustomerModule,
     NotificationModule,
+    AdminModule,
+    PrivacyModule,
   ],
   controllers: [HealthController],
   providers: [

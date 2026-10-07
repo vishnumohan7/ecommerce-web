@@ -223,11 +223,26 @@ export interface RefundDetail {
   }>;
 }
 
+export interface DashboardMetrics { orders: number; revenueMinor: string; averageOrderValueMinor: string; newCustomers: number; repeatCustomers: number; unitsSold: number; lowStock: number; refunds: number; refundAmountMinor: string; couponUsage: number; basketSplit: { grocery: number; alcohol: number; mixed: number } }
+export interface SalesReport { orders: number; totalRevenueMinor: string; groceryRevenueMinor: string; alcoholRevenueMinor: string; units: { grocery: number; alcohol: number }; basketCounts: { grocery: number; alcohol: number; mixed: number } }
+export interface CustomerSummary { id: string; email: string; firstName: string; lastName: string; phone: string | null; active: boolean; tombstonedAt: string | null; createdAt: string; orderCount: number; spendMinor: string }
+export interface InventoryRow { id: string; productId: string; variantId: string | null; warehouseId: string; onHand: number; reserved: number; stockAvailable: number; lowStockThreshold: number; updatedAt: string; product?: { id: string; name: string; sku: string } | null }
+export interface AuditRow { id: string; actorId: string | null; actorType: string; action: string; entity: string; entityId: string; before: unknown; after: unknown; requestId: string; createdAt: string }
+export interface AdminSettings { settings: Record<string, unknown>; settingsVersion: number; branding: null | { brandName: string; legalEntityName: string; companyNumber: string | null; vatNumber: string | null; registeredAddress: Record<string, unknown>; assets: Record<string, unknown>; colours: Record<string, unknown>; typography: Record<string, unknown>; emailBranding: Record<string, unknown> } }
+export interface RbacData { permissions: Array<{ id: string; key: string; description: string }>; roles: Array<{ id: string; key: string; name: string; description: string; system: boolean; permissionKeys: string[] }>; assignments: Array<{ userId: string; roleId: string }>; users: Array<{ id: string; email: string; firstName: string; lastName: string; active: boolean }> }
+export interface ReviewRow { id: string; userId: string; productId: string; orderId: string; rating: number; title: string | null; body: string; status: string; moderationReason: string | null; createdAt: string }
+export interface PromotionRow { id: string; name: string; type: string; priority: number; active: boolean; startsAt: string; endsAt: string }
+export interface NotificationTemplateRow { id: string; event: string; channel: string; locale: string; subject: string | null; body: string; version: number; active: boolean; createdAt: string }
+export interface NotificationDeliveryRow { id: string; event: string; channel: string; recipient: string; status: string; attempts: number; lastError: string | null; createdAt: string }
+export interface ContentData { banners: Array<{ id: string; title: string; subtitle: string | null; position: number; active: boolean; startsAt: string | null; endsAt: string | null }>; blocks: Array<{ id: string; type: string; title: string | null; position: number; active: boolean }>; pages: Array<{ id: string; type: string; locale: string; title: string; published: boolean; updatedAt: string }> }
+export interface PrivacyRequestRow { id: string; userId: string; type: 'EXPORT'|'ERASURE'; status: string; adminNote: string|null; deadlineAt: string; completedAt: string|null; createdAt: string }
+export interface LicenseState { license: { valid: boolean; readOnlyAdmin: boolean; features: string[] }; featureFlags: Array<{key:string;licensed:boolean;override:boolean|null}> }
+
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 async function get<T>(path: string, admin = false): Promise<ApiResult<T>> {
   try {
-    const token = process.env.ADMIN_API_TOKEN;
+    const token = admin ? await adminToken() : undefined;
     const response = await fetch(`${API_BASE_URL}${path}`, {
       cache: 'no-store',
       headers: {
@@ -252,7 +267,7 @@ export async function adminMutation<T>(
   method: 'POST' | 'PATCH' | 'DELETE',
   body?: unknown,
 ): Promise<ApiResult<T>> {
-  const token = process.env.ADMIN_API_TOKEN;
+  const token = await adminToken();
   if (!token)
     return { ok: false, error: 'ADMIN_API_TOKEN is not configured for write operations.' };
   try {
@@ -281,6 +296,11 @@ export async function adminMutation<T>(
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'The API request failed.' };
   }
+}
+
+async function adminToken() {
+  const cookieStore = await cookies();
+  return cookieStore.get('denes_admin_access')?.value ?? process.env.ADMIN_API_TOKEN;
 }
 
 export function fetchHealth(kind: 'health' | 'ready' = 'health') {
@@ -339,4 +359,23 @@ export function fetchSearch(query: string) {
   if (query) params.set('q', query);
   return get<SearchResponse>(`/api/v1/search?${params}`);
 }
+export function fetchDashboard() { return get<DashboardMetrics>('/api/v1/admin/dashboard', true); }
+export function fetchSalesReport() { return get<SalesReport>('/api/v1/admin/reports/sales', true); }
+export function fetchCustomerReport() { return get<{ customers: number; repeatCustomers: number; topCustomers: Array<{ userId: string; orders: number; spendMinor: string }> }>('/api/v1/admin/reports/customers', true); }
+export function fetchProductReport() { return get<Array<{ productId: string; name: string; sku: string; units: number; revenueMinor: string }>>('/api/v1/admin/reports/products', true); }
+export function fetchCouponReport() { return get<Array<{ couponId: string; code: string; uses: number; discountMinor: string }>>('/api/v1/admin/reports/coupons', true); }
+export function fetchCustomers(query = '') { return get<CustomerSummary[]>(`/api/v1/admin/customers${query ? `?q=${encodeURIComponent(query)}` : ''}`, true); }
+export function fetchInventory() { return get<InventoryRow[]>('/api/v1/inventory', true); }
+export function fetchAuditLog() { return get<AuditRow[]>('/api/v1/admin/audit-log', true); }
+export function fetchAdminSettings() { return get<AdminSettings>('/api/v1/admin/settings', true); }
+export function fetchRbac() { return get<RbacData>('/api/v1/admin/rbac', true); }
+export function fetchReviews(status = '') { return get<ReviewRow[]>(`/api/v1/admin/reviews${status ? `?status=${encodeURIComponent(status)}` : ''}`, true); }
+export function fetchPromotions() { return get<PromotionRow[]>('/api/v1/promotions', true); }
+export function fetchNotificationTemplates() { return get<NotificationTemplateRow[]>('/api/v1/admin/notification-templates', true); }
+export function fetchNotificationDeliveries() { return get<NotificationDeliveryRow[]>('/api/v1/admin/notification-deliveries', true); }
+export function fetchContent() { return get<ContentData>('/api/v1/admin/content', true); }
+export function fetchPrivacyRequests() { return get<PrivacyRequestRow[]>('/api/v1/admin/privacy/requests', true); }
+export function fetchLicense() { return get<LicenseState>('/api/v1/admin/license', true); }
 export { API_BASE_URL };
+import 'server-only';
+import { cookies } from 'next/headers';

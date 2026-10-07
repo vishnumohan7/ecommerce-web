@@ -6,6 +6,12 @@ interface LockedInventory { id: string; onHand: number; reserved: number; lowSto
 @Injectable()
 export class InventoryService {
   constructor(private readonly db: TenantScopedPrismaService) {}
+  async list() {
+    const records = await this.db.client.inventory.findMany({ orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }], take: 250 });
+    const products = await this.db.client.product.findMany({ where: { id: { in: records.map((record) => record.productId) } }, select: { id: true, name: true, sku: true } });
+    const names = new Map(products.map((product) => [product.id, product]));
+    return records.map((record) => ({ ...record, product: names.get(record.productId) ?? null }));
+  }
   reserve(inventoryId: string, quantity: number, reference?: string) { if (!Number.isInteger(quantity) || quantity <= 0) throw new ConflictException('Reservation quantity must be positive'); return this.mutate(inventoryId, 'RESERVATION', quantity, reference); }
   release(inventoryId: string, quantity: number, reference?: string) { if (!Number.isInteger(quantity) || quantity <= 0) throw new ConflictException('Release quantity must be positive'); return this.mutate(inventoryId, 'RELEASE', quantity, reference); }
   adjust(inventoryId: string, quantity: number, reason: Exclude<InventoryReason, 'RESERVATION' | 'RELEASE'>, reference?: string) { if (!Number.isInteger(quantity) || quantity === 0) throw new ConflictException('Adjustment quantity cannot be zero'); return this.mutate(inventoryId, reason, quantity, reference); }

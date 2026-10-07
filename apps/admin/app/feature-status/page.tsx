@@ -7,57 +7,56 @@ const features = [
   {
     name: 'Admin shell and navigation',
     area: 'Foundation',
-    status: 'Preview ready',
-    detail: 'Responsive Larkon-inspired operations layout.',
+    status: 'Live',
+    detail: 'Responsive operations layout with secure staff session support.',
   },
   {
     name: 'Catalogue list and search',
     area: 'Products',
-    status: 'Live read',
-    detail: 'Connected to product and search APIs with empty/error states.',
+    status: 'Live',
+    detail: 'Full product/category/brand CRUD connected to live APIs.',
   },
   {
     name: 'Service health',
     area: 'Operations',
-    status: 'Live read',
+    status: 'Live',
     detail: 'Liveness and dependency readiness endpoints.',
   },
   {
     name: 'Product create and edit',
     area: 'Products',
-    status: 'Backend dependency',
-    detail:
-      'Write API exists; admin authentication/session flow is required before enabling controls.',
+    status: 'Live',
+    detail: 'Create, full edit and confirmed archive controls are enabled.',
   },
   {
     name: 'Inventory adjustment',
     area: 'Inventory',
-    status: 'Backend dependency',
-    detail: 'Reservation and adjustment APIs exist; secure admin workflow is pending.',
+    status: 'Live',
+    detail: 'Stock list and audited receipt, wastage, return and adjustment actions.',
   },
   {
     name: 'Promotions management',
     area: 'Merchandising',
-    status: 'Backend dependency',
-    detail: 'Promotion create API exists; list/edit APIs and secured UI remain.',
+    status: 'Live',
+    detail: 'HFSS-aware promotion schedules and activation are connected.',
   },
   {
     name: 'Orders and refunds',
     area: 'Fulfilment',
-    status: 'Planned',
-    detail: 'Enabled when order-management backend milestones land.',
+    status: 'Live',
+    detail: 'Combined order detail, fulfilment, invoices, returns and refunds.',
   },
   {
     name: 'Customer management',
     area: 'CRM',
-    status: 'Planned',
-    detail: 'Enabled when admin-safe customer APIs land.',
+    status: 'Live',
+    detail: 'Customer search, spend/order visibility and account controls.',
   },
   {
     name: 'Roles, permissions and audit',
     area: 'Security',
-    status: 'Planned',
-    detail: 'Required for full Milestone 17 completion.',
+    status: 'Live',
+    detail: 'Role mappings, settings, audit, reports, privacy and licence screens.',
   },
 ] as const;
 
@@ -66,9 +65,9 @@ export default function FeatureStatusPage() {
     <>
       <section className="page-heading compact-heading">
         <div>
-          <p className="eyebrow">Milestone 17 preview</p>
+          <p className="eyebrow">Admin capability matrix</p>
           <h1>Admin feature status</h1>
-          <p>An honest view of usable screens, API dependencies and remaining secure workflows.</p>
+          <p>Live modules and their operational scope.</p>
         </div>
       </section>
       <article className="panel feature-panel">
@@ -77,26 +76,12 @@ export default function FeatureStatusPage() {
             <i />
             Available now
           </span>
-          <span className="legend-dependency">
-            <i />
-            Waiting on secure workflow
-          </span>
-          <span className="legend-planned">
-            <i />
-            Planned
-          </span>
         </div>
         <div className="feature-list">
           {features.map((feature) => {
-            const tone =
-              feature.status === 'Live read' || feature.status === 'Preview ready'
-                ? 'live'
-                : feature.status === 'Backend dependency'
-                  ? 'dependency'
-                  : 'planned';
             return (
               <section key={feature.name}>
-                <span className={`feature-state ${tone}`}>
+                <span className="feature-state live">
                   <i />
                   {feature.status}
                 </span>

@@ -241,3 +241,69 @@ export async function initiateRefund(data: FormData) {
   });
   finish(`/orders/${orderId}`, result, 'Refund initiated successfully.');
 }
+
+export async function adjustInventory(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/inventory/${encodeURIComponent(id)}/adjustments`, 'POST', {
+    quantity: Number(textValue(data, 'quantity')),
+    reason: textValue(data, 'reason'),
+    reference: textValue(data, 'reference') || undefined,
+  });
+  finish('/inventory', result, 'Inventory adjusted.');
+}
+
+export async function toggleCustomer(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/admin/customers/${encodeURIComponent(id)}`, 'PATCH', { active: textValue(data, 'active') !== 'true' });
+  finish('/customers', result, 'Customer status updated.');
+}
+
+export async function moderateReview(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/admin/reviews/${encodeURIComponent(id)}/moderation`, 'PATCH', { status: textValue(data, 'status'), reason: textValue(data, 'reason') || null });
+  finish('/reviews', result, 'Review moderation saved.');
+}
+
+export async function togglePromotion(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/promotions/${encodeURIComponent(id)}`, 'PATCH', { active: textValue(data, 'active') !== 'true' });
+  finish('/promotions', result, 'Promotion updated.');
+}
+
+export async function saveRolePermissions(data: FormData) {
+  const id = textValue(data, 'id');
+  const permissionKeys = data.getAll('permissionKeys').filter((value): value is string => typeof value === 'string');
+  const result = await adminMutation(`/api/v1/admin/rbac/roles/${encodeURIComponent(id)}`, 'PATCH', { permissionKeys });
+  finish('/access', result, 'Role permissions updated.');
+}
+
+export async function saveSettings(data: FormData) {
+  try {
+    const settings = JSON.parse(textValue(data, 'settings')) as Record<string, unknown>;
+    const result = await adminMutation('/api/v1/admin/settings', 'PATCH', { settings });
+    finish('/settings', result, 'Settings updated.');
+  } catch { finish('/settings', { ok: false, error: 'Settings must be valid JSON.' }, ''); }
+}
+
+export async function updateNotificationTemplate(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/admin/notification-templates/${encodeURIComponent(id)}`, 'PATCH', {
+    event: textValue(data, 'event'),
+    channel: textValue(data, 'channel'),
+    locale: textValue(data, 'locale'),
+    subject: textValue(data, 'subject') || null,
+    body: textValue(data, 'body'),
+  });
+  finish('/notifications', result, 'A new template version was created.');
+}
+
+export async function reviewPrivacyRequest(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/admin/privacy/requests/${encodeURIComponent(id)}`, 'PATCH', { status: textValue(data, 'status'), adminNote: textValue(data, 'adminNote') || null });
+  finish('/privacy', result, 'Privacy request updated.');
+}
+
+export async function validateLicense(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/license/validate', 'POST', { token: textValue(data, 'token') });
+  finish('/license', result, 'Licence validated and installed.');
+}
