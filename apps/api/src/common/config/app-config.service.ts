@@ -6,7 +6,6 @@ const schema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
   STORAGE_ENDPOINT: z.string().url(),
-  TENANCY_MODE: z.enum(['single', 'multi']).default('single'),
   DEFAULT_TENANT_ID: z.string().uuid().default('00000000-0000-4000-8000-000000000001'),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('denes-commerce'),
@@ -44,9 +43,6 @@ export class AppConfigService {
   }
   get port(): number {
     return this.values.PORT;
-  }
-  get tenancyMode(): 'single' | 'multi' {
-    return this.values.TENANCY_MODE;
   }
   get defaultTenantId(): string {
     return this.values.DEFAULT_TENANT_ID;

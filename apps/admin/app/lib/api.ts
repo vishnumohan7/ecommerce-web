@@ -344,6 +344,30 @@ export interface AdminSettings {
     typography: Record<string, unknown>;
     emailBranding: Record<string, unknown>;
   };
+  integrations: {
+    email: {
+      provider: 'LOG' | 'RESEND' | 'SMTP';
+      fromName: string;
+      fromEmail: string;
+      replyTo: string;
+      smtpHost: string;
+      smtpPort: number;
+      smtpSecure: boolean;
+      smtpUsername: string;
+      smtpPasswordConfigured: boolean;
+      resendApiKeyConfigured: boolean;
+    };
+    socialLogin: {
+      googleEnabled: boolean;
+      googleClientId: string;
+      googleClientSecretConfigured: boolean;
+      appleEnabled: boolean;
+      appleClientId: string;
+      appleTeamId: string;
+      appleKeyId: string;
+      applePrivateKeyConfigured: boolean;
+    };
+  };
 }
 export interface RbacData {
   permissions: Array<{ id: string; key: string; description: string }>;
@@ -441,11 +465,6 @@ export interface PrivacyRequestRow {
   completedAt: string | null;
   createdAt: string;
 }
-export interface LicenseState {
-  license: { valid: boolean; readOnlyAdmin: boolean; features: string[] };
-  featureFlags: Array<{ key: string; licensed: boolean; override: boolean | null }>;
-}
-
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 async function get<T>(path: string, admin = false): Promise<ApiResult<T>> {
@@ -670,9 +689,6 @@ export function fetchContent() {
 }
 export function fetchPrivacyRequests() {
   return get<PrivacyRequestRow[]>('/api/v1/admin/privacy/requests', true);
-}
-export function fetchLicense() {
-  return get<LicenseState>('/api/v1/admin/license', true);
 }
 export { API_BASE_URL };
 import 'server-only';

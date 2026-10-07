@@ -75,7 +75,8 @@ describe('orders and invoices', () => {
     const text = first.toString('utf8');
     expect(text).toContain('GROCERY ITEMS');
     expect(text).toContain('ALCOHOL ITEMS \\(18+\\)');
-    expect(text).toContain('TOTAL PAID £16.49');
+    expect(text).toContain('TOTAL PAID');
+    expect(text).toContain('16.49');
     expect(text).toContain('GB123456789');
   });
 

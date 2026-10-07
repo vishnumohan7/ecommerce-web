@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
+import { AppConfigService } from '../../common/config/app-config.service';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { PrismaService } from '../../common/database/prisma.service';
+import { encryptConfigSecret } from '../../common/security/config-secret';
 import { TenantContext } from '../../common/tenancy/tenant-context';
 import {
   customerUpdateSchema,
@@ -20,7 +22,11 @@ type RangeInput = { from?: string | undefined; to?: string | undefined };
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly db: TenantScopedPrismaService, private readonly root: PrismaService) {}
+  constructor(
+    private readonly db: TenantScopedPrismaService,
+    private readonly root: PrismaService,
+    private readonly config: AppConfigService,
+  ) {}
 
   async dashboard(input: RangeInput) {
     const range = this.range(input);
@@ -286,16 +292,101 @@ export class AdminService {
       this.db.client.tenantSettings.findFirst(),
       this.db.client.brandingProfile.findFirst(),
     ]);
-    return { settings: settings?.settings ?? {}, settingsVersion: settings?.version ?? 0, branding };
+    const stored = this.record(settings?.settings);
+    const integrations = this.record(stored.integrations);
+    const email = this.record(integrations.email);
+    const social = this.record(integrations.socialLogin);
+    const { integrations: _hidden, ...businessSettings } = stored;
+    return {
+      settings: businessSettings,
+      settingsVersion: settings?.version ?? 0,
+      branding,
+      integrations: {
+        email: {
+          provider: typeof email.provider === 'string' ? email.provider : 'LOG',
+          fromName: typeof email.fromName === 'string' ? email.fromName : 'Denes Commerce',
+          fromEmail: typeof email.fromEmail === 'string' ? email.fromEmail : '',
+          replyTo: typeof email.replyTo === 'string' ? email.replyTo : '',
+          smtpHost: typeof email.smtpHost === 'string' ? email.smtpHost : '',
+          smtpPort: typeof email.smtpPort === 'number' ? email.smtpPort : 587,
+          smtpSecure: email.smtpSecure === true,
+          smtpUsername: typeof email.smtpUsername === 'string' ? email.smtpUsername : '',
+          smtpPasswordConfigured: typeof email.smtpPassword === 'string' && email.smtpPassword.length > 0,
+          resendApiKeyConfigured: typeof email.resendApiKey === 'string' && email.resendApiKey.length > 0,
+        },
+        socialLogin: {
+          googleEnabled: social.googleEnabled === true,
+          googleClientId: typeof social.googleClientId === 'string' ? social.googleClientId : '',
+          googleClientSecretConfigured:
+            typeof social.googleClientSecret === 'string' && social.googleClientSecret.length > 0,
+          appleEnabled: social.appleEnabled === true,
+          appleClientId: typeof social.appleClientId === 'string' ? social.appleClientId : '',
+          appleTeamId: typeof social.appleTeamId === 'string' ? social.appleTeamId : '',
+          appleKeyId: typeof social.appleKeyId === 'string' ? social.appleKeyId : '',
+          applePrivateKeyConfigured:
+            typeof social.applePrivateKey === 'string' && social.applePrivateKey.length > 0,
+        },
+      },
+    };
   }
 
   async updateSettings(body: unknown) {
     const input = settingsUpdateSchema.parse(body);
     const tenantId = TenantContext.requireTenantId();
     const result = await this.db.transaction(async (tx) => {
+      const current = await tx.tenantSettings.findUnique({ where: { tenantId } });
+      const currentSettings = this.record(current?.settings);
       if (input.settings) {
-        const settings = input.settings as Prisma.InputJsonValue;
+        const settings = {
+          ...input.settings,
+          ...(currentSettings.integrations ? { integrations: currentSettings.integrations } : {}),
+        } as Prisma.InputJsonValue;
         await tx.tenantSettings.upsert({ where: { tenantId }, create: { tenantId, settings, version: 1 }, update: { settings, version: { increment: 1 } } });
+      }
+      if (input.integrations) {
+        const existing = this.record(currentSettings.integrations);
+        const existingEmail = this.record(existing.email);
+        const existingSocial = this.record(existing.socialLogin);
+        const email = input.integrations.email;
+        if (email.provider === 'SMTP' && (!email.smtpHost || !email.smtpUsername) && !existingEmail.smtpHost)
+          throw new BadRequestException('SMTP host and username are required');
+        if (email.provider === 'RESEND' && !email.resendApiKey && !existingEmail.resendApiKey)
+          throw new BadRequestException('A Resend API key is required');
+        const protect = (secret: string) => encryptConfigSecret(secret, this.config.values.JWT_ACCESS_SECRET);
+        const integrations = {
+          email: {
+            provider: email.provider,
+            fromName: email.fromName,
+            fromEmail: email.fromEmail,
+            replyTo: email.replyTo ?? '',
+            smtpHost: email.smtpHost ?? '',
+            smtpPort: email.smtpPort ?? 587,
+            smtpSecure: email.smtpSecure,
+            smtpUsername: email.smtpUsername ?? '',
+            smtpPassword: email.smtpPassword ? protect(email.smtpPassword) : existingEmail.smtpPassword ?? '',
+            resendApiKey: email.resendApiKey ? protect(email.resendApiKey) : existingEmail.resendApiKey ?? '',
+          },
+          socialLogin: {
+            googleEnabled: input.integrations.socialLogin.googleEnabled,
+            googleClientId: input.integrations.socialLogin.googleClientId ?? '',
+            googleClientSecret: input.integrations.socialLogin.googleClientSecret
+              ? protect(input.integrations.socialLogin.googleClientSecret)
+              : existingSocial.googleClientSecret ?? '',
+            appleEnabled: input.integrations.socialLogin.appleEnabled,
+            appleClientId: input.integrations.socialLogin.appleClientId ?? '',
+            appleTeamId: input.integrations.socialLogin.appleTeamId ?? '',
+            appleKeyId: input.integrations.socialLogin.appleKeyId ?? '',
+            applePrivateKey: input.integrations.socialLogin.applePrivateKey
+              ? protect(input.integrations.socialLogin.applePrivateKey)
+              : existingSocial.applePrivateKey ?? '',
+          },
+        };
+        const settings = { ...currentSettings, integrations } as Prisma.InputJsonValue;
+        await tx.tenantSettings.upsert({
+          where: { tenantId },
+          create: { tenantId, settings, version: 1 },
+          update: { settings, version: { increment: 1 } },
+        });
       }
       if (input.branding) {
         const branding = {
@@ -313,8 +404,17 @@ export class AdminService {
       }
       return { updated: true };
     });
-    await this.audit('SETTINGS_UPDATED', 'Tenant', tenantId, undefined, input);
+    await this.audit('SETTINGS_UPDATED', 'Store', tenantId, undefined, {
+      settingsUpdated: Boolean(input.settings),
+      integrationsUpdated: Boolean(input.integrations),
+    });
     return result;
+  }
+
+  private record(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
   }
 
   auditLog(filters: { entity?: string | undefined; action?: string | undefined; actorId?: string | undefined }) {

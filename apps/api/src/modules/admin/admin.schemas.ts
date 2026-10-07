@@ -56,6 +56,32 @@ export const userRoleUpdateSchema = z.object({
 
 export const settingsUpdateSchema = z.object({
   settings: z.record(z.string(), z.unknown()).optional(),
+  integrations: z
+    .object({
+      email: z.object({
+        provider: z.enum(['LOG', 'RESEND', 'SMTP']),
+        fromName: z.string().trim().min(1).max(120),
+        fromEmail: z.string().trim().email(),
+        replyTo: z.string().trim().email().nullable().optional(),
+        resendApiKey: z.string().trim().max(500).optional(),
+        smtpHost: z.string().trim().max(255).optional(),
+        smtpPort: z.number().int().min(1).max(65535).optional(),
+        smtpSecure: z.boolean().default(true),
+        smtpUsername: z.string().trim().max(255).optional(),
+        smtpPassword: z.string().trim().max(500).optional(),
+      }),
+      socialLogin: z.object({
+        googleEnabled: z.boolean().default(false),
+        googleClientId: z.string().trim().max(500).optional(),
+        googleClientSecret: z.string().trim().max(500).optional(),
+        appleEnabled: z.boolean().default(false),
+        appleClientId: z.string().trim().max(500).optional(),
+        appleTeamId: z.string().trim().max(100).optional(),
+        appleKeyId: z.string().trim().max(100).optional(),
+        applePrivateKey: z.string().trim().max(10_000).optional(),
+      }),
+    })
+    .optional(),
   branding: z
     .object({
       brandName: z.string().trim().min(1).max(160),

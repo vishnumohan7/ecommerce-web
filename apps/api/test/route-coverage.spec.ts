@@ -23,7 +23,6 @@ import { CustomerController } from '../src/modules/customer/customer.controller'
 import { NotificationController } from '../src/modules/notifications/notification.controller';
 import { AdminController } from '../src/modules/admin/admin.controller';
 import { PrivacyController } from '../src/modules/privacy/privacy.controller';
-import { LicensingController } from '../src/common/licensing/licensing.controller';
 
 describe('route coverage', () => {
   it('requires every route to be public or permission-protected', () => {
@@ -51,7 +50,6 @@ describe('route coverage', () => {
       NotificationController,
       AdminController,
       PrivacyController,
-      LicensingController,
     ]) {
       for (const methodName of Object.getOwnPropertyNames(controller.prototype).filter(
         (name) => name !== 'constructor',

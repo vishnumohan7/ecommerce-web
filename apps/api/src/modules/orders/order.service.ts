@@ -231,10 +231,13 @@ export class OrderService {
       where: { id, ...(admin ? {} : { userId: this.userId() }) },
     });
     if (!order) throw new NotFoundException('Order not found');
-    const [invoice, lines, merchant] = await Promise.all([
+    const [invoice, lines, merchant, deliverySlot] = await Promise.all([
       this.db.client.invoice.findFirst({ where: { orderId: id } }),
       this.db.client.orderItem.findMany({ where: { orderId: id }, orderBy: { createdAt: 'asc' } }),
       this.db.client.brandingProfile.findFirst(),
+      order.deliverySlotId
+        ? this.db.client.deliverySlot.findFirst({ where: { id: order.deliverySlotId } })
+        : Promise.resolve(null),
     ]);
     if (!invoice || !merchant) throw new NotFoundException('Invoice not found');
     const invoiceNumber = this.invoiceNumber(invoice.invoiceNumber, invoice.invoiceNumberYear);
@@ -247,7 +250,9 @@ export class OrderService {
         currency: order.currency,
         lines: lines.map((line) => ({
           productName: line.productName,
+          sku: line.sku,
           quantity: line.quantity,
+          unitPriceMinor: line.unitPriceMinor,
           vatRateBps: line.vatRateBps,
           vatAmountMinor: line.vatAmountMinor,
           lineTotalMinor: line.lineTotalMinor,
@@ -260,7 +265,10 @@ export class OrderService {
         totalMinor: order.totalMinor,
         paymentStatus: order.paymentStatus,
         deliveryAddress: order.deliveryAddress as Record<string, unknown>,
+        customer: order.customerSnapshot as Record<string, unknown>,
+        deliverySlot,
         merchant: {
+          brandName: merchant.brandName,
           legalEntityName: merchant.legalEntityName,
           companyNumber: merchant.companyNumber,
           vatNumber: merchant.vatNumber,

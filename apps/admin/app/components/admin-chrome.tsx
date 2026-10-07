@@ -24,7 +24,6 @@ type IconName =
   | 'settings'
   | 'audit'
   | 'privacy'
-  | 'licence'
   | 'system';
 type Item = { href: string; label: string; icon: IconName };
 const groups: Array<{ label: string; items: Item[] }> = [
@@ -59,7 +58,6 @@ const groups: Array<{ label: string; items: Item[] }> = [
       { href: '/settings', label: 'Settings & branding', icon: 'settings' },
       { href: '/audit', label: 'Audit logs', icon: 'audit' },
       { href: '/privacy', label: 'GDPR requests', icon: 'privacy' },
-      { href: '/license', label: 'Licence', icon: 'licence' },
       { href: '/system', label: 'System health', icon: 'system' },
     ],
   },
@@ -166,7 +164,6 @@ const iconPaths: Record<IconName, string[]> = {
   ],
   audit: ['M5 4h14v16H5z', 'M8 8h8', 'M8 12h8', 'M8 16h5'],
   privacy: ['M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z'],
-  licence: ['M6 3h9l4 4v14H6z', 'M15 3v5h4', 'M9 13h6', 'M9 17h4'],
   system: ['M3 12h4l2-5 4 10 2-5h6'],
 };
 

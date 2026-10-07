@@ -6,7 +6,6 @@ import { ConfigModule } from './common/config/config.module';
 import { CoreModule } from './common/core.module';
 import { RateLimitGuard } from './common/rate-limit/rate-limit.guard';
 import { TurnstileGuard } from './common/security/turnstile.guard';
-import { LicensingModule } from './common/licensing/licensing.module';
 import { DatabaseModule } from './common/database/database.module';
 import { TenantContextMiddleware } from './common/tenancy/tenant-context.middleware';
 import { HealthController } from './health.controller';
@@ -33,7 +32,6 @@ import { PrivacyModule } from './modules/privacy/privacy.module';
   imports: [
     ConfigModule,
     DatabaseModule,
-    LicensingModule,
     CoreModule,
     AuthModule,
     StorageModule,

@@ -462,6 +462,36 @@ export async function saveSettings(data: FormData) {
   }
 }
 
+export async function saveIntegrations(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/settings', 'PATCH', {
+    integrations: {
+      email: {
+        provider: textValue(data, 'emailProvider'),
+        fromName: textValue(data, 'fromName'),
+        fromEmail: textValue(data, 'fromEmail'),
+        replyTo: textValue(data, 'replyTo') || null,
+        resendApiKey: textValue(data, 'resendApiKey'),
+        smtpHost: textValue(data, 'smtpHost'),
+        smtpPort: Number(textValue(data, 'smtpPort') || '587'),
+        smtpSecure: data.get('smtpSecure') === 'on',
+        smtpUsername: textValue(data, 'smtpUsername'),
+        smtpPassword: textValue(data, 'smtpPassword'),
+      },
+      socialLogin: {
+        googleEnabled: data.get('googleEnabled') === 'on',
+        googleClientId: textValue(data, 'googleClientId'),
+        googleClientSecret: textValue(data, 'googleClientSecret'),
+        appleEnabled: data.get('appleEnabled') === 'on',
+        appleClientId: textValue(data, 'appleClientId'),
+        appleTeamId: textValue(data, 'appleTeamId'),
+        appleKeyId: textValue(data, 'appleKeyId'),
+        applePrivateKey: textValue(data, 'applePrivateKey'),
+      },
+    },
+  });
+  finish('/settings', result, 'Communication and sign-in settings updated.');
+}
+
 export async function updateNotificationTemplate(data: FormData) {
   const id = textValue(data, 'id');
   const result = await adminMutation(
@@ -544,11 +574,4 @@ export async function reviewPrivacyRequest(data: FormData) {
     { status: textValue(data, 'status'), adminNote: textValue(data, 'adminNote') || null },
   );
   finish('/privacy', result, 'Privacy request updated.');
-}
-
-export async function validateLicense(data: FormData) {
-  const result = await adminMutation('/api/v1/admin/license/validate', 'POST', {
-    token: textValue(data, 'token'),
-  });
-  finish('/license', result, 'Licence validated and installed.');
 }

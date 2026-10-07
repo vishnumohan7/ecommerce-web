@@ -124,7 +124,7 @@ export async function seedMinimal(client = prisma): Promise<void> {
       passwordHash: adminPasswordHash,
       firstName: 'Store',
       lastName: 'Administrator',
-      role: UserRole.TENANT_ADMIN,
+      role: UserRole.ADMINISTRATOR,
     },
   });
 
@@ -153,7 +153,7 @@ export async function seedMinimal(client = prisma): Promise<void> {
     });
   const rolePermissions: Record<string, readonly string[]> = {
     SUPER_ADMIN: permissionKeys,
-    TENANT_ADMIN: permissionKeys,
+    ADMINISTRATOR: permissionKeys,
     STORE_MANAGER: [
       'catalog.read',
       'inventory.read',
@@ -196,7 +196,7 @@ export async function seedMinimal(client = prisma): Promise<void> {
       })),
       skipDuplicates: true,
     });
-    if (key === 'TENANT_ADMIN')
+    if (key === 'ADMINISTRATOR')
       await client.userRoleAssignment.createMany({
         data: [{ tenantId: DEFAULT_TENANT_ID, userId: admin.id, roleId: role.id }],
         skipDuplicates: true,

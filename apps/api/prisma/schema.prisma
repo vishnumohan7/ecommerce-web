@@ -10,7 +10,7 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
-  TENANT_ADMIN
+  ADMINISTRATOR
   STORE_MANAGER
   CATALOG_MANAGER
   FULFILMENT_STAFF
@@ -205,11 +205,6 @@ enum OutboxStatus {
   PROCESSING
   SENT
   DEAD_LETTER
-}
-
-enum LicenseEdition {
-  STANDARD
-  PRO
 }
 
 enum CmsPageType {
@@ -1324,32 +1319,6 @@ model IdempotencyKey {
 
   @@unique([tenantId, scope, key])
   @@index([tenantId, expiresAt])
-}
-
-model LicenseRecord {
-  id          String         @id @default(uuid()) @db.Uuid
-  tenantId    String         @unique @db.Uuid
-  licenseId   String         @unique
-  edition     LicenseEdition
-  seats       Int
-  expiresAt   DateTime
-  features    String[]
-  tokenHash   String
-  validatedAt DateTime
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
-model FeatureFlagOverride {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
-  key       String
-  enabled   Boolean
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([tenantId, key])
-  @@index([tenantId])
 }
 
 model AlcoholDayBookEntry {

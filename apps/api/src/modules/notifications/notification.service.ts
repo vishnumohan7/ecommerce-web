@@ -494,7 +494,7 @@ export class NotificationService {
     if (!orderId) {
       const user = adminEvent
         ? await this.db.client.user.findFirst({
-            where: { role: { in: ['SUPER_ADMIN', 'TENANT_ADMIN', 'STORE_MANAGER'] }, active: true },
+            where: { role: { in: ['SUPER_ADMIN', 'ADMINISTRATOR', 'STORE_MANAGER'] }, active: true },
             orderBy: { createdAt: 'asc' },
           })
         : undefined;
@@ -576,6 +576,9 @@ export class NotificationService {
       this.db.client.brandingProfile.findFirst(),
     ]);
     if (!order || !invoice || !merchant) throw new Error('The order invoice could not be prepared for email');
+    const deliverySlot = order.deliverySlotId
+      ? await this.db.client.deliverySlot.findFirst({ where: { id: order.deliverySlotId } })
+      : null;
     const invoiceNumber = `INV-${String(invoice.invoiceNumberYear)}-${invoice.invoiceNumber.toString().padStart(6, '0')}`;
     const pdf = renderInvoicePdf({
       invoiceNumber,
@@ -584,7 +587,9 @@ export class NotificationService {
       currency: order.currency,
       lines: lines.map((line) => ({
         productName: line.productName,
+        sku: line.sku,
         quantity: line.quantity,
+        unitPriceMinor: line.unitPriceMinor,
         vatRateBps: line.vatRateBps,
         vatAmountMinor: line.vatAmountMinor,
         lineTotalMinor: line.lineTotalMinor,
@@ -597,7 +602,10 @@ export class NotificationService {
       totalMinor: order.totalMinor,
       paymentStatus: order.paymentStatus,
       deliveryAddress: order.deliveryAddress as Record<string, unknown>,
+      customer: order.customerSnapshot as Record<string, unknown>,
+      deliverySlot,
       merchant: {
+        brandName: merchant.brandName,
         legalEntityName: merchant.legalEntityName,
         companyNumber: merchant.companyNumber,
         vatNumber: merchant.vatNumber,
