@@ -8,16 +8,19 @@ interface LocalCounter { count: number; expiresAt: number; }
 export class RateLimitService {
   private readonly logger = new Logger(RateLimitService.name);
   private readonly redis: Redis;
+  private readonly redisConfigured: boolean;
   private readonly localCounters = new Map<string, LocalCounter>();
   private redisUnavailableUntil = 0;
 
   constructor(config: AppConfigService) {
-    this.redis = new Redis(config.values.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1, enableOfflineQueue: false, retryStrategy: () => null });
+    const redisHost = new URL(config.values.REDIS_URL).hostname;
+    this.redisConfigured = !['localhost', '127.0.0.1', 'redis'].includes(redisHost);
+    this.redis = new Redis(config.values.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1, enableOfflineQueue: false, connectTimeout: 800, commandTimeout: 800, retryStrategy: () => null });
     this.redis.on('error', () => undefined);
   }
 
   async consume(key: string, limit: number, windowSeconds: number): Promise<void> {
-    if (Date.now() >= this.redisUnavailableUntil) {
+    if (this.redisConfigured && Date.now() >= this.redisUnavailableUntil) {
       try {
         if (this.redis.status === 'wait' || this.redis.status === 'end') await this.redis.connect();
         const count = await this.redis.incr(`rate:${key}`);

@@ -1,5 +1,6 @@
 /* eslint-disable local/no-jsx-literals -- Admin login is English-only. */
 import { adminLogin } from '../auth-actions';
+import { LoginSubmitButton } from '../components/login-submit-button';
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
@@ -18,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <label>Email address<div className="login-input"><span aria-hidden="true">@</span><input type="email" name="email" autoComplete="username" placeholder="name@denes.co.uk" required/></div></label>
         <label>Password<div className="login-input"><span aria-hidden="true">●</span><input type="password" name="password" autoComplete="current-password" placeholder="Enter your password" required/></div></label>
         <div className="login-meta"><label><input type="checkbox" name="remember"/>Keep me signed in</label><span>Protected access</span></div>
-        <button className="login-submit" type="submit"><span>Sign in to dashboard</span><b aria-hidden="true">→</b></button>
+        <LoginSubmitButton/>
         <p className="login-security"><span aria-hidden="true">◆</span>Your session is encrypted and permission controlled.</p>
       </form>
       <p className="login-help">Need access? Contact your platform administrator.</p>
