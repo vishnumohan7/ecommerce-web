@@ -162,9 +162,14 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
             Back
           </Link>
           {order.invoice && (
-            <Link className="button button-primary" href={`/orders/${id}/invoice`}>
-              Download {order.invoice.displayInvoiceNumber}
-            </Link>
+            <>
+              <Link className="button button-muted" href={`/orders/${id}/invoice?view=1`} target="_blank">
+                View invoice
+              </Link>
+              <Link className="button button-primary" href={`/orders/${id}/invoice`}>
+                Download {order.invoice.displayInvoiceNumber}
+              </Link>
+            </>
           )}
         </div>
       </section>

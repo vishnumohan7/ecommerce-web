@@ -15,6 +15,7 @@ import {
   testSendSchema,
 } from './notification.schemas';
 import { renderTemplate } from './template.renderer';
+import { renderInvoicePdf } from '../orders/invoice.renderer';
 
 const topicEvents: Record<string, string> = {
   'order.placed': 'ORDER_PLACED',
@@ -43,7 +44,7 @@ const fallback: Record<string, { subject: string; body: string }> = {
   PAYMENT_FAILED: { subject: 'Payment failed', body: 'We could not complete your payment.' },
   ORDER_CONFIRMED: {
     subject: 'Order {{orderNumber}} confirmed',
-    body: 'Order {{orderNumber}} confirmed\n\nGROCERY ITEMS\n{{grocerySection}}\n\nALCOHOL ITEMS (18+)\n{{alcoholSection}}\n\nDelivery: {{delivery}}\nTotal: {{total}}\n{{challenge25Notice}}',
+    body: 'Order {{orderNumber}} confirmed\n\nGROCERY ITEMS\n{{grocerySection}}\n\nALCOHOL ITEMS (18+)\n{{alcoholSection}}\n\nDelivery: {{delivery}}\nTotal: {{total}}\n{{challenge25Notice}}\n\nYour VAT invoice is attached.',
   },
   PICKING_STARTED: {
     subject: 'Picking started',
@@ -322,11 +323,15 @@ export class NotificationService {
       try {
         const provider = this.providers.get(job.channel as NotificationChannel);
         if (!provider) throw new Error(`No ${job.channel} notification provider is configured`);
+        const attachments = job.channel === 'EMAIL' && job.event === 'ORDER_CONFIRMED'
+          ? await this.invoiceAttachments(job.payload as Record<string, unknown>)
+          : undefined;
         const result = await provider.send({
           recipient: job.recipient,
           subject: job.subject,
           body: job.body,
           data: job.payload as Record<string, unknown>,
+          ...(attachments?.length ? { attachments } : {}),
         });
         await this.db.client.notificationDelivery.update({
           where: { id: job.id },
@@ -559,6 +564,47 @@ export class NotificationService {
     if (channel === 'EMAIL') return context.email;
     if (channel === 'SMS' || channel === 'WHATSAPP') return context.phone;
     return context.pushEndpoints[0];
+  }
+
+  private async invoiceAttachments(payload: Record<string, unknown>) {
+    const orderId = typeof payload.orderId === 'string' ? payload.orderId : null;
+    if (!orderId) return [];
+    const [order, invoice, lines, merchant] = await Promise.all([
+      this.db.client.order.findFirst({ where: { id: orderId } }),
+      this.db.client.invoice.findFirst({ where: { orderId } }),
+      this.db.client.orderItem.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } }),
+      this.db.client.brandingProfile.findFirst(),
+    ]);
+    if (!order || !invoice || !merchant) throw new Error('The order invoice could not be prepared for email');
+    const invoiceNumber = `INV-${String(invoice.invoiceNumberYear)}-${invoice.invoiceNumber.toString().padStart(6, '0')}`;
+    const pdf = renderInvoicePdf({
+      invoiceNumber,
+      orderNumber: `${String(order.orderNumberYear)}-${order.orderNumber.toString().padStart(6, '0')}`,
+      issuedAt: invoice.issuedAt,
+      currency: order.currency,
+      lines: lines.map((line) => ({
+        productName: line.productName,
+        quantity: line.quantity,
+        vatRateBps: line.vatRateBps,
+        vatAmountMinor: line.vatAmountMinor,
+        lineTotalMinor: line.lineTotalMinor,
+        orderCategory: line.orderCategory,
+      })),
+      subtotalMinor: order.subtotalMinor,
+      discountMinor: order.discountMinor,
+      deliveryFeeMinor: order.deliveryFeeMinor,
+      taxMinor: order.taxMinor,
+      totalMinor: order.totalMinor,
+      paymentStatus: order.paymentStatus,
+      deliveryAddress: order.deliveryAddress as Record<string, unknown>,
+      merchant: {
+        legalEntityName: merchant.legalEntityName,
+        companyNumber: merchant.companyNumber,
+        vatNumber: merchant.vatNumber,
+        registeredAddress: merchant.registeredAddress as Record<string, unknown>,
+      },
+    });
+    return [{ filename: `${invoiceNumber}.pdf`, content: pdf.toString('base64'), contentType: 'application/pdf' }];
   }
 
   private async marketingAllowed(userId: string | null, channel: NotificationChannel) {

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState, type ReactNode } from 'react';
 import { adminLogout } from '../auth-actions';
 
 type IconName =
@@ -191,6 +191,9 @@ function NavIcon({ name }: { name: IconName }) {
 
 export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  useEffect(() => setNavigatingTo(null), [pathname]);
   if (pathname === '/login') return <>{children}</>;
   const item = groups
     .flatMap((group) => group.items)
@@ -215,11 +218,17 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
                   className={isActive(pathname, entry.href) ? 'active' : undefined}
                   href={entry.href}
                   key={entry.href}
+                  onClick={() => {
+                    if (!isActive(pathname, entry.href)) setNavigatingTo(entry.href);
+                  }}
+                  onFocus={() => router.prefetch(entry.href)}
+                  onMouseEnter={() => router.prefetch(entry.href)}
                 >
                   <span className="larkon-nav-icon">
                     <NavIcon name={entry.icon} />
                   </span>
                   <span>{entry.label}</span>
+                  {navigatingTo === entry.href && <span className="nav-loading" aria-hidden="true" />}
                   <i aria-hidden="true" />
                 </Link>
               ))}

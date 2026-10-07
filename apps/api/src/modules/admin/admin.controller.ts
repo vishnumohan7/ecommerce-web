@@ -10,11 +10,11 @@ export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Get('dashboard') @RequirePermissions('reports.read') dashboard(@Query('from') from?: string, @Query('to') to?: string) { return this.admin.dashboard({ from, to }); }
-  @Get('reports/sales') @RequirePermissions('reports.read') sales(@Query('from') from?: string, @Query('to') to?: string) { return this.admin.salesReport({ from, to }); }
-  @Get('reports/customers') @RequirePermissions('reports.read') customerReport(@Query('from') from?: string, @Query('to') to?: string) { return this.admin.customerReport({ from, to }); }
-  @Get('reports/products') @RequirePermissions('reports.read') productReport(@Query('from') from?: string, @Query('to') to?: string) { return this.admin.productReport({ from, to }); }
-  @Get('reports/coupons') @RequirePermissions('reports.read') couponReport(@Query('from') from?: string, @Query('to') to?: string) { return this.admin.couponReport({ from, to }); }
-  @Get('reports/categories') @RequirePermissions('reports.read') categoryReport(@Query('from') from?: string, @Query('to') to?: string) { return this.admin.categoryReport({ from, to }); }
+  @Get('reports/sales') @RequirePermissions('reports.read') sales(@Query() query: Record<string, string | undefined>) { return this.admin.salesReport(query); }
+  @Get('reports/customers') @RequirePermissions('reports.read') customerReport(@Query() query: Record<string, string | undefined>) { return this.admin.customerReport(query); }
+  @Get('reports/products') @RequirePermissions('reports.read') productReport(@Query() query: Record<string, string | undefined>) { return this.admin.productReport(query); }
+  @Get('reports/coupons') @RequirePermissions('reports.read') couponReport(@Query() query: Record<string, string | undefined>) { return this.admin.couponReport(query); }
+  @Get('reports/categories') @RequirePermissions('reports.read') categoryReport(@Query() query: Record<string, string | undefined>) { return this.admin.categoryReport(query); }
 
   @Get('customers') @RequirePermissions('users.read') customers(@Query('q') query?: string) { return this.admin.customers(query); }
   @Get('customers/:id') @RequirePermissions('users.read') customer(@Param('id') id: string) { return this.admin.customer(id); }

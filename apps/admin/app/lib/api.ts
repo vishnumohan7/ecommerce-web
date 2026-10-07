@@ -1,3 +1,5 @@
+import { readableApiError } from './error-message';
+
 const API_BASE_URL = (
   process.env.API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -275,6 +277,17 @@ export interface SalesReport {
   units: { grocery: number; alcohol: number };
   basketCounts: { grocery: number; alcohol: number; mixed: number };
 }
+export interface ReportFilters {
+  from?: string;
+  to?: string;
+  productId?: string;
+  categoryId?: string;
+  customerId?: string;
+  couponId?: string;
+  basketType?: string;
+  paymentStatus?: string;
+  fulfilmentStatus?: string;
+}
 export interface CustomerSummary {
   id: string;
   email: string;
@@ -478,13 +491,10 @@ export async function adminMutation<T>(
       signal: AbortSignal.timeout(8_000),
     });
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as {
-        message?: string;
-        error?: string;
-      } | null;
+      const payload: unknown = await response.json().catch(() => null);
       return {
         ok: false,
-        error: payload?.message ?? payload?.error ?? `API returned ${String(response.status)}.`,
+        error: readableApiError(payload, response.status),
       };
     }
     return { ok: true, data: (await response.json()) as T };
@@ -506,8 +516,8 @@ export async function adminFormMutation<T>(path: string, body: FormData): Promis
       signal: AbortSignal.timeout(60_000),
     });
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
-      return { ok: false, error: payload?.message ?? payload?.error ?? `API returned ${String(response.status)}.` };
+      const payload: unknown = await response.json().catch(() => null);
+      return { ok: false, error: readableApiError(payload, response.status) };
     }
     return { ok: true, data: (await response.json()) as T };
   } catch (error) {
@@ -582,35 +592,36 @@ export function fetchSearch(query: string) {
 export function fetchDashboard() {
   return get<DashboardMetrics>('/api/v1/admin/dashboard', true);
 }
-function reportQuery(from?: string, to?: string) {
+function reportQuery(filters: ReportFilters = {}) {
   const params = new URLSearchParams();
-  if (from) params.set('from', from);
-  if (to) params.set('to', to);
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
   return params.size ? `?${params}` : '';
 }
-export function fetchSalesReport(from?: string, to?: string) {
-  return get<SalesReport>(`/api/v1/admin/reports/sales${reportQuery(from, to)}`, true);
+export function fetchSalesReport(filters: ReportFilters = {}) {
+  return get<SalesReport>(`/api/v1/admin/reports/sales${reportQuery(filters)}`, true);
 }
-export function fetchCustomerReport(from?: string, to?: string) {
+export function fetchCustomerReport(filters: ReportFilters = {}) {
   return get<{
     customers: number;
     repeatCustomers: number;
-    topCustomers: Array<{ userId: string; orders: number; spendMinor: string }>;
-  }>(`/api/v1/admin/reports/customers${reportQuery(from, to)}`, true);
+    topCustomers: Array<{ userId: string; email: string | null; name: string | null; orders: number; spendMinor: string }>;
+  }>(`/api/v1/admin/reports/customers${reportQuery(filters)}`, true);
 }
-export function fetchProductReport(from?: string, to?: string) {
+export function fetchProductReport(filters: ReportFilters = {}) {
   return get<
     Array<{ productId: string; name: string; sku: string; units: number; revenueMinor: string }>
-  >(`/api/v1/admin/reports/products${reportQuery(from, to)}`, true);
+  >(`/api/v1/admin/reports/products${reportQuery(filters)}`, true);
 }
-export function fetchCouponReport(from?: string, to?: string) {
+export function fetchCouponReport(filters: ReportFilters = {}) {
   return get<Array<{ couponId: string; code: string; uses: number; discountMinor: string }>>(
-    `/api/v1/admin/reports/coupons${reportQuery(from, to)}`,
+    `/api/v1/admin/reports/coupons${reportQuery(filters)}`,
     true,
   );
 }
-export function fetchCategoryReport(from?: string, to?: string) {
-  return get<Array<{ categoryId: string; name: string; units: number; revenueMinor: string }>>(`/api/v1/admin/reports/categories${reportQuery(from, to)}`, true);
+export function fetchCategoryReport(filters: ReportFilters = {}) {
+  return get<Array<{ categoryId: string; name: string; units: number; revenueMinor: string }>>(`/api/v1/admin/reports/categories${reportQuery(filters)}`, true);
 }
 export function fetchInfluencerReport(id: string) {
   return get<{ orders: number; revenueMinor: string | null; commissionMinor: string | null; currency: string }>(`/api/v1/admin/influencers/${encodeURIComponent(id)}/report`, true);

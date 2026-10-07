@@ -54,35 +54,29 @@ export default async function PricingPage({ searchParams }: PageProps) {
           </div>
           <span className="count-pill">{coupons.length}</span>
         </header>
-        <form action={createCoupon} className="inline-create coupon-form">
-          <input name="code" placeholder="WELCOME10" required />
-          <select name="couponClass"><option value="SITE_WIDE">Site-wide</option><option value="CUSTOMER_CREDIT">Customer credit</option><option value="INFLUENCER">Influencer</option></select>
-          <select name="type">
-            <option value="PERCENTAGE">Percentage (basis points)</option>
-            <option value="FIXED">Fixed (pence)</option>
-          </select>
-          <input name="amount" type="number" min="1" placeholder="Amount" required />
-          <select name="appliesTo">
-            <option value="BOTH">All baskets</option>
-            <option value="GROCERY">Grocery</option>
-            <option value="ALCOHOL">Alcohol</option>
-          </select>
-          <input name="startsAt" type="datetime-local" required />
-          <input name="endsAt" type="datetime-local" required />
-          <input name="minimumSpendMinor" type="number" min="0" placeholder="Min spend (pence)" />
-          <input name="maximumDiscountMinor" type="number" min="1" placeholder="Max discount (pence)" />
-          <input name="maxUses" type="number" min="1" placeholder="Total use limit" />
-          <input name="perCustomerLimit" type="number" min="1" defaultValue="1" aria-label="Uses per customer" />
-          <select name="influencerId"><option value="">No influencer</option>{influencers.map(item=><option key={item.id} value={item.id}>{item.displayName}</option>)}</select>
-          <select name="lockedUserId"><option value="">Any customer</option>{customers.map(item=><option key={item.id} value={item.id}>{item.email}</option>)}</select>
-          <select name="categoryIds" multiple aria-label="Eligible categories">{categories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>
-          <select name="productIds" multiple aria-label="Eligible products">{products.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>
-          <input name="attributionWindowDays" type="number" min="1" max="365" defaultValue="30" aria-label="Attribution window days" />
-          <label className="inline-checkbox"><input name="firstOrderOnly" type="checkbox" /> First order only</label>
-          <button className="button button-primary" type="submit">
-            Create coupon
-          </button>
-        </form>
+        <details className="create-disclosure coupon-disclosure">
+          <summary><span><strong>Create coupon</strong><small>Set value, eligibility, schedule and usage limits</small></span><b aria-hidden="true">+</b></summary>
+          <form action={createCoupon} className="coupon-form">
+            <label className="form-field"><span>Coupon code</span><input name="code" placeholder="WELCOME10" required /></label>
+            <label className="form-field"><span>Coupon class</span><select name="couponClass"><option value="SITE_WIDE">Site-wide</option><option value="CUSTOMER_CREDIT">Customer credit</option><option value="INFLUENCER">Influencer</option></select></label>
+            <label className="form-field"><span>Discount type</span><select name="type"><option value="PERCENTAGE">Percentage (basis points)</option><option value="FIXED">Fixed amount (pence)</option></select></label>
+            <label className="form-field"><span>Discount value</span><input name="amount" type="number" min="1" placeholder="e.g. 1000" required /><small>1000 = 10%, or £10 for fixed.</small></label>
+            <label className="form-field"><span>Basket scope</span><select name="appliesTo"><option value="BOTH">All baskets</option><option value="GROCERY">Grocery</option><option value="ALCOHOL">Alcohol</option></select></label>
+            <label className="form-field"><span>Starts</span><input name="startsAt" type="datetime-local" required /></label>
+            <label className="form-field"><span>Ends</span><input name="endsAt" type="datetime-local" required /></label>
+            <label className="form-field"><span>Minimum spend</span><input name="minimumSpendMinor" type="number" min="0" placeholder="Pence (optional)" /></label>
+            <label className="form-field"><span>Maximum discount</span><input name="maximumDiscountMinor" type="number" min="1" placeholder="Pence (optional)" /></label>
+            <label className="form-field"><span>Total use limit</span><input name="maxUses" type="number" min="1" placeholder="Unlimited" /></label>
+            <label className="form-field"><span>Uses per customer</span><input name="perCustomerLimit" type="number" min="1" defaultValue="1" /></label>
+            <label className="form-field"><span>Influencer</span><select name="influencerId"><option value="">No influencer</option>{influencers.map(item=><option key={item.id} value={item.id}>{item.displayName}</option>)}</select></label>
+            <label className="form-field"><span>Customer restriction</span><select name="lockedUserId"><option value="">Any customer</option>{customers.map(item=><option key={item.id} value={item.id}>{item.email}</option>)}</select></label>
+            <label className="form-field coupon-scope-field"><span>Eligible categories</span><select name="categoryIds" multiple>{categories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select><small>Leave empty for all categories.</small></label>
+            <label className="form-field coupon-scope-field"><span>Eligible products</span><select name="productIds" multiple>{products.map(item=><option key={item.id} value={item.id}>{item.name} — {item.sku}</option>)}</select><small>Leave empty for all products.</small></label>
+            <label className="form-field"><span>Attribution window</span><input name="attributionWindowDays" type="number" min="1" max="365" defaultValue="30" /><small>Days after influencer referral.</small></label>
+            <label className="coupon-checkbox"><input name="firstOrderOnly" type="checkbox" /><span><strong>First order only</strong><small>Restrict redemption to new customers.</small></span></label>
+            <div className="coupon-submit"><button className="button button-primary" type="submit">Create coupon</button></div>
+          </form>
+        </details>
         <div className="table-wrap">
           <table>
             <thead>

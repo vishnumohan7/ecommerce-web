@@ -13,6 +13,7 @@ import {
   bannerCreateSchema,
   contentBlockCreateSchema,
   cmsPageUpsertSchema,
+  reportFilterSchema,
 } from './admin.schemas';
 
 type RangeInput = { from?: string | undefined; to?: string | undefined };
@@ -54,51 +55,75 @@ export class AdminService {
     };
   }
 
-  async salesReport(input: RangeInput) {
-    const range = this.range(input);
-    const [orders, lineGroups] = await Promise.all([
-      this.db.client.order.findMany({ where: { createdAt: range }, select: { id: true, totalMinor: true, basketType: true } }),
-      this.db.client.orderItem.groupBy({ by: ['orderCategory'], where: { createdAt: range }, _sum: { lineTotalMinor: true, quantity: true } }),
-    ]);
+  async salesReport(input: Record<string, string | undefined>) {
+    const scope = await this.reportScope(input);
+    const lineGroups = await this.db.client.orderItem.groupBy({
+      by: ['orderCategory'],
+      where: this.reportLineWhere(scope),
+      _sum: { lineTotalMinor: true, quantity: true },
+    });
     const byCategory = Object.fromEntries(lineGroups.map((row) => [row.orderCategory.toLowerCase(), {
       revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString(),
       units: row._sum.quantity ?? 0,
     }]));
     return {
-      range: this.serialiseRange(range),
-      orders: orders.length,
-      totalRevenueMinor: orders.reduce((sum, order) => sum + order.totalMinor, 0n).toString(),
+      range: this.serialiseRange(scope.range),
+      orders: scope.orders.length,
+      totalRevenueMinor: scope.productIds
+        ? (BigInt(byCategory.grocery?.revenueMinor ?? '0') + BigInt(byCategory.alcohol?.revenueMinor ?? '0')).toString()
+        : scope.orders.reduce((sum, order) => sum + order.totalMinor, 0n).toString(),
       groceryRevenueMinor: byCategory.grocery?.revenueMinor ?? '0',
       alcoholRevenueMinor: byCategory.alcohol?.revenueMinor ?? '0',
       units: { grocery: byCategory.grocery?.units ?? 0, alcohol: byCategory.alcohol?.units ?? 0 },
       basketCounts: {
-        grocery: orders.filter((order) => order.basketType === 'GROCERY').length,
-        alcohol: orders.filter((order) => order.basketType === 'ALCOHOL').length,
-        mixed: orders.filter((order) => order.basketType === 'MIXED').length,
+        grocery: scope.orders.filter((order) => order.basketType === 'GROCERY').length,
+        alcohol: scope.orders.filter((order) => order.basketType === 'ALCOHOL').length,
+        mixed: scope.orders.filter((order) => order.basketType === 'MIXED').length,
       },
     };
   }
 
-  async customerReport(input: RangeInput) {
-    const range = this.range(input);
-    const orders = await this.db.client.order.groupBy({ by: ['userId'], where: { createdAt: range, userId: { not: null } }, _count: true, _sum: { totalMinor: true } });
+  async customerReport(input: Record<string, string | undefined>) {
+    const scope = await this.reportScope(input);
+    const totals = new Map<string, { orders: number; spendMinor: bigint }>();
+    for (const order of scope.orders) {
+      if (!order.userId) continue;
+      const current = totals.get(order.userId) ?? { orders: 0, spendMinor: 0n };
+      current.orders += 1;
+      current.spendMinor += order.totalMinor;
+      totals.set(order.userId, current);
+    }
+    const users = await this.db.client.user.findMany({
+      where: { id: { in: [...totals.keys()] } },
+      select: { id: true, email: true, firstName: true, lastName: true },
+    });
+    const userById = new Map(users.map((user) => [user.id, user]));
+    const rows = [...totals.entries()].sort((a, b) => Number(b[1].spendMinor - a[1].spendMinor));
     return {
-      range: this.serialiseRange(range),
-      customers: orders.length,
-      repeatCustomers: orders.filter((row) => row._count > 1).length,
-      topCustomers: orders.sort((a, b) => Number((b._sum.totalMinor ?? 0n) - (a._sum.totalMinor ?? 0n))).slice(0, 20).map((row) => ({ userId: row.userId, orders: row._count, spendMinor: (row._sum.totalMinor ?? 0n).toString() })),
+      range: this.serialiseRange(scope.range),
+      customers: rows.length,
+      repeatCustomers: rows.filter(([, row]) => row.orders > 1).length,
+      topCustomers: rows.slice(0, 100).map(([userId, row]) => ({
+        userId,
+        email: userById.get(userId)?.email ?? null,
+        name: userById.has(userId)
+          ? `${userById.get(userId)?.firstName ?? ''} ${userById.get(userId)?.lastName ?? ''}`.trim()
+          : null,
+        orders: row.orders,
+        spendMinor: row.spendMinor.toString(),
+      })),
     };
   }
 
-  async productReport(input: RangeInput) {
-    const range = this.range(input);
-    const rows = await this.db.client.orderItem.groupBy({ by: ['productId', 'productName', 'sku'], where: { createdAt: range }, _sum: { quantity: true, lineTotalMinor: true }, orderBy: { _sum: { lineTotalMinor: 'desc' } }, take: 100 });
+  async productReport(input: Record<string, string | undefined>) {
+    const scope = await this.reportScope(input);
+    const rows = await this.db.client.orderItem.groupBy({ by: ['productId', 'productName', 'sku'], where: this.reportLineWhere(scope), _sum: { quantity: true, lineTotalMinor: true }, orderBy: { _sum: { lineTotalMinor: 'desc' } }, take: 100 });
     return rows.map((row) => ({ productId: row.productId, name: row.productName, sku: row.sku, units: row._sum.quantity ?? 0, revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString() }));
   }
 
-  async categoryReport(input: RangeInput) {
-    const range = this.range(input);
-    const lines = await this.db.client.orderItem.findMany({ where: { createdAt: range }, select: { productId: true, quantity: true, lineTotalMinor: true } });
+  async categoryReport(input: Record<string, string | undefined>) {
+    const scope = await this.reportScope(input);
+    const lines = await this.db.client.orderItem.findMany({ where: this.reportLineWhere(scope), select: { productId: true, quantity: true, lineTotalMinor: true } });
     const products = await this.db.client.product.findMany({ where: { id: { in: [...new Set(lines.map((line) => line.productId))] } }, select: { id: true, categoryId: true } });
     const categories = await this.db.client.category.findMany({ where: { id: { in: [...new Set(products.map((product) => product.categoryId))] } }, select: { id: true, name: true } });
     const productCategory = new Map(products.map((product) => [product.id, product.categoryId]));
@@ -114,9 +139,18 @@ export class AdminService {
     return categories.map((category) => ({ categoryId: category.id, name: category.name, units: totals.get(category.id)?.units ?? 0, revenueMinor: (totals.get(category.id)?.revenueMinor ?? 0n).toString() })).sort((a, b) => Number(BigInt(b.revenueMinor) - BigInt(a.revenueMinor)));
   }
 
-  async couponReport(input: RangeInput) {
-    const range = this.range(input);
-    const rows = await this.db.client.couponRedemption.groupBy({ by: ['couponId'], where: { createdAt: range }, _count: true, _sum: { discountMinor: true } });
+  async couponReport(input: Record<string, string | undefined>) {
+    const scope = await this.reportScope(input);
+    const rows = await this.db.client.couponRedemption.groupBy({
+      by: ['couponId'],
+      where: {
+        createdAt: scope.range,
+        orderId: { in: scope.orderIds },
+        ...(scope.filters.couponId ? { couponId: scope.filters.couponId } : {}),
+      },
+      _count: true,
+      _sum: { discountMinor: true },
+    });
     const coupons = await this.db.client.coupon.findMany({ where: { id: { in: rows.map((row) => row.couponId) } }, select: { id: true, code: true } });
     const codes = new Map(coupons.map((coupon) => [coupon.id, coupon.code]));
     return rows.map((row) => ({ couponId: row.couponId, code: codes.get(row.couponId) ?? 'Unknown', uses: row._count, discountMinor: (row._sum.discountMinor ?? 0n).toString() }));
@@ -291,6 +325,71 @@ export class AdminService {
     const parsed = dateRangeSchema.parse(input);
     if (parsed.from && parsed.to && parsed.from > parsed.to) throw new BadRequestException('from must be before to');
     return { ...(parsed.from ? { gte: parsed.from } : {}), ...(parsed.to ? { lte: parsed.to } : {}) };
+  }
+
+  private async reportScope(input: Record<string, string | undefined>) {
+    const filters = reportFilterSchema.parse(input);
+    const range = this.reportRange(filters.from, filters.to);
+    const hasProductScope = Boolean(filters.productId || filters.categoryId);
+    const scopedProducts = hasProductScope
+      ? await this.db.client.product.findMany({
+          where: {
+            ...(filters.productId ? { id: filters.productId } : {}),
+            ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+          },
+          select: { id: true },
+        })
+      : [];
+    const productIds = hasProductScope ? scopedProducts.map((product) => product.id) : null;
+    const productOrderIds = productIds
+      ? (
+          await this.db.client.orderItem.findMany({
+            where: { productId: { in: productIds } },
+            distinct: ['orderId'],
+            select: { orderId: true },
+          })
+        ).map((line) => line.orderId)
+      : null;
+    const couponOrderIds = filters.couponId
+      ? (
+          await this.db.client.couponRedemption.findMany({
+            where: { couponId: filters.couponId, orderId: { not: null } },
+            distinct: ['orderId'],
+            select: { orderId: true },
+          })
+        ).flatMap((redemption) => (redemption.orderId ? [redemption.orderId] : []))
+      : null;
+    const constrainedOrderIds = productOrderIds && couponOrderIds
+      ? productOrderIds.filter((id) => couponOrderIds.includes(id))
+      : productOrderIds ?? couponOrderIds;
+    const orders = await this.db.client.order.findMany({
+      where: {
+        createdAt: range,
+        ...(filters.customerId ? { userId: filters.customerId } : {}),
+        ...(filters.basketType ? { basketType: filters.basketType } : {}),
+        ...(filters.paymentStatus ? { paymentStatus: filters.paymentStatus } : {}),
+        ...(filters.fulfilmentStatus ? { fulfilmentStatus: filters.fulfilmentStatus } : {}),
+        ...(constrainedOrderIds ? { id: { in: constrainedOrderIds } } : {}),
+      },
+      select: { id: true, userId: true, totalMinor: true, basketType: true },
+    });
+    return { filters, range, orders, orderIds: orders.map((order) => order.id), productIds };
+  }
+
+  private reportLineWhere(scope: Awaited<ReturnType<AdminService['reportScope']>>): Prisma.OrderItemWhereInput {
+    return {
+      orderId: { in: scope.orderIds },
+      ...(scope.productIds ? { productId: { in: scope.productIds } } : {}),
+    };
+  }
+
+  private reportRange(from?: string, to?: string) {
+    const parsed = dateRangeSchema.parse({ from, to });
+    const start = parsed.from;
+    const end = parsed.to;
+    if (end && to && /^\d{4}-\d{2}-\d{2}$/.test(to)) end.setUTCHours(23, 59, 59, 999);
+    if (start && end && start > end) throw new BadRequestException('from must be before to');
+    return { ...(start ? { gte: start } : {}), ...(end ? { lte: end } : {}) };
   }
 
   private serialiseRange(range: { gte?: Date; lte?: Date }) { return { from: range.gte?.toISOString() ?? null, to: range.lte?.toISOString() ?? null }; }

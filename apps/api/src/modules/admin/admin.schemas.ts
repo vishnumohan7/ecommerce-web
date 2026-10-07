@@ -5,6 +5,40 @@ export const dateRangeSchema = z.object({
   to: z.coerce.date().optional(),
 });
 
+export const reportFilterSchema = z.object({
+  from: z.string().trim().optional(),
+  to: z.string().trim().optional(),
+  productId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
+  customerId: z.string().uuid().optional(),
+  couponId: z.string().uuid().optional(),
+  basketType: z.enum(['GROCERY', 'ALCOHOL', 'MIXED']).optional(),
+  paymentStatus: z
+    .enum([
+      'PENDING',
+      'REQUIRES_ACTION',
+      'AUTHORISED',
+      'CAPTURED',
+      'FAILED',
+      'CANCELLED',
+      'PARTIALLY_REFUNDED',
+      'REFUNDED',
+    ])
+    .optional(),
+  fulfilmentStatus: z
+    .enum([
+      'PENDING',
+      'CONFIRMED',
+      'PICKING',
+      'PICKED',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'REFUSED',
+      'CANCELLED',
+    ])
+    .optional(),
+});
+
 export const customerUpdateSchema = z.object({
   firstName: z.string().trim().min(1).max(100).optional(),
   lastName: z.string().trim().min(1).max(100).optional(),
