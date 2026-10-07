@@ -143,6 +143,7 @@ export interface SearchHit {
   storageType: string;
   ratingAverageBps: number;
   ratingCount: number;
+  imageUrl?: string | null;
   inStock: boolean;
   onOffer: boolean;
   rank: number;

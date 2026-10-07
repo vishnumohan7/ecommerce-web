@@ -40,6 +40,7 @@ export interface Product {
   shelfLifeDays: number | null;
   ratingAverageBps: number;
   ratingCount: number;
+  imageUrl?: string | null;
   variants?: Array<{
     id: string;
     sku: string;

@@ -97,60 +97,83 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
-                  <tr key={product.id}>
-                    <td>
-                      <div className="product-cell">
-                        <span>{product.name.slice(0, 1).toUpperCase()}</span>
-                        <div>
-                          <Link href={`/products/${product.id}`}><strong>{product.name}</strong></Link>
-                          <small>{product.description || product.unitPriceDisplay}</small>
+                {products.map((product) => {
+                  const featuredImage =
+                    product.imageUrl ??
+                    product.images?.find((image) => /^https?:\/\//.test(image.url))?.url ??
+                    null;
+                  return (
+                    <tr key={product.id}>
+                      <td>
+                        <div className="product-cell">
+                          {featuredImage ? (
+                            <span
+                              className="product-thumbnail has-image"
+                              style={{ backgroundImage: `url(${featuredImage})` }}
+                              role="img"
+                              aria-label={`${product.name} featured image`}
+                            />
+                          ) : (
+                            <span className="product-thumbnail" aria-hidden="true">
+                              {product.name.slice(0, 1).toUpperCase()}
+                            </span>
+                          )}
+                          <div>
+                            <Link href={`/products/${product.id}`}>
+                              <strong>{product.name}</strong>
+                            </Link>
+                            <small>{product.description || product.unitPriceDisplay}</small>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <code>{product.sku}</code>
-                    </td>
-                    <td>
-                      {product.isAlcohol ? (
-                        <span className="compliance-badge">
-                          18+ {product.abv ? `${product.abv}%` : ''}
+                      </td>
+                      <td>
+                        <code>{product.sku}</code>
+                      </td>
+                      <td>
+                        {product.isAlcohol ? (
+                          <span className="compliance-badge">
+                            18+ {product.abv ? `${product.abv}%` : ''}
+                          </span>
+                        ) : (
+                          <span className="muted-text">Standard</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="soft-badge">{product.storageType.toLowerCase()}</span>
+                      </td>
+                      <td>
+                        <span className="rating">★</span>{' '}
+                        {(product.ratingAverageBps / 100).toFixed(1)}{' '}
+                        <small>({product.ratingCount})</small>
+                      </td>
+                      <td>
+                        <strong>
+                          <Currency minor={product.priceMinor} currency={product.currency} />
+                        </strong>
+                        <small className="cell-subtext">{product.unitPriceDisplay}</small>
+                      </td>
+                      <td>
+                        <span className="status-badge status-active">
+                          <span />
+                          {product.status.toLowerCase()}
                         </span>
-                      ) : (
-                        <span className="muted-text">Standard</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className="soft-badge">{product.storageType.toLowerCase()}</span>
-                    </td>
-                    <td>
-                      <span className="rating">★</span>{' '}
-                      {(product.ratingAverageBps / 100).toFixed(1)}{' '}
-                      <small>({product.ratingCount})</small>
-                    </td>
-                    <td>
-                      <strong>
-                        <Currency minor={product.priceMinor} currency={product.currency} />
-                      </strong>
-                      <small className="cell-subtext">{product.unitPriceDisplay}</small>
-                    </td>
-                    <td>
-                      <span className="status-badge status-active">
-                        <span />
-                        {product.status.toLowerCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <Link className="text-action" href={`/products/${product.id}`}>Edit</Link>
-                      <form action={deleteProduct}>
-                        <input type="hidden" name="id" value={product.id} />
-                        <ConfirmSubmitButton message={`Delete ${product.name}? Products used in previous orders will be retained internally for invoices and reports.`}>
-                          Delete
-                        </ConfirmSubmitButton>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td>
+                        <Link className="text-action" href={`/products/${product.id}`}>
+                          Edit
+                        </Link>
+                        <form action={deleteProduct}>
+                          <input type="hidden" name="id" value={product.id} />
+                          <ConfirmSubmitButton
+                            message={`Delete ${product.name}? Products used in previous orders will be retained internally for invoices and reports.`}
+                          >
+                            Delete
+                          </ConfirmSubmitButton>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

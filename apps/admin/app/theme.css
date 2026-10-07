@@ -532,7 +532,7 @@ td code {
   gap: 10px;
   min-width: 210px;
 }
-.product-cell > span {
+.product-thumbnail {
   align-items: center;
   background: #fff2e6;
   border-radius: 7px;
@@ -543,6 +543,13 @@ td code {
   height: 34px;
   justify-content: center;
   width: 34px;
+}
+.product-thumbnail.has-image {
+  background-color: #f3f4f6;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: 1px solid #e7e9ed;
 }
 .product-cell > div {
   display: flex;

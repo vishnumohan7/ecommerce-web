@@ -31,6 +31,7 @@ interface SearchRow {
   storageType: string;
   ratingAverageBps: number;
   ratingCount: number;
+  imageUrl: string | null;
   inStock: boolean;
   onOffer: boolean;
   rank: number;
@@ -76,6 +77,10 @@ export class PostgresSearchProvider implements SearchProvider {
         SELECT p."id", p."tenantId", p."status"::text, p."sku", p."slug", p."name", p."description", p."categoryId", c."name" AS "categoryName",
           p."brandId", b."name" AS "brandName", p."priceMinor", p."currency", p."isAlcohol", p."abv",
           p."dietaryTags", p."allergens", p."storageType"::text, p."ratingAverageBps", p."ratingCount",
+          (SELECT image."url" FROM "ProductImage" image
+            WHERE image."tenantId" = p."tenantId" AND image."productId" = p."id"
+              AND image."url" ~ '^https?://'
+            ORDER BY image."position" ASC, image."createdAt" ASC LIMIT 1) AS "imageUrl",
           ${inStock} AS "inStock", ${offer} AS "onOffer", ${rank}::double precision AS rank
         FROM "Product" p
         JOIN "Category" c ON c."id" = p."categoryId" AND c."tenantId" = p."tenantId"
@@ -270,6 +275,7 @@ export class PostgresSearchProvider implements SearchProvider {
       storageType: row.storageType,
       ratingAverageBps: row.ratingAverageBps,
       ratingCount: row.ratingCount,
+      imageUrl: row.imageUrl,
       inStock: row.inStock,
       onOffer: row.onOffer,
       rank: row.rank,

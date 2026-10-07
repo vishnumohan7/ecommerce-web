@@ -6,8 +6,8 @@ import { ProductInput, productInputSchema, variantInputSchema } from './catalog.
 @Injectable()
 export class CatalogService {
   constructor(private readonly db: TenantScopedPrismaService) {}
-  list(input: { categoryId?: string; alcohol?: boolean; take?: number; cursor?: string }) {
-    return this.db.client.product.findMany({
+  async list(input: { categoryId?: string; alcohol?: boolean; take?: number; cursor?: string }) {
+    const products = await this.db.client.product.findMany({
       where: {
         status: 'ACTIVE',
         ...(input.categoryId ? { categoryId: input.categoryId } : {}),
@@ -17,6 +17,21 @@ export class CatalogService {
       orderBy: { id: 'asc' },
       take: Math.min(input.take ?? 24, 100),
     });
+    if (!products.length) return products;
+    const images = await this.db.client.productImage.findMany({
+      where: { productId: { in: products.map((product) => product.id) } },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+    });
+    const imagesByProduct = new Map<string, typeof images>();
+    images.forEach((image) => {
+      const productImages = imagesByProduct.get(image.productId) ?? [];
+      productImages.push(image);
+      imagesByProduct.set(image.productId, productImages);
+    });
+    return products.map((product) => ({
+      ...product,
+      images: imagesByProduct.get(product.id) ?? [],
+    }));
   }
   async byId(id: string) {
     const product = await this.db.client.product.findFirst({ where: { id } });
