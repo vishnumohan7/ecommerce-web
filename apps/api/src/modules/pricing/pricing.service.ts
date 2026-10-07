@@ -267,6 +267,8 @@ export class PricingService {
       maxUses: input.maxUses ?? null,
       perCustomerLimit: input.perCustomerLimit ?? null,
       influencerId: input.influencerId ?? null,
+      lockedUserId: input.lockedUserId ?? null,
+      returnRequestId: input.returnRequestId ?? null,
     };
     return this.db.transaction(async (tx, tenantId) => {
       const coupon = await tx.coupon.create({ data });

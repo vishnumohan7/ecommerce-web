@@ -1,6 +1,6 @@
 /* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
-import { createDeliveryZone, toggleDelivery } from '../actions';
+import { createDeliverySlot, createDeliveryZone, toggleDelivery } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { Currency } from '../components/currency';
@@ -111,10 +111,20 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
           </div>
           <span className="count-pill">{slots.length}</span>
         </header>
+        <form action={createDeliverySlot} className="inline-create slot-form">
+          <select name="zoneId" aria-label="Delivery zone" required><option value="">Select zone</option>{zones.filter((zone) => zone.active).map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}</select>
+          <label>Starts<input name="startsAt" type="datetime-local" required /></label>
+          <label>Ends<input name="endsAt" type="datetime-local" required /></label>
+          <input name="capacity" type="number" min="1" placeholder="Capacity" required />
+          <input name="surchargeMinor" type="number" min="0" defaultValue="0" aria-label="Surcharge in pence" />
+          <input name="cutoffMinutes" type="number" min="0" defaultValue="120" aria-label="Cut-off in minutes" />
+          <label className="inline-checkbox"><input name="allowsAgeRestricted" type="checkbox" defaultChecked /> Allow 18+ orders</label>
+          <button className="button button-primary" type="submit">Add slot</button>
+        </form>
         {slots.length === 0 ? (
           <div className="empty-state">
             <h3>No delivery slots</h3>
-            <p>Create slots through the API after defining a zone.</p>
+            <p>Create the first delivery window above.</p>
           </div>
         ) : (
           <div className="table-wrap">

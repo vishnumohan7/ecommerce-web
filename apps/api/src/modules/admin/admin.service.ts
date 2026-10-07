@@ -10,6 +10,9 @@ import {
   rolePermissionUpdateSchema,
   settingsUpdateSchema,
   userRoleUpdateSchema,
+  bannerCreateSchema,
+  contentBlockCreateSchema,
+  cmsPageUpsertSchema,
 } from './admin.schemas';
 
 type RangeInput = { from?: string | undefined; to?: string | undefined };
@@ -93,6 +96,24 @@ export class AdminService {
     return rows.map((row) => ({ productId: row.productId, name: row.productName, sku: row.sku, units: row._sum.quantity ?? 0, revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString() }));
   }
 
+  async categoryReport(input: RangeInput) {
+    const range = this.range(input);
+    const lines = await this.db.client.orderItem.findMany({ where: { createdAt: range }, select: { productId: true, quantity: true, lineTotalMinor: true } });
+    const products = await this.db.client.product.findMany({ where: { id: { in: [...new Set(lines.map((line) => line.productId))] } }, select: { id: true, categoryId: true } });
+    const categories = await this.db.client.category.findMany({ where: { id: { in: [...new Set(products.map((product) => product.categoryId))] } }, select: { id: true, name: true } });
+    const productCategory = new Map(products.map((product) => [product.id, product.categoryId]));
+    const totals = new Map<string, { units: number; revenueMinor: bigint }>();
+    for (const line of lines) {
+      const categoryId = productCategory.get(line.productId);
+      if (!categoryId) continue;
+      const current = totals.get(categoryId) ?? { units: 0, revenueMinor: 0n };
+      current.units += line.quantity;
+      current.revenueMinor += line.lineTotalMinor;
+      totals.set(categoryId, current);
+    }
+    return categories.map((category) => ({ categoryId: category.id, name: category.name, units: totals.get(category.id)?.units ?? 0, revenueMinor: (totals.get(category.id)?.revenueMinor ?? 0n).toString() })).sort((a, b) => Number(BigInt(b.revenueMinor) - BigInt(a.revenueMinor)));
+  }
+
   async couponReport(input: RangeInput) {
     const range = this.range(input);
     const rows = await this.db.client.couponRedemption.groupBy({ by: ['couponId'], where: { createdAt: range }, _count: true, _sum: { discountMinor: true } });
@@ -164,6 +185,38 @@ export class AdminService {
       this.db.client.cmsPage.findMany({ orderBy: [{ type: 'asc' }, { locale: 'asc' }] }),
     ]);
     return { banners, blocks, pages };
+  }
+
+  async createBanner(body: unknown) {
+    const input = bannerCreateSchema.parse(body);
+    const created = await this.db.client.banner.create({ data: { tenantId: TenantContext.requireTenantId(), ...input, subtitle: input.subtitle ?? null, mobileImageUrl: input.mobileImageUrl ?? null, linkUrl: input.linkUrl ?? null, startsAt: input.startsAt ?? null, endsAt: input.endsAt ?? null } });
+    await this.audit('BANNER_CREATED', 'Banner', created.id, undefined, created);
+    return created;
+  }
+
+  async updateBanner(id: string, body: unknown) {
+    const input = bannerCreateSchema.partial().parse(body);
+    const existing = await this.db.client.banner.findFirst({ where: { id } });
+    if (!existing) throw new NotFoundException('Banner not found');
+    const data = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined)) as Prisma.BannerUncheckedUpdateInput;
+    const updated = await this.db.client.banner.update({ where: { id }, data });
+    await this.audit('BANNER_UPDATED', 'Banner', id, existing, updated);
+    return updated;
+  }
+
+  async createContentBlock(body: unknown) {
+    const input = contentBlockCreateSchema.parse(body);
+    const created = await this.db.client.cmsContentBlock.create({ data: { tenantId: TenantContext.requireTenantId(), ...input, content: input.content as Prisma.InputJsonValue, title: input.title ?? null, startsAt: input.startsAt ?? null, endsAt: input.endsAt ?? null } });
+    await this.audit('CONTENT_BLOCK_CREATED', 'CmsContentBlock', created.id, undefined, created);
+    return created;
+  }
+
+  async upsertCmsPage(body: unknown) {
+    const input = cmsPageUpsertSchema.parse(body);
+    const tenantId = TenantContext.requireTenantId();
+    const page = await this.db.client.cmsPage.upsert({ where: { tenantId_type_locale: { tenantId, type: input.type, locale: input.locale } }, create: { tenantId, ...input }, update: { title: input.title, content: input.content, published: input.published } });
+    await this.audit('CMS_PAGE_SAVED', 'CmsPage', page.id, undefined, { type: page.type, locale: page.locale, published: page.published });
+    return page;
   }
 
   async updateRolePermissions(id: string, body: unknown) {

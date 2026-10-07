@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { adminMutation } from './lib/api';
+import { adminFormMutation, adminMutation } from './lib/api';
 
 function textValue(data: FormData, key: string) {
   const value = data.get(key);
@@ -105,6 +105,61 @@ export async function archiveProduct(data: FormData) {
   finish('/products', result, 'Product archived.');
 }
 
+export async function importCatalogue(data: FormData) {
+  const file = data.get('file');
+  if (!(file instanceof File) || file.size === 0)
+    finish('/products/import', { ok: false, error: 'Choose a CSV or XLSX file.' }, '');
+  const upload = new FormData();
+  upload.set('file', file);
+  const policy = textValue(data, 'duplicatePolicy') || 'fail';
+  const dryRun = data.get('dryRun') === 'on';
+  const result = await adminFormMutation<{ jobId: string; applied: number; errors?: unknown[] }>(
+    `/api/v1/catalog/imports?duplicatePolicy=${encodeURIComponent(policy)}&dryRun=${String(dryRun)}`,
+    upload,
+  );
+  const success = result.ok
+    ? `${dryRun ? 'Validation complete' : 'Import complete'} · ${result.data.applied} rows applied · job ${result.data.jobId}`
+    : '';
+  finish('/products/import', result, success);
+}
+
+export async function uploadProductImage(data: FormData) {
+  const id = textValue(data, 'id');
+  const file = data.get('file');
+  if (!(file instanceof File) || file.size === 0)
+    finish(`/products/${id}`, { ok: false, error: 'Choose an image file.' }, '');
+  const upload = new FormData();
+  upload.set('file', file);
+  upload.set('altText', textValue(data, 'altText'));
+  const result = await adminFormMutation(`/api/v1/products/${encodeURIComponent(id)}/images`, upload);
+  finish(`/products/${id}`, result, 'Product image uploaded and optimised.');
+}
+
+export async function createProductVariant(data: FormData) {
+  const id = textValue(data, 'id');
+  let attributes: Record<string, string> = {};
+  try {
+    attributes = textValue(data, 'attributes') ? JSON.parse(textValue(data, 'attributes')) as Record<string, string> : {};
+  } catch {
+    finish(`/products/${id}`, { ok: false, error: 'Variant attributes must be valid JSON.' }, '');
+  }
+  const result = await adminMutation(`/api/v1/products/${encodeURIComponent(id)}/variants`, 'POST', {
+    sku: textValue(data, 'sku'),
+    name: textValue(data, 'name'),
+    priceMinor: textValue(data, 'priceMinor'),
+    currency: 'GBP',
+    packSize: textValue(data, 'packSize') || null,
+    weightGrams: optionalNumber(data, 'weightGrams'),
+    abv: textValue(data, 'abv') || null,
+    flavour: textValue(data, 'flavour') || null,
+    attributes,
+    warehouseId: textValue(data, 'warehouseId'),
+    stockOnHand: Number(textValue(data, 'stockOnHand') || '0'),
+    lowStockThreshold: Number(textValue(data, 'lowStockThreshold') || '5'),
+  });
+  finish(`/products/${id}`, result, 'Variant created with opening stock.');
+}
+
 export async function removeTaxonomy(data: FormData) {
   const kind = textValue(data, 'kind') === 'brand' ? 'brands' : 'categories';
   const result = await adminMutation(`/api/v1/${kind}/${textValue(data, 'id')}`, 'DELETE');
@@ -162,6 +217,20 @@ export async function toggleDelivery(data: FormData) {
   finish('/delivery', result, 'Delivery record updated.');
 }
 
+export async function createDeliverySlot(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/delivery/slots', 'POST', {
+    zoneId: textValue(data, 'zoneId'),
+    startsAt: new Date(textValue(data, 'startsAt')).toISOString(),
+    endsAt: new Date(textValue(data, 'endsAt')).toISOString(),
+    capacity: Number(textValue(data, 'capacity')),
+    surchargeMinor: Number(textValue(data, 'surchargeMinor') || '0'),
+    cutoffMinutes: Number(textValue(data, 'cutoffMinutes') || '120'),
+    allowsAgeRestricted: data.get('allowsAgeRestricted') === 'on',
+    active: true,
+  });
+  finish('/delivery', result, 'Delivery slot created.');
+}
+
 export async function createCoupon(data: FormData) {
   const type = textValue(data, 'type');
   const amount = Number(textValue(data, 'amount'));
@@ -172,7 +241,17 @@ export async function createCoupon(data: FormData) {
     startsAt: textValue(data, 'startsAt'),
     endsAt: textValue(data, 'endsAt'),
     appliesTo: textValue(data, 'appliesTo'),
-    couponClass: 'SITE_WIDE',
+    couponClass: textValue(data, 'couponClass') || 'SITE_WIDE',
+    minimumSpendMinor: textValue(data, 'minimumSpendMinor') || null,
+    maximumDiscountMinor: textValue(data, 'maximumDiscountMinor') || null,
+    maxUses: optionalNumber(data, 'maxUses'),
+    perCustomerLimit: optionalNumber(data, 'perCustomerLimit'),
+    firstOrderOnly: data.get('firstOrderOnly') === 'on',
+    productIds: data.getAll('productIds').filter((value): value is string => typeof value === 'string'),
+    categoryIds: data.getAll('categoryIds').filter((value): value is string => typeof value === 'string'),
+    influencerId: textValue(data, 'influencerId') || null,
+    lockedUserId: textValue(data, 'lockedUserId') || null,
+    attributionWindowDays: Number(textValue(data, 'attributionWindowDays') || '30'),
   });
   finish('/pricing', result, 'Coupon created.');
 }
@@ -213,6 +292,46 @@ export async function transitionFulfilment(data: FormData) {
     { status: textValue(data, 'status') },
   );
   finish(`/orders/${orderId}`, result, 'Fulfilment status updated.');
+}
+
+export async function createPickList(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const result = await adminMutation(`/api/v1/admin/orders/${orderId}/pick-list`, 'POST');
+  finish(`/orders/${orderId}`, result, 'Pick list opened.');
+}
+
+export async function recordPick(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const itemId = textValue(data, 'itemId');
+  const outcome = textValue(data, 'outcome');
+  const result = await adminMutation(`/api/v1/admin/orders/${orderId}/pick-list/items/${itemId}`, 'PATCH', {
+    outcome,
+    picked: Number(textValue(data, 'picked')),
+    ...(textValue(data, 'actualWeightGrams') ? { actualWeightGrams: Number(textValue(data, 'actualWeightGrams')) } : {}),
+    ...(outcome === 'SUBSTITUTED' ? { substituteProductId: textValue(data, 'substituteProductId') } : {}),
+  });
+  finish(`/orders/${orderId}`, result, 'Pick line recorded.');
+}
+
+export async function completePickList(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const result = await adminMutation(`/api/v1/admin/orders/${orderId}/pick-list/complete`, 'POST');
+  finish(`/orders/${orderId}`, result, 'Picking completed and totals recalculated.');
+}
+
+export async function captureAgeCheck(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const outcome = textValue(data, 'outcome');
+  const result = await adminMutation('/api/v1/delivery-age-check', 'POST', {
+    orderId,
+    outcome,
+    challengeAge: 25,
+    recipientPresent: data.get('recipientPresent') === 'on',
+    ...(outcome === 'PASSED' ? { idType: textValue(data, 'idType') } : {}),
+    ...(textValue(data, 'refusalReason') ? { refusalReason: textValue(data, 'refusalReason') } : {}),
+    ...(textValue(data, 'note') ? { note: textValue(data, 'note') } : {}),
+  });
+  finish(`/orders/${orderId}`, result, 'Challenge 25 outcome recorded.');
 }
 
 export async function reviewReturn(data: FormData) {
@@ -326,6 +445,13 @@ export async function saveRolePermissions(data: FormData) {
   finish('/access', result, 'Role permissions updated.');
 }
 
+export async function saveUserRoles(data: FormData) {
+  const id = textValue(data, 'id');
+  const roleKeys = data.getAll('roleKeys').filter((value): value is string => typeof value === 'string');
+  const result = await adminMutation(`/api/v1/admin/rbac/users/${encodeURIComponent(id)}`, 'PATCH', { roleKeys });
+  finish('/access', result, 'Staff role assignments updated.');
+}
+
 export async function saveSettings(data: FormData) {
   try {
     const settings = JSON.parse(textValue(data, 'settings')) as Record<string, unknown>;
@@ -350,6 +476,64 @@ export async function updateNotificationTemplate(data: FormData) {
     },
   );
   finish('/notifications', result, 'A new template version was created.');
+}
+
+function jsonValue(data: FormData, key: string) {
+  const raw = textValue(data, key);
+  return raw ? JSON.parse(raw) as Record<string, unknown> : {};
+}
+
+export async function createNotificationTemplate(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/notification-templates', 'POST', {
+    event: textValue(data, 'event'), channel: textValue(data, 'channel'), locale: textValue(data, 'locale') || 'en-GB',
+    subject: textValue(data, 'subject') || null, body: textValue(data, 'body'),
+  });
+  finish('/notifications', result, 'Notification template created.');
+}
+
+export async function testNotification(data: FormData) {
+  const id = textValue(data, 'id');
+  try {
+    const result = await adminMutation(`/api/v1/admin/notification-templates/${encodeURIComponent(id)}/test-send`, 'POST', { recipient: textValue(data, 'recipient'), data: jsonValue(data, 'data') });
+    finish('/notifications', result, 'Test notification queued.');
+  } catch { finish('/notifications', { ok: false, error: 'Test data must be valid JSON.' }, ''); }
+}
+
+export async function processNotifications() {
+  const result = await adminMutation('/api/v1/admin/notifications/process', 'POST');
+  finish('/notifications', result, 'Queued notifications processed.');
+}
+
+export async function createBanner(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/content/banners', 'POST', {
+    title: textValue(data, 'title'), subtitle: textValue(data, 'subtitle') || null, imageUrl: textValue(data, 'imageUrl'),
+    mobileImageUrl: textValue(data, 'mobileImageUrl') || null, linkUrl: textValue(data, 'linkUrl') || null,
+    position: Number(textValue(data, 'position') || '0'), startsAt: textValue(data, 'startsAt') || null, endsAt: textValue(data, 'endsAt') || null, active: true,
+  });
+  finish('/content', result, 'Banner created.');
+}
+
+export async function toggleBanner(data: FormData) {
+  const result = await adminMutation(`/api/v1/admin/content/banners/${encodeURIComponent(textValue(data, 'id'))}`, 'PATCH', { active: textValue(data, 'active') !== 'true' });
+  finish('/content', result, 'Banner status updated.');
+}
+
+export async function createContentBlock(data: FormData) {
+  try {
+    const result = await adminMutation('/api/v1/admin/content/blocks', 'POST', {
+      type: textValue(data, 'type'), title: textValue(data, 'title') || null, content: jsonValue(data, 'content'),
+      position: Number(textValue(data, 'position') || '0'), active: true,
+    });
+    finish('/content', result, 'Homepage block created.');
+  } catch { finish('/content', { ok: false, error: 'Block content must be valid JSON.' }, ''); }
+}
+
+export async function saveCmsPage(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/content/pages', 'POST', {
+    type: textValue(data, 'type'), locale: textValue(data, 'locale') || 'en-GB', title: textValue(data, 'title'),
+    content: textValue(data, 'content'), published: data.get('published') === 'on',
+  });
+  finish('/content', result, 'CMS page saved.');
 }
 
 export async function reviewPrivacyRequest(data: FormData) {

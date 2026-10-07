@@ -36,9 +36,10 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           <h1>Products</h1>
           <p>Inspect live product, compliance and pricing data from the commerce API.</p>
         </div>
-        <Link className="button button-primary" href="/products/new">
-          + Add product
-        </Link>
+        <div className="heading-actions">
+          <Link className="button button-muted" href="/products/import">Import CSV / Excel</Link>
+          <Link className="button button-primary" href="/products/new">+ Add product</Link>
+        </div>
       </section>
       <ActionMessage success={params.success} error={params.error} />
       <article className="panel">

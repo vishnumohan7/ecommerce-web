@@ -21,7 +21,11 @@ export class CatalogService {
   async byId(id: string) {
     const product = await this.db.client.product.findFirst({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+    const [variants, images] = await Promise.all([
+      this.db.client.productVariant.findMany({ where: { productId: id }, orderBy: { createdAt: 'asc' } }),
+      this.db.client.productImage.findMany({ where: { productId: id }, orderBy: { position: 'asc' } }),
+    ]);
+    return { ...product, variants, images };
   }
   async create(raw: ProductInput) {
     const input = productInputSchema.parse(raw);

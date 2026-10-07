@@ -1,5 +1,5 @@
 /* eslint-disable local/no-jsx-literals */
-import { saveRolePermissions } from '../actions';
+import { saveRolePermissions, saveUserRoles } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { fetchRbac } from '../lib/api';
@@ -80,6 +80,10 @@ export default async function AccessPage({
           ))}
         </section>
       )}
+      {result.ok && <article className="panel staff-assignments section-gap"><header className="panel-header"><div><p className="eyebrow">Staff accounts</p><h2>Role assignments</h2><p>Assign one or more operational roles to each authorised staff member.</p></div><span className="count-pill">{result.data.users.length}</span></header><div className="staff-list">{result.data.users.map(user => {
+        const assigned = result.data.assignments.filter(item => item.userId === user.id).map(item => item.roleId);
+        return <form action={saveUserRoles} className="staff-row" key={user.id}><input type="hidden" name="id" value={user.id}/><div><strong>{user.firstName} {user.lastName}</strong><small>{user.email}</small></div><div className="role-chip-list">{result.data.roles.map(role=><label key={role.id}><input type="checkbox" name="roleKeys" value={role.key} defaultChecked={assigned.includes(role.id)}/><span>{role.name}</span></label>)}</div><button className="button button-muted">Save roles</button></form>;
+      })}</div></article>}
     </>
   );
 }

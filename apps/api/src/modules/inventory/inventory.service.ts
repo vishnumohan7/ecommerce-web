@@ -6,6 +6,13 @@ interface LockedInventory { id: string; onHand: number; reserved: number; lowSto
 @Injectable()
 export class InventoryService {
   constructor(private readonly db: TenantScopedPrismaService) {}
+  warehouses() {
+    return this.db.client.warehouse.findMany({
+      where: { active: true },
+      orderBy: { name: 'asc' },
+      select: { id: true, code: true, name: true, active: true },
+    });
+  }
   async list() {
     const records = await this.db.client.inventory.findMany({ orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }], take: 250 });
     const products = await this.db.client.product.findMany({ where: { id: { in: records.map((record) => record.productId) } }, select: { id: true, name: true, sku: true } });

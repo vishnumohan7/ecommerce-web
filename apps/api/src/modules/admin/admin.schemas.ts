@@ -36,3 +36,18 @@ export const settingsUpdateSchema = z.object({
     })
     .optional(),
 });
+
+const optionalDate = z.preprocess((value) => value === '' || value == null ? null : value, z.coerce.date().nullable());
+export const bannerCreateSchema = z.object({
+  title: z.string().trim().min(1).max(160), subtitle: z.string().trim().max(300).nullable().optional(),
+  imageUrl: z.string().url(), mobileImageUrl: z.string().url().nullable().optional(), linkUrl: z.string().url().nullable().optional(),
+  position: z.number().int().nonnegative().default(0), startsAt: optionalDate.optional(), endsAt: optionalDate.optional(), active: z.boolean().default(true),
+});
+export const contentBlockCreateSchema = z.object({
+  type: z.enum(['FEATURED_PRODUCTS','CATEGORY_TILES','PROMO_BLOCK']), title: z.string().trim().max(160).nullable().optional(),
+  content: z.record(z.string(), z.unknown()), position: z.number().int().nonnegative().default(0), startsAt: optionalDate.optional(), endsAt: optionalDate.optional(), active: z.boolean().default(true),
+});
+export const cmsPageUpsertSchema = z.object({
+  type: z.enum(['TERMS','PRIVACY','COOKIE','RETURNS','ALCOHOL_POLICY','DELIVERY_POLICY']), locale: z.string().min(2).max(20).default('en-GB'),
+  title: z.string().trim().min(1).max(200), content: z.string().min(1).max(250_000), published: z.boolean().default(false),
+});

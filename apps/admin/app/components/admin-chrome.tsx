@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { adminLogout } from '../auth-actions';
 
 type IconName =
@@ -67,6 +67,68 @@ const groups: Array<{ label: string; items: Item[] }> = [
 
 function isActive(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname.startsWith(href);
+}
+
+function TablePaginationManager() {
+  const pathname = usePathname();
+  useEffect(() => {
+    const setup = (table: HTMLTableElement) => {
+      if (table.dataset.paginated === 'true') return;
+      const body = table.tBodies.item(0);
+      if (!body || body.rows.length <= 10) return;
+      table.dataset.paginated = 'true';
+      let page = 1;
+      let pageSize = 10;
+      const rows = Array.from(body.rows);
+      const pager = document.createElement('nav');
+      pager.className = 'table-pagination';
+      pager.setAttribute('aria-label', 'Table pagination');
+      const summary = document.createElement('span');
+      const controls = document.createElement('div');
+      const sizeLabel = document.createElement('label');
+      sizeLabel.textContent = 'Rows ';
+      const size = document.createElement('select');
+      for (const value of [10, 25, 50]) {
+        const option = document.createElement('option');
+        option.value = String(value);
+        option.textContent = String(value);
+        size.append(option);
+      }
+      sizeLabel.append(size);
+      const previous = document.createElement('button');
+      previous.type = 'button';
+      previous.textContent = 'Previous';
+      const current = document.createElement('strong');
+      const next = document.createElement('button');
+      next.type = 'button';
+      next.textContent = 'Next';
+      controls.append(sizeLabel, previous, current, next);
+      pager.append(summary, controls);
+      const wrap = table.closest('.table-wrap');
+      (wrap ?? table).insertAdjacentElement('afterend', pager);
+      const render = () => {
+        const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+        page = Math.min(page, pages);
+        const start = (page - 1) * pageSize;
+        rows.forEach((row, index) => { row.hidden = index < start || index >= start + pageSize; });
+        summary.textContent = `Showing ${start + 1}–${Math.min(start + pageSize, rows.length)} of ${rows.length}`;
+        current.textContent = `${page} / ${pages}`;
+        previous.disabled = page === 1;
+        next.disabled = page === pages;
+      };
+      previous.addEventListener('click', () => { page -= 1; render(); table.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      next.addEventListener('click', () => { page += 1; render(); table.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      size.addEventListener('change', () => { pageSize = Number(size.value); page = 1; render(); });
+      render();
+    };
+    const scan = () => document.querySelectorAll<HTMLTableElement>('.content table').forEach(setup);
+    scan();
+    const observer = new MutationObserver(scan);
+    const content = document.querySelector('.content');
+    if (content) observer.observe(content, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [pathname]);
+  return null;
 }
 
 const iconPaths: Record<IconName, string[]> = {
@@ -229,6 +291,7 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
             <strong>{title}</strong>
           </div>
           {children}
+          <TablePaginationManager />
         </main>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { ApiNotice } from '../components/api-notice';
 import { Currency } from '../components/currency';
 import {
   fetchCouponReport,
+  fetchCategoryReport,
   fetchCustomerReport,
   fetchProductReport,
   fetchSalesReport,
@@ -23,12 +24,14 @@ function Metric({ label, value, tone }: { label: string; value: ReactNode; tone:
   );
 }
 
-export default async function ReportsPage() {
-  const [sales, customers, products, coupons] = await Promise.all([
-    fetchSalesReport(),
-    fetchCustomerReport(),
-    fetchProductReport(),
-    fetchCouponReport(),
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
+  const params = await searchParams;
+  const [sales, customers, products, coupons, categories] = await Promise.all([
+    fetchSalesReport(params.from, params.to),
+    fetchCustomerReport(params.from, params.to),
+    fetchProductReport(params.from, params.to),
+    fetchCouponReport(params.from, params.to),
+    fetchCategoryReport(params.from, params.to),
   ]);
   return (
     <>
@@ -39,6 +42,12 @@ export default async function ReportsPage() {
           <p>Sales, product and customer performance from completed orders.</p>
         </div>
       </section>
+      <form className="report-filter panel" action="/reports">
+        <label>From<input name="from" type="date" defaultValue={params.from}/></label>
+        <label>To<input name="to" type="date" defaultValue={params.to}/></label>
+        <button className="button button-primary" type="submit">Apply period</button>
+        {(params.from || params.to) && <a className="button button-muted" href="/reports">Clear</a>}
+      </form>
       {!sales.ok ? (
         <ApiNotice message={sales.error} />
       ) : (
@@ -182,6 +191,10 @@ export default async function ReportsPage() {
             )}
           </article>
         </div>
+      </section>
+      <section className="reports-grid section-gap">
+        <article className="panel report-panel"><header className="panel-header"><div><p className="eyebrow">Category performance</p><h2>Revenue by category</h2></div></header>{categories.ok && categories.data.length ? <div className="table-wrap"><table><thead><tr><th>Category</th><th>Units</th><th>Revenue</th></tr></thead><tbody>{categories.data.map(row=><tr key={row.categoryId}><td><strong>{row.name}</strong></td><td>{row.units}</td><td><Currency minor={row.revenueMinor}/></td></tr>)}</tbody></table></div> : <p className="panel-empty">No category sales in this period.</p>}</article>
+        <article className="panel report-panel"><header className="panel-header"><div><p className="eyebrow">Catalogue action</p><h2>Low-performing products</h2></div></header>{products.ok && products.data.length ? <div className="table-wrap"><table><thead><tr><th>Product</th><th>Units</th><th>Revenue</th></tr></thead><tbody>{[...products.data].reverse().slice(0,20).map(row=><tr key={row.productId}><td><strong>{row.name}</strong><small className="cell-subtext">{row.sku}</small></td><td>{row.units}</td><td><Currency minor={row.revenueMinor}/></td></tr>)}</tbody></table></div> : <p className="panel-empty">No product sales in this period.</p>}</article>
       </section>
     </>
   );

@@ -4,7 +4,7 @@ import { createCoupon, createInfluencer, createTaxRule, toggleCoupon } from '../
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { Currency } from '../components/currency';
-import { fetchCoupons, fetchInfluencers, fetchTaxRules } from '../lib/api';
+import { fetchCategories, fetchCoupons, fetchCustomers, fetchInfluencerReport, fetchInfluencers, fetchProducts, fetchTaxRules } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Pricing & tax' };
 export const dynamic = 'force-dynamic';
@@ -13,15 +13,21 @@ interface PageProps {
 }
 
 export default async function PricingPage({ searchParams }: PageProps) {
-  const [params, couponResult, influencerResult, taxResult] = await Promise.all([
+  const [params, couponResult, influencerResult, taxResult, productResult, categoryResult, customerResult] = await Promise.all([
     searchParams,
     fetchCoupons(),
     fetchInfluencers(),
     fetchTaxRules(),
+    fetchProducts(), fetchCategories(), fetchCustomers(),
   ]);
   const coupons = couponResult.ok ? couponResult.data : [];
   const influencers = influencerResult.ok ? influencerResult.data : [];
   const rules = taxResult.ok ? taxResult.data : [];
+  const products = productResult.ok ? productResult.data : [];
+  const categories = categoryResult.ok ? categoryResult.data.items : [];
+  const customers = customerResult.ok ? customerResult.data : [];
+  const influencerReports = await Promise.all(influencers.map(async (item) => ({ id: item.id, result: await fetchInfluencerReport(item.id) })));
+  const reportsById = new Map(influencerReports.map((item) => [item.id, item.result]));
   const failure = !couponResult.ok
     ? couponResult.error
     : !influencerResult.ok
@@ -50,6 +56,7 @@ export default async function PricingPage({ searchParams }: PageProps) {
         </header>
         <form action={createCoupon} className="inline-create coupon-form">
           <input name="code" placeholder="WELCOME10" required />
+          <select name="couponClass"><option value="SITE_WIDE">Site-wide</option><option value="CUSTOMER_CREDIT">Customer credit</option><option value="INFLUENCER">Influencer</option></select>
           <select name="type">
             <option value="PERCENTAGE">Percentage (basis points)</option>
             <option value="FIXED">Fixed (pence)</option>
@@ -62,6 +69,16 @@ export default async function PricingPage({ searchParams }: PageProps) {
           </select>
           <input name="startsAt" type="datetime-local" required />
           <input name="endsAt" type="datetime-local" required />
+          <input name="minimumSpendMinor" type="number" min="0" placeholder="Min spend (pence)" />
+          <input name="maximumDiscountMinor" type="number" min="1" placeholder="Max discount (pence)" />
+          <input name="maxUses" type="number" min="1" placeholder="Total use limit" />
+          <input name="perCustomerLimit" type="number" min="1" defaultValue="1" aria-label="Uses per customer" />
+          <select name="influencerId"><option value="">No influencer</option>{influencers.map(item=><option key={item.id} value={item.id}>{item.displayName}</option>)}</select>
+          <select name="lockedUserId"><option value="">Any customer</option>{customers.map(item=><option key={item.id} value={item.id}>{item.email}</option>)}</select>
+          <select name="categoryIds" multiple aria-label="Eligible categories">{categories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <select name="productIds" multiple aria-label="Eligible products">{products.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <input name="attributionWindowDays" type="number" min="1" max="365" defaultValue="30" aria-label="Attribution window days" />
+          <label className="inline-checkbox"><input name="firstOrderOnly" type="checkbox" /> First order only</label>
           <button className="button button-primary" type="submit">
             Create coupon
           </button>
@@ -155,6 +172,7 @@ export default async function PricingPage({ searchParams }: PageProps) {
                   <small>{item.code}</small>
                 </div>
                 <span>{(item.commissionBps / 100).toFixed(2)}%</span>
+                <span>{(() => { const report = reportsById.get(item.id); return report?.ok ? `${report.data.orders} orders` : 'Report unavailable'; })()}</span>
                 <span className={`status-badge ${item.active ? 'status-active' : 'status-down'}`}>
                   <span />
                   {item.active ? 'Active' : 'Off'}

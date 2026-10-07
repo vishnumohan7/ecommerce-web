@@ -38,7 +38,27 @@ export interface Product {
   shelfLifeDays: number | null;
   ratingAverageBps: number;
   ratingCount: number;
+  variants?: Array<{
+    id: string;
+    sku: string;
+    name: string;
+    priceMinor: string;
+    currency: string;
+    packSize: string | null;
+    weightGrams: number | null;
+    abv: string | null;
+    flavour: string | null;
+    attributes: Record<string, string>;
+  }>;
+  images?: Array<{
+    id: string;
+    url: string;
+    altText: string;
+    position: number;
+  }>;
 }
+
+export interface Warehouse { id: string; code: string; name: string; active: boolean }
 
 export interface SearchResponse {
   items: Array<
@@ -169,6 +189,20 @@ export interface FulfilmentGroup {
   status: string;
   updatedAt: string;
 }
+export interface PickList {
+  id: string;
+  status: string;
+  items: Array<{
+    id: string;
+    requested: number;
+    picked: number;
+    outcome: string | null;
+    completedAt: string | null;
+    storageType: string;
+    aisle: string;
+    orderItem: OrderLine | null;
+  }>;
+}
 
 export interface OrderDetail extends OrderSummary {
   subtotalMinor: string;
@@ -252,6 +286,12 @@ export interface CustomerSummary {
   createdAt: string;
   orderCount: number;
   spendMinor: string;
+}
+export interface CustomerDetail extends Omit<CustomerSummary, 'orderCount' | 'spendMinor'> {
+  updatedAt: string;
+  addresses: Array<{ id: string; label: string; line1: string; line2: string | null; city: string; postcode: string; country: string; isDefault: boolean }>;
+  orders: Array<{ id: string; orderNumber: number; orderNumberYear: number; totalMinor: string; paymentStatus: string; fulfilmentStatus: string; createdAt: string }>;
+  reviews: Array<{ id: string; productId: string; rating: number; title: string | null; body: string; status: string; createdAt: string }>;
 }
 export interface InventoryRow {
   id: string;
@@ -356,6 +396,9 @@ export interface ContentData {
     active: boolean;
     startsAt: string | null;
     endsAt: string | null;
+    imageUrl: string;
+    mobileImageUrl: string | null;
+    linkUrl: string | null;
   }>;
   blocks: Array<{
     id: string;
@@ -363,6 +406,7 @@ export interface ContentData {
     title: string | null;
     position: number;
     active: boolean;
+    content: Record<string, unknown>;
   }>;
   pages: Array<{
     id: string;
@@ -371,6 +415,7 @@ export interface ContentData {
     title: string;
     published: boolean;
     updatedAt: string;
+    content: string;
   }>;
 }
 export interface PrivacyRequestRow {
@@ -448,6 +493,28 @@ export async function adminMutation<T>(
   }
 }
 
+export async function adminFormMutation<T>(path: string, body: FormData): Promise<ApiResult<T>> {
+  const token = await adminToken();
+  if (!token)
+    return { ok: false, error: 'ADMIN_API_TOKEN is not configured for write operations.' };
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { accept: 'application/json', authorization: `Bearer ${token}` },
+      body,
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
+      return { ok: false, error: payload?.message ?? payload?.error ?? `API returned ${String(response.status)}.` };
+    }
+    return { ok: true, data: (await response.json()) as T };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'The upload failed.' };
+  }
+}
+
 async function adminToken() {
   const cookieStore = await cookies();
   return cookieStore.get('denes_admin_access')?.value ?? process.env.ADMIN_API_TOKEN;
@@ -494,6 +561,9 @@ export function fetchOrders(filters: Record<string, string | undefined> = {}) {
 export function fetchOrder(id: string) {
   return get<OrderDetail>(`/api/v1/admin/orders/${encodeURIComponent(id)}`, true);
 }
+export function fetchPickList(id: string) {
+  return get<PickList>(`/api/v1/admin/orders/${encodeURIComponent(id)}/pick-list`, true);
+}
 export function fetchReturns(filters: { status?: string; orderId?: string } = {}) {
   const params = new URLSearchParams();
   if (filters.status) params.set('status', filters.status);
@@ -512,26 +582,38 @@ export function fetchSearch(query: string) {
 export function fetchDashboard() {
   return get<DashboardMetrics>('/api/v1/admin/dashboard', true);
 }
-export function fetchSalesReport() {
-  return get<SalesReport>('/api/v1/admin/reports/sales', true);
+function reportQuery(from?: string, to?: string) {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  return params.size ? `?${params}` : '';
 }
-export function fetchCustomerReport() {
+export function fetchSalesReport(from?: string, to?: string) {
+  return get<SalesReport>(`/api/v1/admin/reports/sales${reportQuery(from, to)}`, true);
+}
+export function fetchCustomerReport(from?: string, to?: string) {
   return get<{
     customers: number;
     repeatCustomers: number;
     topCustomers: Array<{ userId: string; orders: number; spendMinor: string }>;
-  }>('/api/v1/admin/reports/customers', true);
+  }>(`/api/v1/admin/reports/customers${reportQuery(from, to)}`, true);
 }
-export function fetchProductReport() {
+export function fetchProductReport(from?: string, to?: string) {
   return get<
     Array<{ productId: string; name: string; sku: string; units: number; revenueMinor: string }>
-  >('/api/v1/admin/reports/products', true);
+  >(`/api/v1/admin/reports/products${reportQuery(from, to)}`, true);
 }
-export function fetchCouponReport() {
+export function fetchCouponReport(from?: string, to?: string) {
   return get<Array<{ couponId: string; code: string; uses: number; discountMinor: string }>>(
-    '/api/v1/admin/reports/coupons',
+    `/api/v1/admin/reports/coupons${reportQuery(from, to)}`,
     true,
   );
+}
+export function fetchCategoryReport(from?: string, to?: string) {
+  return get<Array<{ categoryId: string; name: string; units: number; revenueMinor: string }>>(`/api/v1/admin/reports/categories${reportQuery(from, to)}`, true);
+}
+export function fetchInfluencerReport(id: string) {
+  return get<{ orders: number; revenueMinor: string | null; commissionMinor: string | null; currency: string }>(`/api/v1/admin/influencers/${encodeURIComponent(id)}/report`, true);
 }
 export function fetchCustomers(query = '') {
   return get<CustomerSummary[]>(
@@ -539,8 +621,14 @@ export function fetchCustomers(query = '') {
     true,
   );
 }
+export function fetchCustomer(id: string) {
+  return get<CustomerDetail>(`/api/v1/admin/customers/${encodeURIComponent(id)}`, true);
+}
 export function fetchInventory() {
   return get<InventoryRow[]>('/api/v1/inventory', true);
+}
+export function fetchWarehouses() {
+  return get<Warehouse[]>('/api/v1/inventory/warehouses', true);
 }
 export function fetchAuditLog() {
   return get<AuditRow[]>('/api/v1/admin/audit-log', true);

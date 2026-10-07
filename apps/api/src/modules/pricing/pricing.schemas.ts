@@ -32,6 +32,8 @@ export const couponCreateSchema = z
     categoryIds: z.array(z.string().uuid()).default([]),
     brandIds: z.array(z.string().uuid()).default([]),
     influencerId: z.string().uuid().nullable().optional(),
+    lockedUserId: z.string().uuid().nullable().optional(),
+    returnRequestId: z.string().uuid().nullable().optional(),
     attributionWindowDays: z.number().int().min(1).max(365).default(30),
   })
   .superRefine((value, context) => {
@@ -65,6 +67,8 @@ export const couponUpdateSchema = z.object({
   categoryIds: z.array(z.string().uuid()).optional(),
   brandIds: z.array(z.string().uuid()).optional(),
   influencerId: z.string().uuid().nullable().optional(),
+  lockedUserId: z.string().uuid().nullable().optional(),
+  returnRequestId: z.string().uuid().nullable().optional(),
   attributionWindowDays: z.number().int().min(1).max(365).optional(),
   active: z.boolean().optional(),
 });

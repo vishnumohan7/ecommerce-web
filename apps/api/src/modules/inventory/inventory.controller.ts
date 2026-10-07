@@ -8,6 +8,7 @@ import { InventoryService } from './inventory.service';
 @Controller('api/v1/inventory')
 export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}
+  @Get('warehouses') @RequirePermissions('inventory.read') @ApiOperation({ summary: 'List active stock warehouses' }) warehouses() { return this.inventory.warehouses(); }
   @Get() @RequirePermissions('inventory.read') @ApiOperation({ summary: 'List inventory with product details' }) list() { return this.inventory.list(); }
   @RequirePermissions('inventory.write')
   @Post(':id/reservations') @ApiOperation({ summary: 'Reserve stock atomically' }) reserve(@Param('id') id: string, @Body() body: { quantity: number; reference?: string }) { return this.inventory.reserve(id, body.quantity, body.reference); }
