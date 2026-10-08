@@ -35,13 +35,10 @@ export function AuthForm({ mode }: Readonly<{ mode: Mode }>) {
                 : 'password/reset';
       const body = mode === 'otp' ? { challengeId, code: values.code } : values;
       const data = await browserApi<{
-        accessToken?: string;
-        refreshToken?: string;
+        authenticated?: boolean;
         accepted?: boolean;
       }>(`/api/v1/auth/${endpoint}`, { method: 'POST', body: JSON.stringify(body) });
-      if (data.accessToken) {
-        localStorage.setItem('denes_access_token', data.accessToken);
-        if (data.refreshToken) localStorage.setItem('denes_refresh_token', data.refreshToken);
+      if (data.authenticated) {
         router.push('/profile');
       } else if (mode === 'register') {
         setMessage('Account created. We sent a verification link to your email address.');

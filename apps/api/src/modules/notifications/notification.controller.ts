@@ -1,13 +1,39 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  Query,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '../../common/auth/auth.decorators';
+import { Public, RequirePermissions } from '../../common/auth/auth.decorators';
+import { AppConfigService } from '../../common/config/app-config.service';
 import { NotificationService } from './notification.service';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
 @Controller('api/v1')
 export class NotificationController {
-  constructor(private readonly notifications: NotificationService) {}
+  constructor(
+    private readonly notifications: NotificationService,
+    private readonly config: AppConfigService,
+  ) {}
+
+  @Public()
+  @Get('system/notifications/process')
+  processScheduled(@Headers('authorization') authorization?: string) {
+    const secret = this.config.values.CRON_SECRET;
+    if (!secret) throw new ServiceUnavailableException('Notification scheduler is not configured');
+    if (authorization !== `Bearer ${secret}`)
+      throw new UnauthorizedException('Invalid scheduler credentials');
+    return this.notifications.process();
+  }
 
   @Get('notification-preferences')
   @RequirePermissions('orders.read')

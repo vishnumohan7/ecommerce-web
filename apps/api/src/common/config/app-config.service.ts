@@ -29,6 +29,7 @@ const schema = z.object({
   MEILI_MASTER_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  CRON_SECRET: z.string().min(32).optional(),
 });
 export type AppConfig = z.infer<typeof schema>;
 @Injectable()

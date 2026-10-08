@@ -11,6 +11,7 @@ import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.s
 import { TenantContext } from '../../common/tenancy/tenant-context';
 import { CartService } from '../cart/cart.service';
 import { PaymentService } from '../payments/payment.service';
+import { NotificationService } from '../notifications/notification.service';
 import { ReturnService } from '../returns/return.service';
 import { renderAlcoholComplianceCsv, renderAlcoholCompliancePdf } from './compliance.renderer';
 import { renderInvoicePdf } from './invoice.renderer';
@@ -66,6 +67,7 @@ export class OrderService {
     private readonly carts: CartService,
     private readonly payments: PaymentService,
     @Optional() private readonly returns?: ReturnService,
+    @Optional() private readonly notifications?: NotificationService,
   ) {}
 
   async customerList() {
@@ -142,7 +144,7 @@ export class OrderService {
     const input = fulfilmentTransitionSchema.parse(raw);
     const tenantId = TenantContext.requireTenantId();
     const actorId = this.userId();
-    return this.db.transaction(async (tx) => {
+    const updated = await this.db.transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "OrderFulfilmentGroup" WHERE "tenantId" = ${tenantId}::uuid AND "id" = ${groupId}::uuid FOR UPDATE`;
       const group = await tx.orderFulfilmentGroup.findFirst({
         where: { tenantId, id: groupId, orderId },
@@ -224,6 +226,8 @@ export class OrderService {
       });
       return updated;
     });
+    await this.notifications?.process(100);
+    return updated;
   }
 
   async invoice(id: string, admin = false): Promise<{ filename: string; pdf: Buffer }> {

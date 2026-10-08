@@ -1,4 +1,98 @@
 'use client';
-import Link from 'next/link'; import { FormEvent, useEffect, useState } from 'react'; import { browserApi } from '../../lib/store-api';
-interface ProfileData { id: string; email: string; firstName: string; lastName: string; phone: string | null; createdAt: string }
-export default function Profile() { const [profile, setProfile] = useState<ProfileData | null>(null); const [error, setError] = useState(''); const [message, setMessage] = useState(''); useEffect(() => { void browserApi<ProfileData>('/api/v1/profile').then(setProfile).catch((reason: Error) => setError(reason.message)); }, []); async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setMessage('Saving…'); const values = Object.fromEntries(new FormData(event.currentTarget)); try { const updated = await browserApi<ProfileData>('/api/v1/profile', { method: 'PATCH', body: JSON.stringify({ firstName: values.firstName, lastName: values.lastName, phone: values.phone || null }) }); setProfile(updated); setMessage('Profile saved.'); } catch (reason) { setMessage(reason instanceof Error ? reason.message : 'Could not save'); } } function logout() { localStorage.removeItem('denes_access_token'); localStorage.removeItem('denes_refresh_token'); location.href = '/'; } if (error) return <main className="section"><div className="empty-state"><h1>My account</h1><p>{error}</p><Link className="button" href="/auth/login">Sign in</Link></div></main>; return <main className="section narrow"><p className="eyebrow">Account</p><h1>My profile</h1>{!profile ? <div className="skeleton">Loading account…</div> : <form className="form-card" onSubmit={save}><label>Email address<input disabled value={profile.email} /></label><div className="form-grid"><label>First name<input required name="firstName" defaultValue={profile.firstName} /></label><label>Last name<input required name="lastName" defaultValue={profile.lastName} /></label></div><label>Phone<input name="phone" type="tel" defaultValue={profile.phone ?? ''} /></label><button className="button">Save profile</button>{message && <p role="status">{message}</p>}<div className="account-links"><Link href="/orders">Orders</Link><Link href="/addresses">Addresses</Link><Link href="/wishlist">Wishlist</Link><Link href="/privacy">Privacy</Link><button type="button" onClick={logout}>Sign out</button></div></form>}</main>; }
+import Link from 'next/link';
+import { FormEvent, useEffect, useState } from 'react';
+import { browserApi } from '../../lib/store-api';
+interface ProfileData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  createdAt: string;
+}
+export default function Profile() {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  useEffect(() => {
+    void browserApi<ProfileData>('/api/v1/profile')
+      .then(setProfile)
+      .catch((reason: Error) => setError(reason.message));
+  }, []);
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage('Saving…');
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    try {
+      const updated = await browserApi<ProfileData>('/api/v1/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          phone: values.phone || null,
+        }),
+      });
+      setProfile(updated);
+      setMessage('Profile saved.');
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : 'Could not save');
+    }
+  }
+  async function logout() {
+    await browserApi('/api/v1/auth/logout', { method: 'POST', body: '{}' }).catch(() => undefined);
+    location.href = '/';
+  }
+  if (error)
+    return (
+      <main className="section">
+        <div className="empty-state">
+          <h1>My account</h1>
+          <p>{error}</p>
+          <Link className="button" href="/auth/login">
+            Sign in
+          </Link>
+        </div>
+      </main>
+    );
+  return (
+    <main className="section narrow">
+      <p className="eyebrow">Account</p>
+      <h1>My profile</h1>
+      {!profile ? (
+        <div className="skeleton">Loading account…</div>
+      ) : (
+        <form className="form-card" onSubmit={save}>
+          <label>
+            Email address
+            <input disabled value={profile.email} />
+          </label>
+          <div className="form-grid">
+            <label>
+              First name
+              <input required name="firstName" defaultValue={profile.firstName} />
+            </label>
+            <label>
+              Last name
+              <input required name="lastName" defaultValue={profile.lastName} />
+            </label>
+          </div>
+          <label>
+            Phone
+            <input name="phone" type="tel" defaultValue={profile.phone ?? ''} />
+          </label>
+          <button className="button">Save profile</button>
+          {message && <p role="status">{message}</p>}
+          <div className="account-links">
+            <Link href="/orders">Orders</Link>
+            <Link href="/addresses">Addresses</Link>
+            <Link href="/wishlist">Wishlist</Link>
+            <Link href="/privacy">Privacy</Link>
+            <button type="button" onClick={() => void logout()}>
+              Sign out
+            </button>
+          </div>
+        </form>
+      )}
+    </main>
+  );
+}

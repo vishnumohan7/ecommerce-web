@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.s
 import { TenantContext } from '../../common/tenancy/tenant-context';
 import type { PricingIdentity } from '../pricing/pricing.service';
 import { CheckoutService } from '../checkout/checkout.service';
+import { NotificationService } from '../notifications/notification.service';
 import { verifyStripeSignature } from './payment.providers';
 import { allocateCommerceNumber } from './commerce-number';
 
@@ -48,6 +50,7 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
     private readonly checkout: CheckoutService,
     private readonly config: AppConfigService,
     @Inject(TOKENS.Payment) private readonly provider: PaymentProvider,
+    @Optional() private readonly notifications?: NotificationService,
   ) {}
 
   onModuleInit(): void {
@@ -213,6 +216,7 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
         data: { status: 'PROCESSING', attempts: { increment: 1 } },
       });
       await this.process(webhookEventId, event);
+      await this.notifications?.process(100);
     } catch (error) {
       await this.db.transaction(async (tx) => {
         await tx.webhookEvent.update({

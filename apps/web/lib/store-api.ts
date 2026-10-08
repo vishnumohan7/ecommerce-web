@@ -1,5 +1,7 @@
 export const API_BASE = (
-  process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3000'
+  process.env.API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  'http://127.0.0.1:3000'
 ).replace(/\/$/, '');
 
 export interface Product {
@@ -40,13 +42,16 @@ export interface Category {
   path: string;
   imageUrl?: string | null;
 }
-export interface Brand { id: string; name: string; slug: string; imageUrl?: string | null }
+export interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+}
 
 export function productImage(product: Pick<Product, 'imageUrl' | 'images'>) {
   return (
-    product.imageUrl ??
-    product.images?.find((image) => /^https?:\/\//.test(image.url))?.url ??
-    null
+    product.imageUrl ?? product.images?.find((image) => /^https?:\/\//.test(image.url))?.url ?? null
   );
 }
 
@@ -70,7 +75,7 @@ export async function serverApi<T>(path: string, headers?: HeadersInit): Promise
 export async function browserApi<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api/store${path}`, {
     ...init,
-    headers: { 'content-type': 'application/json', ...authHeader(), ...init?.headers },
+    headers: { 'content-type': 'application/json', ...init?.headers },
   });
   const data = (await response.json().catch(() => ({}))) as T & {
     message?: string;
@@ -78,10 +83,4 @@ export async function browserApi<T>(path: string, init?: RequestInit): Promise<T
   };
   if (!response.ok) throw new Error(data.message ?? data.error?.message ?? 'Request failed');
   return data;
-}
-
-export function authHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = window.localStorage.getItem('denes_access_token');
-  return token ? { authorization: `Bearer ${token}` } : {};
 }

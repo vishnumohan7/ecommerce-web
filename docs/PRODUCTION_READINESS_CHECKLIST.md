@@ -65,7 +65,7 @@ Exit gate: no user-facing or database behaviour depends on tenant selection, lic
 - [ ] Replace/remove seeded fixture media and non-client catalogue records.
 - [ ] Verify every migration is applied and capture a schema checksum.
 - [ ] Run and document a Supabase backup-and-restore drill.
-- [ ] Configure scheduled processing for outbox, notifications, reservations and retention jobs.
+- [ ] Configure scheduled processing for reservations and retention jobs. Notification processing now has a secured ten-minute Vercel schedule.
 
 Exit gate: a clean production deployment can be recreated from Git, migrations and documented secrets, and restored from backup.
 
@@ -79,7 +79,7 @@ Exit gate: a clean production deployment can be recreated from Git, migrations a
 - [x] Do not expose verification tokens in production API responses.
 - [x] Queue and attempt password-reset emails with single-use expiring links.
 - [ ] Implement refresh-token rotation in the storefront and admin sessions.
-- [ ] Move storefront authentication away from browser `localStorage` to secure HTTP-only session cookies.
+- [x] Move storefront authentication away from browser `localStorage` to secure HTTP-only session cookies, with refresh rotation and server-side logout revocation.
 - [ ] Configure a real OTP/SMS provider if OTP login remains enabled.
 - [ ] Implement the required email fallback when SMS OTP delivery fails.
 - [ ] Either wire Google/Apple login end-to-end or hide their settings until credentials are supplied.
@@ -94,7 +94,7 @@ Exit gate: a new customer can register, verify, log in, reset a password and mai
 - [ ] Configure and verify one real production provider: SMTP or Resend.
 - [ ] Configure authenticated sender domain, SPF, DKIM and DMARC.
 - [x] Replace the development `LOG` provider with a fail-closed production configuration.
-- [ ] Automatically process notification outbox records without an admin button.
+- [x] Automatically process notification outbox records after authentication, payment and fulfilment events, with a secured scheduled retry endpoint.
 - [x] Generate and queue registration verification and password-reset messages.
 - [ ] Send exactly one order confirmation after successful payment finalisation.
 - [ ] Attach the generated PDF invoice to the order confirmation.
