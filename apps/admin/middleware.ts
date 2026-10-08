@@ -62,7 +62,9 @@ export async function middleware(request: NextRequest) {
   const pair = refreshToken ? await rotate(refreshToken) : null;
   if (!pair) {
     if (isLogin) return NextResponse.next();
-    const response = NextResponse.redirect(new URL('/login?error=Your+session+expired.+Please+sign+in+again.', request.url));
+    const hadSession = Boolean(accessToken || refreshToken);
+    const target = hadSession ? '/login?error=Your+session+expired.+Please+sign+in+again.' : '/login';
+    const response = NextResponse.redirect(new URL(target, request.url));
     response.cookies.delete(ACCESS_COOKIE);
     response.cookies.delete(REFRESH_COOKIE);
     response.cookies.delete(REMEMBER_COOKIE);
