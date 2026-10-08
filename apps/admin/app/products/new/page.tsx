@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createProduct } from '../../actions';
+import { ActionMessage } from '../../components/action-message';
 import { ApiNotice } from '../../components/api-notice';
 import { ProductForm } from '../../components/product-form';
 import { fetchBrands, fetchCategories, fetchWarehouses } from '../../lib/api';
@@ -9,8 +10,13 @@ import { fetchBrands, fetchCategories, fetchWarehouses } from '../../lib/api';
 export const metadata: Metadata = { title: 'Add product' };
 export const dynamic = 'force-dynamic';
 
-export default async function NewProductPage() {
-  const [categoryResult, brandResult, warehouseResult] = await Promise.all([
+interface PageProps {
+  searchParams: Promise<{ success?: string; error?: string }>;
+}
+
+export default async function NewProductPage({ searchParams }: Readonly<PageProps>) {
+  const [query, categoryResult, brandResult, warehouseResult] = await Promise.all([
+    searchParams,
     fetchCategories(),
     fetchBrands(),
     fetchWarehouses(),
@@ -30,6 +36,7 @@ export default async function NewProductPage() {
           Cancel
         </Link>
       </section>
+      <ActionMessage success={query.success} error={query.error} />
       <ProductForm
         action={createProduct}
         categories={categoryResult.data.items}

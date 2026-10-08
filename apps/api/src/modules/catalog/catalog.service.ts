@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { TenantContext } from '../../common/tenancy/tenant-context';
@@ -44,6 +44,7 @@ export class CatalogService {
   }
   async create(raw: ProductInput) {
     const input = productInputSchema.parse(raw);
+    await this.ensureProductIdentityIsAvailable(input.sku, input.slug);
     return this.db.transaction(async (tx, tenantId) => {
       const product = await tx.product.create({ data: this.data(input) });
       await tx.outboxMessage.create({
@@ -53,8 +54,10 @@ export class CatalogService {
     });
   }
   async update(id: string, raw: ProductInput) {
-    await this.byId(id);
+    const current = await this.byId(id);
     const input = productInputSchema.parse(raw);
+    if (input.sku !== current.sku || input.slug !== current.slug)
+      await this.ensureProductIdentityIsAvailable(input.sku, input.slug, id);
     return this.db.transaction(async (tx, tenantId) => {
       const product = await tx.product.update({ where: { id, tenantId }, data: this.data(input) });
       await tx.outboxMessage.create({
@@ -143,6 +146,26 @@ export class CatalogService {
         id,
         status: retainHistory ? 'INACTIVE' : null,
       };
+    });
+  }
+  private async ensureProductIdentityIsAvailable(
+    sku: string,
+    slug: string,
+    excludingId?: string,
+  ) {
+    const existing = await this.db.client.product.findFirst({
+      where: {
+        ...(excludingId ? { id: { not: excludingId } } : {}),
+        OR: [{ sku }, { slug }],
+      },
+      select: { id: true, sku: true, slug: true },
+    });
+    if (!existing) return;
+    const duplicateField = existing.sku === sku ? 'SKU' : 'URL slug';
+    throw new ConflictException({
+      code: 'PRODUCT_IDENTITY_EXISTS',
+      message: `A product with this ${duplicateField} already exists. Choose a unique ${duplicateField}.`,
+      details: { existingProductId: existing.id, field: duplicateField },
     });
   }
   private data(input: ProductInput) {
