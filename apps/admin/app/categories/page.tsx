@@ -128,11 +128,12 @@ export default async function CategoriesPage({ searchParams }: Props) {
                       <form action={removeTaxonomy}>
                         <input type="hidden" name="kind" value="category" />
                         <input type="hidden" name="id" value={item.id} />
+                        <input type="hidden" name="cascade" value="true" />
                         <ConfirmSubmitButton
                           className="text-action danger-action"
-                          message={`Archive ${item.name}? Child categories and active products must be removed first.`}
+                          message={`Delete ${item.name} and all of its child categories? This is permanent and will be blocked if any products still use the category group.`}
                         >
-                          Archive
+                          Delete
                         </ConfirmSubmitButton>
                       </form>
                     </div>

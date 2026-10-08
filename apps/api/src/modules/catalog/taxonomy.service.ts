@@ -100,26 +100,35 @@ export class TaxonomyService {
     });
   }
 
-  async deleteCategory(id: string) {
+  async deleteCategory(id: string, cascade = false) {
     const current = await this.db.client.category.findFirst({ where: { id } });
     if (!current) throw new NotFoundException('Category not found');
-    const [products, children] = await Promise.all([
-      this.db.client.product.count({ where: { categoryId: id, status: { not: 'INACTIVE' } } }),
-      this.db.client.category.count({ where: { parentId: id, active: true } }),
-    ]);
-    if (products > 0 || children > 0)
+    const subtree = await this.db.client.category.findMany({
+      where: { OR: [{ id }, { path: { startsWith: `${current.path}/` } }] },
+      select: { id: true, name: true, path: true },
+      orderBy: { path: 'desc' },
+    });
+    const descendants = subtree.filter((category) => category.id !== id);
+    if (descendants.length > 0 && !cascade)
+      throw new ConflictException({
+        code: 'CATEGORY_HAS_CHILDREN',
+        message: 'This category contains child categories. Confirm deletion of the complete category group.',
+        details: { children: descendants.length },
+      });
+    const ids = subtree.map((category) => category.id);
+    const products = await this.db.client.product.count({ where: { categoryId: { in: ids } } });
+    if (products > 0)
       throw new ConflictException({
         code: 'CATEGORY_IN_USE',
-        message: 'Archive child categories and products before archiving this category',
-        details: { products, children },
+        message: 'Move or delete the products in this category group before deleting it.',
+        details: { products, categories: ids.length },
       });
     return this.db.transaction(async (tx, tenantId) => {
-      const archived = await tx.category.update({
-        where: { id, tenantId },
-        data: { active: false },
+      const deleted = await tx.category.deleteMany({
+        where: { tenantId, id: { in: ids } },
       });
-      await this.audit(tx, 'CATEGORY_ARCHIVED', 'Category', id, current, archived);
-      return { archived: true, id };
+      await this.audit(tx, 'CATEGORY_TREE_DELETED', 'Category', id, subtree, null);
+      return { deleted: true, id, count: deleted.count };
     });
   }
 

@@ -51,8 +51,8 @@ export class TaxonomyController {
   @Delete('categories/:id')
   @RequirePermissions('catalog.write')
   @ApiBearerAuth()
-  deleteCategory(@Param('id') id: string) {
-    return this.taxonomy.deleteCategory(id);
+  deleteCategory(@Param('id') id: string, @Query('cascade') cascade?: string) {
+    return this.taxonomy.deleteCategory(id, cascade === 'true');
   }
   @Post('categories/:id/image')
   @RequirePermissions('catalog.write')

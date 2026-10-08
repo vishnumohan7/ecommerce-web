@@ -110,7 +110,7 @@ Exit gate: the complete lifecycle reaches a real mailbox automatically and is tr
 - [x] Featured and gallery image upload APIs exist.
 - [x] Product listings can display uploaded live media.
 - [x] Variant-owned inventory and inventory ledgers exist.
-- [ ] Fix and verify Add Product from the deployed admin panel.
+- [x] Fix and verify Add Product from the deployed admin panel; successful creation persists product, gallery media and opening stock, while duplicate SKU/slug submissions return a visible conflict message.
 - [ ] Verify edit product can replace featured media and manage gallery media.
 - [ ] Verify variants can be created, edited and deleted with independent SKU, price and stock.
 - [ ] Verify initial stock and subsequent stock adjustments from product edit and inventory screens.
@@ -257,4 +257,3 @@ After each milestone, record:
 3. Focused validation performed and results.
 4. Live URLs or evidence checked.
 5. Outstanding risks, client inputs and rollback notes.
-

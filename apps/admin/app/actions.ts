@@ -267,11 +267,15 @@ export async function createProductVariant(data: FormData) {
 
 export async function removeTaxonomy(data: FormData) {
   const kind = textValue(data, 'kind') === 'brand' ? 'brands' : 'categories';
-  const result = await adminMutation(`/api/v1/${kind}/${textValue(data, 'id')}`, 'DELETE');
+  const cascade = kind === 'categories' && data.get('cascade') === 'true' ? '?cascade=true' : '';
+  const result = await adminMutation(
+    `/api/v1/${kind}/${textValue(data, 'id')}${cascade}`,
+    'DELETE',
+  );
   finish(
     kind === 'brands' ? '/brands' : '/categories',
     result,
-    kind === 'brands' ? 'Brand deleted.' : 'Category archived.',
+    kind === 'brands' ? 'Brand deleted.' : 'Category group deleted.',
   );
 }
 
