@@ -22,6 +22,7 @@ const schema = z.object({
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3001,http://localhost:3002,http://localhost:3003'),
+  STOREFRONT_BASE_URL: z.string().url().default('http://localhost:3001'),
   TURNSTILE_SECRET: z.string().optional(),
   SEARCH_PROVIDER: z.enum(['postgres', 'meilisearch']).default('postgres'),
   MEILI_HOST: z.string().url().default('http://localhost:7700'),

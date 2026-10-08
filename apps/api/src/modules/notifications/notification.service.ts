@@ -18,6 +18,7 @@ import { renderTemplate } from './template.renderer';
 import { renderInvoicePdf } from '../orders/invoice.renderer';
 
 const topicEvents: Record<string, string> = {
+  'auth.email-verification': 'EMAIL_VERIFICATION',
   'order.placed': 'ORDER_PLACED',
   'payment.succeeded': 'PAYMENT_SUCCEEDED',
   'notification.payment-failed': 'PAYMENT_FAILED',
@@ -36,6 +37,10 @@ const topicEvents: Record<string, string> = {
 };
 
 const fallback: Record<string, { subject: string; body: string }> = {
+  EMAIL_VERIFICATION: {
+    subject: 'Verify your Denes account',
+    body: 'Hello {{firstName}},\n\nVerify your email address to activate your Denes account: {{verificationUrl}}\n\nThis link expires in 24 hours.',
+  },
   ORDER_PLACED: { subject: 'Order received', body: 'We have received order {{orderNumber}}.' },
   PAYMENT_SUCCEEDED: {
     subject: 'Payment succeeded',
@@ -323,9 +328,10 @@ export class NotificationService {
       try {
         const provider = this.providers.get(job.channel as NotificationChannel);
         if (!provider) throw new Error(`No ${job.channel} notification provider is configured`);
-        const attachments = job.channel === 'EMAIL' && job.event === 'ORDER_CONFIRMED'
-          ? await this.invoiceAttachments(job.payload as Record<string, unknown>)
-          : undefined;
+        const attachments =
+          job.channel === 'EMAIL' && job.event === 'ORDER_CONFIRMED'
+            ? await this.invoiceAttachments(job.payload as Record<string, unknown>)
+            : undefined;
         const result = await provider.send({
           recipient: job.recipient,
           subject: job.subject,
@@ -492,9 +498,26 @@ export class NotificationService {
     }
     const adminEvent = event === 'LOW_STOCK' || event === 'NEW_ORDER';
     if (!orderId) {
+      if (event === 'EMAIL_VERIFICATION' || event === 'PASSWORD_RESET') {
+        const userId = typeof payload.userId === 'string' ? payload.userId : null;
+        const user = userId ? await this.db.client.user.findFirst({ where: { id: userId } }) : null;
+        const email = typeof payload.email === 'string' ? payload.email : user?.email;
+        if (!email) return null;
+        return {
+          userId: user?.id ?? userId,
+          email,
+          phone: user?.phone,
+          locale: 'en-GB',
+          pushEndpoints: [] as string[],
+          data: payload,
+        };
+      }
       const user = adminEvent
         ? await this.db.client.user.findFirst({
-            where: { role: { in: ['SUPER_ADMIN', 'ADMINISTRATOR', 'STORE_MANAGER'] }, active: true },
+            where: {
+              role: { in: ['SUPER_ADMIN', 'ADMINISTRATOR', 'STORE_MANAGER'] },
+              active: true,
+            },
             orderBy: { createdAt: 'asc' },
           })
         : undefined;
@@ -575,7 +598,8 @@ export class NotificationService {
       this.db.client.orderItem.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } }),
       this.db.client.brandingProfile.findFirst(),
     ]);
-    if (!order || !invoice || !merchant) throw new Error('The order invoice could not be prepared for email');
+    if (!order || !invoice || !merchant)
+      throw new Error('The order invoice could not be prepared for email');
     const deliverySlot = order.deliverySlotId
       ? await this.db.client.deliverySlot.findFirst({ where: { id: order.deliverySlotId } })
       : null;
@@ -612,7 +636,13 @@ export class NotificationService {
         registeredAddress: merchant.registeredAddress as Record<string, unknown>,
       },
     });
-    return [{ filename: `${invoiceNumber}.pdf`, content: pdf.toString('base64'), contentType: 'application/pdf' }];
+    return [
+      {
+        filename: `${invoiceNumber}.pdf`,
+        content: pdf.toString('base64'),
+        contentType: 'application/pdf',
+      },
+    ];
   }
 
   private async marketingAllowed(userId: string | null, channel: NotificationChannel) {

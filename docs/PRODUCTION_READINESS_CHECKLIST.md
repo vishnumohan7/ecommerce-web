@@ -18,20 +18,20 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 
 ## Status summary
 
-| Milestone | Gate | Current status |
-|---|---|---|
-| 0 | Scope and architecture cleanup | In progress |
-| 1 | Production infrastructure and data | In progress |
-| 2 | Authentication and customer accounts | In progress |
-| 3 | Transactional email and notifications | Not production-ready |
-| 4 | Catalogue, media and inventory | In progress |
-| 5 | Customer storefront | In progress |
-| 6 | Checkout, Stripe and order finalisation | Not production-ready |
-| 7 | Orders, fulfilment, invoices and refunds | In progress |
-| 8 | Admin operations and reporting | In progress |
-| 9 | Security, privacy and compliance | In progress |
-| 10 | Reliability, monitoring and performance | Not verified |
-| 11 | UAT and go-live | Not started |
+| Milestone | Gate                                     | Current status       |
+| --------- | ---------------------------------------- | -------------------- |
+| 0         | Scope and architecture cleanup           | In progress          |
+| 1         | Production infrastructure and data       | In progress          |
+| 2         | Authentication and customer accounts     | In progress          |
+| 3         | Transactional email and notifications    | Not production-ready |
+| 4         | Catalogue, media and inventory           | In progress          |
+| 5         | Customer storefront                      | In progress          |
+| 6         | Checkout, Stripe and order finalisation  | Not production-ready |
+| 7         | Orders, fulfilment, invoices and refunds | In progress          |
+| 8         | Admin operations and reporting           | In progress          |
+| 9         | Security, privacy and compliance         | In progress          |
+| 10        | Reliability, monitoring and performance  | Not verified         |
+| 11        | UAT and go-live                          | Not started          |
 
 ---
 
@@ -56,6 +56,7 @@ Exit gate: no user-facing or database behaviour depends on tenant selection, lic
 - [x] API, admin and storefront are deployed to Vercel.
 - [x] Deployments are connected to the GitHub `main` branch.
 - [x] Storefront production `API_BASE_URL` points to the live API.
+- [x] Database access uses portable Prisma/PostgreSQL and media uses an S3-compatible storage port; migration to AWS RDS/Aurora and S3 is not blocked by a Supabase SDK dependency.
 - [ ] Define and verify production, preview and local environment-variable matrices.
 - [ ] Configure custom domains, HTTPS redirects and final CORS origins.
 - [ ] Rotate the exposed Supabase database password and update every deployment safely.
@@ -73,10 +74,10 @@ Exit gate: a clean production deployment can be recreated from Git, migrations a
 - [x] Customer registration, login, JWT and refresh-token foundations exist.
 - [x] Admin login uses permission-bearing API tokens stored in secure HTTP-only cookies.
 - [x] Email-verification and password-reset token models exist.
-- [ ] Send a branded verification email immediately after registration.
-- [ ] Add a customer-facing verification route and success/expired/resend states.
-- [ ] Do not expose verification tokens in production API responses.
-- [ ] Send real password-reset emails with single-use expiring links.
+- [x] Queue and attempt a branded verification email immediately after registration.
+- [x] Add a customer-facing verification route and success/expired/resend states.
+- [x] Do not expose verification tokens in production API responses.
+- [x] Queue and attempt password-reset emails with single-use expiring links.
 - [ ] Implement refresh-token rotation in the storefront and admin sessions.
 - [ ] Move storefront authentication away from browser `localStorage` to secure HTTP-only session cookies.
 - [ ] Configure a real OTP/SMS provider if OTP login remains enabled.
@@ -92,9 +93,9 @@ Exit gate: a new customer can register, verify, log in, reset a password and mai
 - [x] Admin settings support SMTP and Resend credentials.
 - [ ] Configure and verify one real production provider: SMTP or Resend.
 - [ ] Configure authenticated sender domain, SPF, DKIM and DMARC.
-- [ ] Replace the development `LOG` provider with a fail-closed production configuration.
+- [x] Replace the development `LOG` provider with a fail-closed production configuration.
 - [ ] Automatically process notification outbox records without an admin button.
-- [ ] Send registration verification and password-reset messages.
+- [x] Generate and queue registration verification and password-reset messages.
 - [ ] Send exactly one order confirmation after successful payment finalisation.
 - [ ] Attach the generated PDF invoice to the order confirmation.
 - [ ] Send packed, dispatched/out-for-delivery, delivered, payment-failed, refund and return updates.

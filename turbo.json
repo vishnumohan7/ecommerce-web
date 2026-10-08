@@ -10,7 +10,8 @@
         "DEFAULT_TENANT_ID",
         "JWT_ACCESS_SECRET",
         "JWT_ISSUER",
-        "CORS_ORIGINS"
+        "CORS_ORIGINS",
+        "STOREFRONT_BASE_URL"
     ],
     "tasks": {
         "lint": {},

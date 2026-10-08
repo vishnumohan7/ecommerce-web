@@ -42,15 +42,23 @@ export class EmailProvider extends LoggingProvider {
     const root = this.record(stored?.settings);
     const integrations = this.record(root.integrations);
     const email = this.record(integrations.email);
-    const provider = typeof email.provider === 'string' ? email.provider : process.env.EMAIL_PROVIDER?.toUpperCase();
+    const provider =
+      typeof email.provider === 'string'
+        ? email.provider
+        : process.env.EMAIL_PROVIDER?.toUpperCase();
     if (provider === 'SMTP') return this.sendSmtp(message, email);
-    if (provider !== 'RESEND') return super.send(message);
+    if (provider !== 'RESEND') {
+      if (process.env.NODE_ENV === 'production')
+        throw new Error('No production email provider is configured');
+      return super.send(message);
+    }
     const encryptedKey = typeof email.resendApiKey === 'string' ? email.resendApiKey : '';
     const apiKey = encryptedKey
       ? decryptConfigSecret(encryptedKey, this.encryptionKey())
       : process.env.RESEND_API_KEY;
     const from = this.sender(email) || process.env.EMAIL_FROM;
-    if (!apiKey || !from) throw new Error('Resend email is enabled but RESEND_API_KEY or EMAIL_FROM is missing');
+    if (!apiKey || !from)
+      throw new Error('Resend email is enabled but RESEND_API_KEY or EMAIL_FROM is missing');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
@@ -65,13 +73,22 @@ export class EmailProvider extends LoggingProvider {
         subject: message.subject ?? 'Denes Commerce update',
         text: message.body,
         ...(message.attachments?.length
-          ? { attachments: message.attachments.map(({ filename, content }) => ({ filename, content })) }
+          ? {
+              attachments: message.attachments.map(({ filename, content }) => ({
+                filename,
+                content,
+              })),
+            }
           : {}),
       }),
       signal: AbortSignal.timeout(15_000),
     });
-    const payload = (await response.json().catch(() => null)) as { id?: string; message?: string } | null;
-    if (!response.ok || !payload?.id) throw new Error(payload?.message ?? `Email provider returned ${String(response.status)}`);
+    const payload = (await response.json().catch(() => null)) as {
+      id?: string;
+      message?: string;
+    } | null;
+    if (!response.ok || !payload?.id)
+      throw new Error(payload?.message ?? `Email provider returned ${String(response.status)}`);
     return { messageId: payload.id };
   }
 
