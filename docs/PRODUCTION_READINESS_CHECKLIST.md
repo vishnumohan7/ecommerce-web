@@ -13,8 +13,8 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 - [x] No standalone driver application or driver workflow is required.
 - [x] This is a single-client bespoke deployment, not a multitenant or licensed product.
 - [ ] Remove remaining multitenant identifiers, services, schema fields and seed assumptions without breaking live data.
-- [ ] Remove any remaining driver package/artifacts and confirm they are excluded from builds.
-- [ ] Confirm there are no licence, entitlement, reseller or tenant-management screens or APIs.
+- [x] Remove any remaining driver package/artifacts and confirm they are excluded from builds.
+- [x] Confirm there are no licence, entitlement, reseller or tenant-management screens or APIs.
 
 ## Status summary
 
@@ -41,11 +41,11 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 - [x] Exclude Flutter from the current web/admin release.
 - [x] Exclude a standalone driver application and driver-facing UI.
 - [x] Remove licence navigation and screens from the admin panel.
-- [ ] Produce a live-schema inventory of every remaining `tenantId` dependency.
-- [ ] Create a reversible migration plan that preserves all existing production records.
+- [x] Produce a live-schema inventory of every remaining `tenantId` dependency.
+- [x] Create a reversible migration plan that preserves all existing production records.
 - [ ] Remove tenant middleware, tenant settings ownership and tenant-specific compound keys.
 - [ ] Convert business settings, branding, counters, permissions and audit ownership to single-store records.
-- [ ] Remove `apps/driver` and all driver build/deployment references.
+- [x] Remove `apps/driver` and all driver build/deployment references.
 - [ ] Verify storefront, admin, API, invoices, uploads and reporting after cleanup.
 
 Exit gate: no user-facing or database behaviour depends on tenant selection, licence state or a driver application.
@@ -78,7 +78,7 @@ Exit gate: a clean production deployment can be recreated from Git, migrations a
 - [x] Add a customer-facing verification route and success/expired/resend states.
 - [x] Do not expose verification tokens in production API responses.
 - [x] Queue and attempt password-reset emails with single-use expiring links.
-- [ ] Implement refresh-token rotation in the storefront and admin sessions.
+- [x] Implement refresh-token rotation in the storefront and admin sessions.
 - [x] Move storefront authentication away from browser `localStorage` to secure HTTP-only session cookies, with refresh rotation and server-side logout revocation.
 - [ ] Configure a real OTP/SMS provider if OTP login remains enabled.
 - [ ] Implement the required email fallback when SMS OTP delivery fails.
