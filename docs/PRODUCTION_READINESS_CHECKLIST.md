@@ -65,7 +65,7 @@ Exit gate: no user-facing or database behaviour depends on tenant selection, lic
 - [ ] Replace/remove seeded fixture media and non-client catalogue records.
 - [ ] Verify every migration is applied and capture a schema checksum.
 - [ ] Run and document a Supabase backup-and-restore drill.
-- [ ] Configure scheduled processing for reservations and retention jobs. Notification processing now has a secured ten-minute Vercel schedule.
+- [ ] Configure scheduled processing for reservations and retention jobs. Notification events process immediately and have a secured daily retry sweep on Vercel Hobby; use a shorter EventBridge interval after AWS migration.
 
 Exit gate: a clean production deployment can be recreated from Git, migrations and documented secrets, and restored from backup.
 
