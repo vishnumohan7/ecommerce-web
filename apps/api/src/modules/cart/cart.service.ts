@@ -226,15 +226,24 @@ export class CartService {
       orderBy: { createdAt: 'asc' },
     });
     const productIds = items.map((item) => item.productId);
-    const [products, inventory] = await Promise.all([
+    const [products, inventory, productImages] = await Promise.all([
       this.db.client.product.findMany({ where: { id: { in: productIds } } }),
       this.db.client.inventory.groupBy({
         by: ['productId'],
         where: { productId: { in: productIds } },
         _sum: { stockAvailable: true },
       }),
+      this.db.client.productImage.findMany({
+        where: { productId: { in: productIds } },
+        orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+      }),
     ]);
     const productById = new Map(products.map((product) => [product.id, product]));
+    const imageByProduct = new Map<string, string>();
+    productImages.forEach((image) => {
+      if (!imageByProduct.has(image.productId) && /^https?:\/\//.test(image.url))
+        imageByProduct.set(image.productId, image.url);
+    });
     const stockById = new Map(
       inventory.map((entry) => [entry.productId, entry._sum.stockAvailable ?? 0]),
     );
@@ -291,6 +300,7 @@ export class CartService {
         availableStock: available,
         ageRestriction: product.ageRestriction,
         isAlcohol: product.isAlcohol,
+        imageUrl: imageByProduct.get(product.id) ?? null,
       });
     }
     if (removeIds.length > 0)

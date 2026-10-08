@@ -22,10 +22,33 @@ export interface Product {
   onOffer?: boolean;
   categoryName?: string;
   brandName?: string | null;
+  imageUrl?: string | null;
+  images?: Array<{ id: string; url: string; altText: string; position: number }>;
+  variants?: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    priceMinor: string | number;
+    packSize?: string | null;
+  }>;
 }
 
-export interface Category { id: string; name: string; slug: string; path: string }
-export interface Brand { id: string; name: string; slug: string }
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  path: string;
+  imageUrl?: string | null;
+}
+export interface Brand { id: string; name: string; slug: string; imageUrl?: string | null }
+
+export function productImage(product: Pick<Product, 'imageUrl' | 'images'>) {
+  return (
+    product.imageUrl ??
+    product.images?.find((image) => /^https?:\/\//.test(image.url))?.url ??
+    null
+  );
+}
 
 export function money(value: string | number | bigint, currency = 'GBP') {
   const minor = typeof value === 'bigint' ? Number(value) : Number(value);

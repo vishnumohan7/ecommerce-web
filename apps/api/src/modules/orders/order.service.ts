@@ -585,12 +585,26 @@ export class OrderService {
       }),
       this.db.client.auditLog.findMany({ where: { entityId: id }, orderBy: { createdAt: 'asc' } }),
     ]);
+    const productIds = [...new Set(items.map((item) => item.productId))];
+    const productImages = await this.db.client.productImage.findMany({
+      where: { productId: { in: productIds } },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+    });
+    const imageByProduct = new Map<string, string>();
+    productImages.forEach((image) => {
+      if (!imageByProduct.has(image.productId) && /^https?:\/\//.test(image.url))
+        imageByProduct.set(image.productId, image.url);
+    });
+    const storefrontItems = items.map((item) => ({
+      ...item,
+      imageUrl: imageByProduct.get(item.productId) ?? null,
+    }));
     return {
       ...order,
       displayOrderNumber: this.orderNumber(order.orderNumber, order.orderNumberYear),
       sections: {
-        grocery: items.filter((item) => item.orderCategory === 'GROCERY'),
-        alcohol: items.filter((item) => item.orderCategory === 'ALCOHOL'),
+        grocery: storefrontItems.filter((item) => item.orderCategory === 'GROCERY'),
+        alcohol: storefrontItems.filter((item) => item.orderCategory === 'ALCOHOL'),
       },
       fulfilmentGroups,
       payment,
