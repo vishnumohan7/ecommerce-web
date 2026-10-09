@@ -18,20 +18,39 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 
 ## Status summary
 
-| Milestone | Gate                                     | Current status       |
-| --------- | ---------------------------------------- | -------------------- |
-| 0         | Scope and architecture cleanup           | In progress          |
-| 1         | Production infrastructure and data       | In progress          |
-| 2         | Authentication and customer accounts     | In progress          |
-| 3         | Transactional email and notifications    | Not production-ready |
-| 4         | Catalogue, media and inventory           | In progress          |
-| 5         | Customer storefront                      | In progress          |
-| 6         | Checkout, Stripe and order finalisation  | Not production-ready |
-| 7         | Orders, fulfilment, invoices and refunds | In progress          |
-| 8         | Admin operations and reporting           | In progress          |
-| 9         | Security, privacy and compliance         | In progress          |
-| 10        | Reliability, monitoring and performance  | Not verified         |
-| 11        | UAT and go-live                          | Not started          |
+Milestones are strict release gates: a milestone is marked complete only when every item in that gate is complete. The progress column distinguishes completed implementation from remaining launch verification and external configuration.
+
+| Milestone | Gate                                     | Checklist progress | Gate status                         |
+| --------- | ---------------------------------------- | ------------------ | ----------------------------------- |
+| 0         | Scope and architecture cleanup           | 7/10 (70%)         | In progress                         |
+| 1         | Production infrastructure and data       | 5/14 (36%)         | In progress                         |
+| 2         | Authentication and customer accounts     | 9/13 (69%)         | In progress                         |
+| 3         | Transactional email and notifications    | 5/13 (38%)         | Awaiting provider configuration     |
+| 4         | Catalogue, media and inventory           | 9/15 (60%)         | In progress                         |
+| 5         | Customer storefront                      | 3/12 (25%)         | In progress                         |
+| 6         | Checkout, Stripe and order finalisation  | 2/12 (17%)         | Stripe intentionally postponed      |
+| 7         | Orders, fulfilment, invoices and refunds | 3/11 (27%)         | In progress                         |
+| 8         | Admin operations and reporting           | 5/14 (36%)         | In progress                         |
+| 9         | Security, privacy and compliance         | 2/11 (18%)         | Review and client approval required |
+| 10        | Reliability, monitoring and performance  | 1/10 (10%)         | Production verification required    |
+| 11        | UAT and go-live                          | 0/11 (0%)          | Starts after release gates          |
+
+## Admin-only production gate
+
+This gate separates the administrator application from unfinished storefront, Stripe and client-owned launch configuration.
+
+- [x] Admin is deployed and authenticates against the production API.
+- [x] Core catalogue, inventory, promotion, order, return, delivery, pricing, customer, review, content, reporting, settings and audit routes exist.
+- [x] Product media, variants and variant-owned stock controls are implemented.
+- [x] Products, inventory, orders, returns, customers, reviews, audit logs, promotions and notification deliveries use server-side pagination.
+- [x] Promotion creation, scheduling, editing, enable and disable controls are implemented.
+- [x] Notification delivery logs, filters and dead-letter retry controls are implemented.
+- [x] Fulfilment, invoice download and refund foundations are implemented; missing seeded payment aggregates were repaired.
+- [ ] Finish pagination and polished empty/error states on the remaining long-list screens.
+- [ ] Positively verify every admin create/edit/delete and operational workflow against the deployed API.
+- [ ] Configure a real email provider and verify delivery/resend from the admin.
+- [ ] Complete RBAC/IDOR, accessibility and common-desktop visual review.
+- [ ] Remove or anonymise fixture catalogue and personal data before launch.
 
 ---
 
@@ -180,13 +199,15 @@ Exit gate: one paid order can be fulfilled, invoiced, returned/refunded and audi
 - [x] Admin shell and core operational modules are deployed.
 - [x] Products, categories, brands, inventory, promotions, orders, returns, delivery, pricing, customers, reviews, content, reports, roles, settings and audit routes exist.
 - [ ] Resolve all create/edit/delete form refreshes, server exceptions and `[object Object]` error messages.
-- [ ] Add consistent server-side pagination to every long table.
-- [ ] Verify promotions can be created, scheduled, edited, enabled and disabled.
+- [x] Add authenticated server-side pagination to products, inventory, orders, returns, customers, reviews, audit logs, promotions and notification deliveries.
+- [ ] Add consistent server-side pagination to the remaining long tables.
+- [x] Promotions can be created, scheduled, edited, enabled and disabled.
 - [ ] Verify coupons, delivery zones/slots/charges, VAT rules and return policies affect runtime behaviour.
 - [ ] Complete product-wise, customer-wise, date-wise, category-wise, coupon-wise and order-status reporting.
 - [ ] Add CSV export for operational reports where required.
 - [ ] Verify customer block/unblock, order history and privacy requests.
-- [ ] Verify notification templates, provider settings, delivery logs and resends.
+- [x] Notification delivery logs, status/search filters and controlled dead-letter retries are available in admin.
+- [ ] Configure a real provider and verify templates, deliveries and resends with a real mailbox.
 - [ ] Enforce RBAC in both navigation and every API endpoint.
 - [ ] Complete keyboard/accessibility and visual regression review at common desktop sizes.
 
