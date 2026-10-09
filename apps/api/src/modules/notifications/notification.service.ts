@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { TenantContext } from '../../common/tenancy/tenant-context';
@@ -269,11 +269,33 @@ export class NotificationService {
     return { deleted: true };
   }
 
-  deliveryLog(status?: string) {
-    return this.db.client.notificationDelivery.findMany({
-      where: status ? { status } : {},
+  async deliveryLog(input: Record<string, string | undefined>) {
+    const pageSize = positiveInteger(input.pageSize, 25, 100);
+    const requestedPage = positiveInteger(input.page, 1, 100_000);
+    const where: Prisma.NotificationDeliveryWhereInput = {
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.q ? { OR: [{ recipient: { contains: input.q, mode: 'insensitive' } }, { event: { contains: input.q, mode: 'insensitive' } }] } : {}),
+    };
+    const total = await this.db.client.notificationDelivery.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, pageCount);
+    const items = await this.db.client.notificationDelivery.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
-      take: 250,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    return { items, page, pageSize, total, pageCount };
+  }
+
+  async retryDelivery(id: string) {
+    const delivery = await this.db.client.notificationDelivery.findFirst({ where: { id } });
+    if (!delivery) throw new NotFoundException('Notification delivery not found');
+    if (!['DEAD_LETTER', 'FAILED'].includes(delivery.status))
+      throw new ConflictException('Only failed deliveries can be retried');
+    return this.db.client.notificationDelivery.update({
+      where: { id },
+      data: { status: 'QUEUED', attempts: 0, lastError: null, availableAt: new Date() },
     });
   }
 
@@ -661,4 +683,9 @@ export class NotificationService {
     if (!id) throw new BadRequestException('Authenticated user context is required');
     return id;
   }
+}
+
+function positiveInteger(value: string | undefined, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
 }

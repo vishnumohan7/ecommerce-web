@@ -121,8 +121,14 @@ export class NotificationController {
 
   @Get('admin/notification-deliveries')
   @RequirePermissions('settings.read')
-  deliveryLog(@Query('status') status?: string) {
-    return this.notifications.deliveryLog(status);
+  deliveryLog(@Query() query: Record<string, string | undefined>) {
+    return this.notifications.deliveryLog(query);
+  }
+
+  @Post('admin/notification-deliveries/:id/retry')
+  @RequirePermissions('settings.write')
+  retryDelivery(@Param('id') id: string) {
+    return this.notifications.retryDelivery(id);
   }
 
   @Post('admin/notifications/process')

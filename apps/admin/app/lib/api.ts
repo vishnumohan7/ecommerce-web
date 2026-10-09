@@ -781,8 +781,11 @@ export function fetchPromotions(page = 1) {
 export function fetchNotificationTemplates() {
   return get<NotificationTemplateRow[]>('/api/v1/admin/notification-templates', true);
 }
-export function fetchNotificationDeliveries() {
-  return get<NotificationDeliveryRow[]>('/api/v1/admin/notification-deliveries', true);
+export function fetchNotificationDeliveries(filters: { page?: number; status?: string; q?: string } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
+  if (filters.status) params.set('status', filters.status);
+  if (filters.q) params.set('q', filters.q);
+  return get<NumberedPageResult<NotificationDeliveryRow>>(`/api/v1/admin/notification-deliveries?${params}`, true);
 }
 export function fetchContent() {
   return get<ContentData>('/api/v1/admin/content', true);

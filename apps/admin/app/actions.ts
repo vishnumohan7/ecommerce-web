@@ -785,6 +785,12 @@ export async function processNotifications() {
   finish('/notifications', result, 'Queued notifications processed.');
 }
 
+export async function retryNotification(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/admin/notification-deliveries/${encodeURIComponent(id)}/retry`, 'POST');
+  finish('/notifications', result, 'Notification queued for retry.');
+}
+
 export async function createBanner(data: FormData) {
   const result = await adminMutation('/api/v1/admin/content/banners', 'POST', {
     title: textValue(data, 'title'),
