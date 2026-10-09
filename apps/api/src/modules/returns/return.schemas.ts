@@ -51,6 +51,8 @@ export const createRefundSchema = z
   });
 
 export const returnListSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(25),
   status: z.enum(['REQUESTED', 'APPROVED', 'REJECTED', 'REFUND_PENDING', 'COMPLETED']).optional(),
   orderId: z.string().uuid().optional(),
 });

@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { reviewReturn } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
+import { TablePagination } from '../components/table-pagination';
 import { fetchReturns } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Returns & refunds' };
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; orderId?: string; success?: string; error?: string }>;
+  searchParams: Promise<{ status?: string; orderId?: string; page?: string; success?: string; error?: string }>;
 }
 
 function badgeClass(status: string) {
@@ -24,8 +25,9 @@ export default async function ReturnsPage({ searchParams }: PageProps) {
   const result = await fetchReturns({
     ...(query.status ? { status: query.status } : {}),
     ...(query.orderId ? { orderId: query.orderId } : {}),
+    page: Math.max(1, Number(query.page) || 1),
   });
-  const requests = result.ok ? result.data : [];
+  const requests = result.ok ? result.data.items : [];
 
   return (
     <>
@@ -35,7 +37,7 @@ export default async function ReturnsPage({ searchParams }: PageProps) {
           <h1>Returns & refunds</h1>
           <p>Review customer return requests and follow their refund progress.</p>
         </div>
-        <span className="count-pill">{requests.length} requests</span>
+        <span className="count-pill">{result.ok ? result.data.total : 0} requests</span>
       </section>
       <ActionMessage success={query.success} error={query.error} />
       {!result.ok && <ApiNotice message={result.error} />}
@@ -135,6 +137,7 @@ export default async function ReturnsPage({ searchParams }: PageProps) {
             <p>New customer requests will appear in this review queue.</p>
           </div>
         ) : null}
+        {result.ok && <TablePagination basePath="/returns" page={result.data.page} pageCount={result.data.pageCount} total={result.data.total} params={{ ...(query.status ? { status: query.status } : {}), ...(query.orderId ? { orderId: query.orderId } : {}) }} />}
       </article>
     </>
   );

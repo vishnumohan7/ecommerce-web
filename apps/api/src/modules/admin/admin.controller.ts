@@ -16,11 +16,11 @@ export class AdminController {
   @Get('reports/coupons') @RequirePermissions('reports.read') couponReport(@Query() query: Record<string, string | undefined>) { return this.admin.couponReport(query); }
   @Get('reports/categories') @RequirePermissions('reports.read') categoryReport(@Query() query: Record<string, string | undefined>) { return this.admin.categoryReport(query); }
 
-  @Get('customers') @RequirePermissions('users.read') customers(@Query('q') query?: string) { return this.admin.customers(query); }
+  @Get('customers') @RequirePermissions('users.read') customers(@Query() query: Record<string, string | undefined>) { return this.admin.customers(query); }
   @Get('customers/:id') @RequirePermissions('users.read') customer(@Param('id') id: string) { return this.admin.customer(id); }
   @Patch('customers/:id') @RequirePermissions('users.write') updateCustomer(@Param('id') id: string, @Body() body: unknown) { return this.admin.updateCustomer(id, body); }
   @Get('inventory') @RequirePermissions('inventory.read') inventory() { return this.admin.inventory(); }
-  @Get('reviews') @RequirePermissions('catalog.read') reviews(@Query('status') status?: string) { return this.admin.reviews(status); }
+  @Get('reviews') @RequirePermissions('catalog.read') reviews(@Query() query: Record<string, string | undefined>) { return this.admin.reviews(query); }
   @Get('promotions') @RequirePermissions('catalog.read') promotions() { return this.admin.promotions(); }
   @Get('content') @RequirePermissions('settings.read') content() { return this.admin.content(); }
   @Post('content/banners') @RequirePermissions('settings.write') createBanner(@Body() body: unknown) { return this.admin.createBanner(body); }
@@ -34,5 +34,5 @@ export class AdminController {
 
   @Get('settings') @RequirePermissions('settings.read') settings() { return this.admin.settings(); }
   @Patch('settings') @RequirePermissions('settings.write') updateSettings(@Body() body: unknown) { return this.admin.updateSettings(body); }
-  @Get('audit-log') @RequirePermissions('audit.read') audit(@Query('entity') entity?: string, @Query('action') action?: string, @Query('actorId') actorId?: string) { return this.admin.auditLog({ entity, action, actorId }); }
+  @Get('audit-log') @RequirePermissions('audit.read') audit(@Query() query: Record<string, string | undefined>) { return this.admin.auditLog(query); }
 }

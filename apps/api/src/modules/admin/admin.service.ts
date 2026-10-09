@@ -162,15 +162,22 @@ export class AdminService {
     return rows.map((row) => ({ couponId: row.couponId, code: codes.get(row.couponId) ?? 'Unknown', uses: row._count, discountMinor: (row._sum.discountMinor ?? 0n).toString() }));
   }
 
-  async customers(query?: string) {
+  async customers(input: Record<string, string | undefined>) {
+    const query = input.q?.trim();
+    const pageSize = boundedInteger(input.pageSize, 25, 100);
+    const requestedPage = boundedInteger(input.page, 1, 100_000);
+    const where: Prisma.UserWhereInput = { role: 'CUSTOMER', ...(query ? { OR: [{ email: { contains: query, mode: 'insensitive' } }, { firstName: { contains: query, mode: 'insensitive' } }, { lastName: { contains: query, mode: 'insensitive' } }] } : {}) };
+    const total = await this.db.client.user.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, pageCount);
     const users = await this.db.client.user.findMany({
-      where: { role: 'CUSTOMER', ...(query ? { OR: [{ email: { contains: query, mode: 'insensitive' } }, { firstName: { contains: query, mode: 'insensitive' } }, { lastName: { contains: query, mode: 'insensitive' } }] } : {}) },
-      orderBy: { createdAt: 'desc' }, take: 100,
+      where,
+      orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize,
       select: { id: true, email: true, firstName: true, lastName: true, phone: true, active: true, tombstonedAt: true, createdAt: true },
     });
     const aggregates = await this.db.client.order.groupBy({ by: ['userId'], where: { userId: { in: users.map((user) => user.id) } }, _count: true, _sum: { totalMinor: true } });
     const stats = new Map(aggregates.map((row) => [row.userId, row]));
-    return users.map((user) => ({ ...user, orderCount: stats.get(user.id)?._count ?? 0, spendMinor: (stats.get(user.id)?._sum.totalMinor ?? 0n).toString() }));
+    return { items: users.map((user) => ({ ...user, orderCount: stats.get(user.id)?._count ?? 0, spendMinor: (stats.get(user.id)?._sum.totalMinor ?? 0n).toString() })), page, pageSize, total, pageCount };
   }
 
   async customer(id: string) {
@@ -216,7 +223,16 @@ export class AdminService {
   }
 
   inventory() { return this.db.client.inventory.findMany({ orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }], take: 250 }); }
-  reviews(status?: string) { return this.db.client.review.findMany({ where: status ? { status: status as 'PENDING' | 'APPROVED' | 'REJECTED' } : {}, orderBy: { createdAt: 'desc' }, take: 200 }); }
+  async reviews(input: Record<string, string | undefined>) {
+    const pageSize = boundedInteger(input.pageSize, 25, 100);
+    const requestedPage = boundedInteger(input.page, 1, 100_000);
+    const where: Prisma.ReviewWhereInput = input.status ? { status: input.status as 'PENDING' | 'APPROVED' | 'REJECTED' } : {};
+    const total = await this.db.client.review.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, pageCount);
+    const items = await this.db.client.review.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+    return { items, page, pageSize, total, pageCount };
+  }
   promotions() { return this.db.client.promotion.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }); }
   async content() {
     const [banners, blocks, pages] = await Promise.all([
@@ -417,8 +433,15 @@ export class AdminService {
       : {};
   }
 
-  auditLog(filters: { entity?: string | undefined; action?: string | undefined; actorId?: string | undefined }) {
-    return this.db.client.auditLog.findMany({ where: { ...(filters.entity ? { entity: filters.entity } : {}), ...(filters.action ? { action: filters.action } : {}), ...(filters.actorId ? { actorId: filters.actorId } : {}) }, orderBy: { createdAt: 'desc' }, take: 200 });
+  async auditLog(filters: Record<string, string | undefined>) {
+    const pageSize = boundedInteger(filters.pageSize, 25, 100);
+    const requestedPage = boundedInteger(filters.page, 1, 100_000);
+    const where: Prisma.AuditLogWhereInput = { ...(filters.entity ? { entity: filters.entity } : {}), ...(filters.action ? { action: filters.action } : {}), ...(filters.actorId ? { actorId: filters.actorId } : {}) };
+    const total = await this.db.client.auditLog.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, pageCount);
+    const items = await this.db.client.auditLog.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+    return { items, page, pageSize, total, pageCount };
   }
 
   private range(input: RangeInput) {
@@ -505,4 +528,9 @@ export class AdminService {
       requestId: TenantContext.get()?.requestId ?? randomUUID(),
     } });
   }
+}
+
+function boundedInteger(value: string | undefined, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
 }

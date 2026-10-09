@@ -643,12 +643,12 @@ export function fetchTaxRules() {
   return get<TaxRule[]>('/api/v1/admin/tax-rules', true);
 }
 export function fetchOrders(filters: Record<string, string | undefined> = {}) {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ page: filters.page ?? '1', pageSize: filters.pageSize ?? '25' });
   Object.entries(filters).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
   const query = params.size > 0 ? `?${params.toString()}` : '';
-  return get<OrderSummary[]>(`/api/v1/admin/orders${query}`, true);
+  return get<NumberedPageResult<OrderSummary>>(`/api/v1/admin/orders${query}`, true);
 }
 export function fetchOrder(id: string) {
   return get<OrderDetail>(`/api/v1/admin/orders/${encodeURIComponent(id)}`, true);
@@ -656,12 +656,12 @@ export function fetchOrder(id: string) {
 export function fetchPickList(id: string) {
   return get<PickList>(`/api/v1/admin/orders/${encodeURIComponent(id)}/pick-list`, true);
 }
-export function fetchReturns(filters: { status?: string; orderId?: string } = {}) {
-  const params = new URLSearchParams();
+export function fetchReturns(filters: { status?: string; orderId?: string; page?: number } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
   if (filters.status) params.set('status', filters.status);
   if (filters.orderId) params.set('orderId', filters.orderId);
   const query = params.size > 0 ? `?${params.toString()}` : '';
-  return get<ReturnRequest[]>(`/api/v1/admin/returns${query}`, true);
+  return get<NumberedPageResult<ReturnRequest>>(`/api/v1/admin/returns${query}`, true);
 }
 export function fetchRefund(id: string) {
   return get<RefundDetail>(`/api/v1/admin/refunds/${encodeURIComponent(id)}`, true);
@@ -722,11 +722,14 @@ export function fetchInfluencerReport(id: string) {
     currency: string;
   }>(`/api/v1/admin/influencers/${encodeURIComponent(id)}/report`, true);
 }
-export function fetchCustomers(query = '') {
-  return get<CustomerSummary[]>(
-    `/api/v1/admin/customers${query ? `?q=${encodeURIComponent(query)}` : ''}`,
-    true,
-  );
+export function fetchCustomerPage(filters: { q?: string; page?: number; pageSize?: number } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: String(filters.pageSize ?? 25) });
+  if (filters.q) params.set('q', filters.q);
+  return get<NumberedPageResult<CustomerSummary>>(`/api/v1/admin/customers?${params}`, true);
+}
+export async function fetchCustomers(query = '') {
+  const result = await fetchCustomerPage({ q: query, pageSize: 100 });
+  return result.ok ? { ok: true as const, data: result.data.items } : result;
 }
 export function fetchCustomer(id: string) {
   return get<CustomerDetail>(`/api/v1/admin/customers/${encodeURIComponent(id)}`, true);
@@ -748,8 +751,11 @@ export function fetchInventoryPage(filters: { page?: number; pageSize?: number; 
 export function fetchWarehouses() {
   return get<Warehouse[]>('/api/v1/inventory/warehouses', true);
 }
-export function fetchAuditLog() {
-  return get<AuditRow[]>('/api/v1/admin/audit-log', true);
+export function fetchAuditLog(filters: { page?: number; entity?: string; action?: string } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
+  if (filters.entity) params.set('entity', filters.entity);
+  if (filters.action) params.set('action', filters.action);
+  return get<NumberedPageResult<AuditRow>>(`/api/v1/admin/audit-log?${params}`, true);
 }
 export function fetchAdminSettings() {
   return get<AdminSettings>('/api/v1/admin/settings', true);
@@ -757,11 +763,10 @@ export function fetchAdminSettings() {
 export function fetchRbac() {
   return get<RbacData>('/api/v1/admin/rbac', true);
 }
-export function fetchReviews(status = '') {
-  return get<ReviewRow[]>(
-    `/api/v1/admin/reviews${status ? `?status=${encodeURIComponent(status)}` : ''}`,
-    true,
-  );
+export function fetchReviews(filters: { status?: string; page?: number } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
+  if (filters.status) params.set('status', filters.status);
+  return get<NumberedPageResult<ReviewRow>>(`/api/v1/admin/reviews?${params}`, true);
 }
 export function fetchPromotions() {
   return get<PromotionRow[]>('/api/v1/promotions', true);

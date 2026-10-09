@@ -100,12 +100,22 @@ export class OrderService {
         : {}),
       ...(input.search && /^\d+$/.test(input.search) ? { orderNumber: BigInt(input.search) } : {}),
     };
+    const total = await this.db.client.order.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
+    const page = Math.min(input.page, pageCount);
     const orders = await this.db.client.order.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: 200,
+      skip: (page - 1) * input.pageSize,
+      take: input.pageSize,
     });
-    return Promise.all(orders.map((order) => this.summary(order)));
+    return {
+      items: await Promise.all(orders.map((order) => this.summary(order))),
+      page,
+      pageSize: input.pageSize,
+      total,
+      pageCount,
+    };
   }
 
   adminDetail(id: string) {

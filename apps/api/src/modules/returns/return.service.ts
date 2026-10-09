@@ -149,16 +149,22 @@ export class ReturnService {
     return this.returnDetail(this.db.client as never, id, this.userId());
   }
 
-  adminListReturns(raw: unknown) {
+  async adminListReturns(raw: unknown) {
     const input = returnListSchema.parse(raw);
-    return this.db.client.returnRequest.findMany({
-      where: {
-        ...(input.status ? { status: input.status } : {}),
-        ...(input.orderId ? { orderId: input.orderId } : {}),
-      },
+    const where = {
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.orderId ? { orderId: input.orderId } : {}),
+    };
+    const total = await this.db.client.returnRequest.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
+    const page = Math.min(input.page, pageCount);
+    const items = await this.db.client.returnRequest.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
-      take: 200,
+      skip: (page - 1) * input.pageSize,
+      take: input.pageSize,
     });
+    return { items, page, pageSize: input.pageSize, total, pageCount };
   }
 
   async updateReturn(id: string, raw: unknown) {

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ApiNotice } from '../components/api-notice';
 import { Currency } from '../components/currency';
+import { TablePagination } from '../components/table-pagination';
 import { fetchOrders } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Orders' };
@@ -14,6 +15,7 @@ interface PageProps {
     basketType?: string;
     paymentStatus?: string;
     fulfilmentStatus?: string;
+    page?: string;
   }>;
 }
 
@@ -25,8 +27,9 @@ function badgeClass(status: string) {
 
 export default async function OrdersPage({ searchParams }: PageProps) {
   const filters = await searchParams;
-  const result = await fetchOrders(filters);
-  const orders = result.ok ? result.data : [];
+  const page = Math.max(1, Number(filters.page) || 1);
+  const result = await fetchOrders({ ...filters, page: String(page) });
+  const orders = result.ok ? result.data.items : [];
 
   return (
     <>
@@ -36,7 +39,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
           <h1>Orders</h1>
           <p>Review grocery and alcohol baskets, payment state and fulfilment progress.</p>
         </div>
-        <span className="count-pill">{orders.length} orders</span>
+        <span className="count-pill">{result.ok ? result.data.total : 0} orders</span>
       </section>
       {!result.ok && <ApiNotice message={result.error} />}
       <article className="panel">
@@ -158,6 +161,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
             <p>Orders will appear here after a successful checkout.</p>
           </div>
         ) : null}
+        {result.ok && <TablePagination basePath="/orders" page={result.data.page} pageCount={result.data.pageCount} total={result.data.total} params={{ ...(filters.search ? { search: filters.search } : {}), ...(filters.basketType ? { basketType: filters.basketType } : {}), ...(filters.paymentStatus ? { paymentStatus: filters.paymentStatus } : {}), ...(filters.fulfilmentStatus ? { fulfilmentStatus: filters.fulfilmentStatus } : {}) }} />}
       </article>
     </>
   );
