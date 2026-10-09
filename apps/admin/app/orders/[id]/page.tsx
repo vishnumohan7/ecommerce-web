@@ -174,6 +174,10 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
     calculatedSubtotal !== BigInt(order.subtotalMinor) ||
     calculatedNetItems !== BigInt(order.subtotalMinor) - BigInt(order.discountMinor) ||
     calculatedNetItems + BigInt(order.deliveryFeeMinor) !== BigInt(order.totalMinor);
+  const paymentRefundable =
+    !calculationMismatch &&
+    order.payment !== null &&
+    ['CAPTURED', 'PARTIALLY_REFUNDED'].includes(order.payment.status);
   return (
     <>
       <section className="page-heading compact-heading">
@@ -488,13 +492,14 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
               Reason
               <input name="reason" required maxLength={300} placeholder="Reason for refund" />
             </label>
-            <button className="button button-primary" type="submit">
+            <button className="button button-primary" type="submit" disabled={!paymentRefundable}>
               Initiate refund
             </button>
           </div>
           <p className="page-note">
-            Enter only the quantities to refund. The API validates prior refunds, captured payment
-            limits and approved return quantities.
+            {paymentRefundable
+              ? 'Enter only the quantities to refund. The API validates prior refunds, captured payment limits and approved return quantities.'
+              : 'Refunds are unavailable until this order has a linked captured payment and reconciled totals.'}
           </p>
         </form>
       </article>

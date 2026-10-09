@@ -232,6 +232,13 @@ export interface OrderDetail extends OrderSummary {
   customerSnapshot: Record<string, unknown>;
   sections: { grocery: OrderLine[]; alcohol: OrderLine[] };
   fulfilmentGroups: FulfilmentGroup[];
+  payment: {
+    id: string;
+    provider: string;
+    status: string;
+    capturedAmountMinor: string;
+    refundedAmountMinor: string;
+  } | null;
   invoice: { id: string; displayInvoiceNumber: string; issuedAt: string } | null;
 }
 

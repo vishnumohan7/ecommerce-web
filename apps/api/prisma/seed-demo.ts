@@ -369,6 +369,23 @@ async function seedDemo(): Promise<void> {
         issuedAt: order.createdAt,
       },
     });
+    await prisma.payment.upsert({
+      where: { orderId: order.id },
+      update: {},
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        orderId: order.id,
+        provider: 'STUB',
+        providerPaymentIntentId: `pi_seed_${order.id.replaceAll('-', '')}`,
+        status: order.paymentStatus,
+        authorisedAmountMinor: order.totalMinor,
+        capturedAmountMinor: order.totalMinor,
+        refundedAmountMinor:
+          order.paymentStatus === PaymentStatus.REFUNDED ? order.totalMinor : 0n,
+        currency: order.currency,
+        manualCapture: false,
+      },
+    });
     await prisma.orderItem.deleteMany({ where: { orderId: order.id } });
     await prisma.orderItem.createMany({
       data: [
