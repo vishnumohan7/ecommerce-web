@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import type { InventoryReason } from '@prisma/client';
+import { Prisma, type InventoryReason } from '@prisma/client';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { TenantContext } from '../../common/tenancy/tenant-context';
 interface LockedInventory {
@@ -30,6 +30,43 @@ export class InventoryService {
     });
     const names = new Map(products.map((product) => [product.id, product]));
     return records.map((record) => ({ ...record, product: names.get(record.productId) ?? null }));
+  }
+  async page(input: { page: number; pageSize: number; query?: string }) {
+    const productWhere: Prisma.ProductWhereInput | undefined = input.query
+      ? {
+          OR: [
+            { name: { contains: input.query, mode: 'insensitive' } },
+            { sku: { contains: input.query, mode: 'insensitive' } },
+          ],
+        }
+      : undefined;
+    const matchingProducts = productWhere
+      ? await this.db.client.product.findMany({ where: productWhere, select: { id: true } })
+      : null;
+    const where: Prisma.InventoryWhereInput = matchingProducts
+      ? { productId: { in: matchingProducts.map((product) => product.id) } }
+      : {};
+    const total = await this.db.client.inventory.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
+    const page = Math.min(input.page, pageCount);
+    const records = await this.db.client.inventory.findMany({
+      where,
+      orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }],
+      skip: (page - 1) * input.pageSize,
+      take: input.pageSize,
+    });
+    const products = await this.db.client.product.findMany({
+      where: { id: { in: records.map((record) => record.productId) } },
+      select: { id: true, name: true, sku: true },
+    });
+    const names = new Map(products.map((product) => [product.id, product]));
+    return {
+      items: records.map((record) => ({ ...record, product: names.get(record.productId) ?? null })),
+      page,
+      pageSize: input.pageSize,
+      total,
+      pageCount,
+    };
   }
   async create(input: {
     productId: string;

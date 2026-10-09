@@ -1,6 +1,6 @@
 # Production Readiness Milestone Checklist
 
-Last audited: 2026-10-08
+Last audited: 2026-10-09
 
 This is the authoritative go-live checklist for the bespoke single-client UK grocery and alcohol commerce platform. It supersedes optimistic completion labels in historical milestone notes, while retaining those notes as implementation evidence.
 
@@ -112,12 +112,14 @@ Exit gate: the complete lifecycle reaches a real mailbox automatically and is tr
 - [x] Product listings can display uploaded live media.
 - [x] Variant-owned inventory and inventory ledgers exist.
 - [x] Fix and verify Add Product from the deployed admin panel; successful creation persists product, gallery media and opening stock, while duplicate SKU/slug submissions return a visible conflict message.
-- [ ] Verify edit product can replace featured media and manage gallery media.
-- [ ] Verify variants can be created, edited and deleted with independent SKU, price and stock.
+- [x] Implement edit-product featured/gallery media upload, replacement ordering and deletion controls.
+- [x] Implement variant create, edit and safe delete/deactivate controls with independent SKU and price; stock remains variant-owned.
 - [ ] Verify initial stock and subsequent stock adjustments from product edit and inventory screens.
 - [ ] Replace archive wording/actions with the agreed delete/deactivate behaviour and safe dependency errors.
 - [ ] Finish separate category and brand pages with image upload/edit/delete.
 - [ ] Add server-side pagination, search, sorting and filters to every catalogue table.
+- [x] Add authenticated server-side pagination, search, sorting and status filters to the product catalogue table.
+- [x] Add authenticated server-side pagination and search to the inventory table.
 - [ ] Verify CSV/XLSX dry-run, error report, atomic import and image handling from the UI.
 - [ ] Remove remaining fixture/demo catalogue values and broken relative image URLs.
 

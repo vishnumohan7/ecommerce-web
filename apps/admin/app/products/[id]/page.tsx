@@ -5,10 +5,13 @@ import {
   adjustInventory,
   createProductInventory,
   createProductVariant,
+  deleteProductImage,
   deleteProduct,
   deleteProductInventory,
+  deleteProductVariant,
   updateProduct,
   updateProductInventory,
+  updateProductVariant,
   uploadProductImage,
 } from '../../actions';
 import { ActionMessage } from '../../components/action-message';
@@ -235,18 +238,33 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
           {product.variants?.length ? (
             <div className="record-list">
               {product.variants.map((variant) => (
-                <div className="record-row" key={variant.id}>
-                  <div>
-                    <strong>{variant.name}</strong>
-                    <small>
-                      {variant.sku}
-                      {variant.packSize ? ` · ${variant.packSize}` : ''}
-                    </small>
-                  </div>
-                  <div className="record-meta">
-                    <strong>£{(Number(variant.priceMinor) / 100).toFixed(2)}</strong>
-                  </div>
-                </div>
+                <details className="variant-editor" key={variant.id}>
+                  <summary>
+                    <span><strong>{variant.name}</strong><small>{variant.sku}{variant.packSize ? ` · ${variant.packSize}` : ''}</small></span>
+                    <span className="record-meta"><strong>£{(Number(variant.priceMinor) / 100).toFixed(2)}</strong><small>{variant.active ? 'Active' : 'Inactive'}</small></span>
+                  </summary>
+                  <form action={updateProductVariant} className="variant-edit-form">
+                    <input type="hidden" name="productId" value={product.id} />
+                    <input type="hidden" name="variantId" value={variant.id} />
+                    <label>Name<input name="name" defaultValue={variant.name} required /></label>
+                    <label>SKU<input name="sku" defaultValue={variant.sku} required /></label>
+                    <label>Price (pence)<input name="priceMinor" type="number" min="0" defaultValue={variant.priceMinor} required /></label>
+                    <label>Pack size<input name="packSize" defaultValue={variant.packSize ?? ''} /></label>
+                    <label>Weight (grams)<input name="weightGrams" type="number" min="1" defaultValue={variant.weightGrams ?? ''} /></label>
+                    <label>Flavour<input name="flavour" defaultValue={variant.flavour ?? ''} /></label>
+                    {product.isAlcohol && <label>ABV %<input name="abv" defaultValue={variant.abv ?? ''} /></label>}
+                    <label className="wide-field">Attributes JSON<input name="attributes" defaultValue={JSON.stringify(variant.attributes ?? {})} /></label>
+                    <label className="checkbox-field"><input name="active" type="checkbox" defaultChecked={variant.active} /> Available for sale</label>
+                    <div className="variant-actions">
+                      <button className="button button-primary">Save variant</button>
+                    </div>
+                  </form>
+                  <form action={deleteProductVariant} className="variant-delete-form">
+                    <input type="hidden" name="productId" value={product.id} />
+                    <input type="hidden" name="variantId" value={variant.id} />
+                    <ConfirmSubmitButton className="text-action danger-action" message={`Delete ${variant.name}? Variants with stock or transaction history will be deactivated instead.`}>Delete variant</ConfirmSubmitButton>
+                  </form>
+                </details>
               ))}
             </div>
           ) : (
@@ -327,11 +345,18 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
           {product.images?.length ? (
             <div className="image-records">
               {product.images.map((item) => (
-                <a href={item.url} target="_blank" rel="noreferrer" key={item.id}>
-                  <span className="image-preview" style={{ backgroundImage: `url(${item.url})` }} />
-                  <strong>{item.altText}</strong>
-                  <small>Position {item.position + 1}</small>
-                </a>
+                <div className="image-record" key={item.id}>
+                  <a href={item.url} target="_blank" rel="noreferrer">
+                    <span className="image-preview" style={{ backgroundImage: `url(${item.url})` }} />
+                    <strong>{item.altText}</strong>
+                    <small>{item.position === 0 ? 'Featured image' : `Gallery position ${item.position}`}</small>
+                  </a>
+                  <form action={deleteProductImage}>
+                    <input type="hidden" name="productId" value={product.id} />
+                    <input type="hidden" name="imageId" value={item.id} />
+                    <ConfirmSubmitButton className="text-action danger-action" message={`Delete ${item.position === 0 ? 'the featured image' : 'this gallery image'}?`}>Delete</ConfirmSubmitButton>
+                  </form>
+                </div>
               ))}
             </div>
           ) : (
@@ -349,6 +374,10 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
             <label className="wide-field">
               Accessible alt text
               <input name="altText" required placeholder={`${product.name} product image`} />
+            </label>
+            <label className="checkbox-field wide-field">
+              <input name="featured" type="checkbox" defaultChecked={!product.images?.length} />
+              Make this the featured product image
             </label>
             <div className="form-actions">
               <button className="button button-primary" type="submit">

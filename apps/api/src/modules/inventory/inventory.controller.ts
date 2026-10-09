@@ -17,8 +17,19 @@ export class InventoryController {
   @Get()
   @RequirePermissions('inventory.read')
   @ApiOperation({ summary: 'List inventory with product details' })
-  list(@Query('productId') productId?: string) {
-    return this.inventory.list(productId);
+  list(
+    @Query('productId') productId?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('q') query?: string,
+  ) {
+    return page
+      ? this.inventory.page({
+          page: positiveInteger(page, 1),
+          pageSize: positiveInteger(pageSize, 25, 100),
+          ...(query?.trim() ? { query: query.trim() } : {}),
+        })
+      : this.inventory.list(productId);
   }
   @RequirePermissions('inventory.write')
   @Post()
@@ -72,4 +83,9 @@ export class InventoryController {
   ) {
     return this.inventory.adjust(id, body.quantity, body.reason, body.reference);
   }
+}
+
+function positiveInteger(value: string | undefined, fallback: number, maximum = 100_000) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
 }

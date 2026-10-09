@@ -6,9 +6,10 @@ import { ImageService } from './image.service';
 import { SearchModule } from '../search/search.module';
 import { TaxonomyController } from './taxonomy.controller';
 import { TaxonomyService } from './taxonomy.service';
+import { AdminCatalogController } from './admin-catalog.controller';
 @Module({
   imports: [SearchModule],
-  controllers: [CatalogController, ImageController, TaxonomyController],
+  controllers: [CatalogController, AdminCatalogController, ImageController, TaxonomyController],
   providers: [CatalogService, ImageService, TaxonomyService],
   exports: [CatalogService, TaxonomyService],
 })

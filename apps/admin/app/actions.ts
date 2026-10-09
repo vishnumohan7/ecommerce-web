@@ -227,11 +227,22 @@ export async function uploadProductImage(data: FormData) {
   const upload = new FormData();
   upload.set('file', file);
   upload.set('altText', textValue(data, 'altText'));
+  upload.set('featured', data.get('featured') === 'on' ? 'true' : 'false');
   const result = await adminFormMutation(
     `/api/v1/products/${encodeURIComponent(id)}/images`,
     upload,
   );
   finish(`/products/${id}`, result, 'Product image uploaded and optimised.');
+}
+
+export async function deleteProductImage(data: FormData) {
+  const productId = textValue(data, 'productId');
+  const imageId = textValue(data, 'imageId');
+  const result = await adminMutation(
+    `/api/v1/products/${encodeURIComponent(productId)}/images/${encodeURIComponent(imageId)}`,
+    'DELETE',
+  );
+  finish(`/products/${productId}`, result, 'Product image deleted.');
 }
 
 export async function createProductVariant(data: FormData) {
@@ -263,6 +274,50 @@ export async function createProductVariant(data: FormData) {
     },
   );
   finish(`/products/${id}`, result, 'Variant created with opening stock.');
+}
+
+export async function updateProductVariant(data: FormData) {
+  const productId = textValue(data, 'productId');
+  const variantId = textValue(data, 'variantId');
+  let attributes: Record<string, string> = {};
+  try {
+    attributes = textValue(data, 'attributes')
+      ? (JSON.parse(textValue(data, 'attributes')) as Record<string, string>)
+      : {};
+  } catch {
+    finish(`/products/${productId}`, { ok: false, error: 'Variant attributes must be valid JSON.' }, '');
+  }
+  const result = await adminMutation(
+    `/api/v1/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
+    'PATCH',
+    {
+      sku: textValue(data, 'sku'),
+      name: textValue(data, 'name'),
+      priceMinor: textValue(data, 'priceMinor'),
+      currency: 'GBP',
+      packSize: textValue(data, 'packSize') || null,
+      weightGrams: optionalNumber(data, 'weightGrams'),
+      abv: textValue(data, 'abv') || null,
+      flavour: textValue(data, 'flavour') || null,
+      attributes,
+      active: data.get('active') === 'on',
+    },
+  );
+  finish(`/products/${productId}`, result, 'Variant updated.');
+}
+
+export async function deleteProductVariant(data: FormData) {
+  const productId = textValue(data, 'productId');
+  const variantId = textValue(data, 'variantId');
+  const result = await adminMutation(
+    `/api/v1/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
+    'DELETE',
+  );
+  finish(
+    `/products/${productId}`,
+    result,
+    'Variant removed. Variants with stock history are safely deactivated.',
+  );
 }
 
 export async function removeTaxonomy(data: FormData) {

@@ -2,10 +2,79 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Prisma } from '@prisma/client';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { TenantContext } from '../../common/tenancy/tenant-context';
-import { ProductInput, productInputSchema, variantInputSchema } from './catalog.schemas';
+import {
+  ProductInput,
+  productInputSchema,
+  variantInputSchema,
+  variantUpdateSchema,
+} from './catalog.schemas';
 @Injectable()
 export class CatalogService {
   constructor(private readonly db: TenantScopedPrismaService) {}
+  async adminList(input: {
+    page: number;
+    pageSize: number;
+    query?: string;
+    status?: string;
+    sort?: string;
+  }) {
+    const status = ['DRAFT', 'ACTIVE', 'INACTIVE'].includes(input.status ?? '')
+      ? (input.status as 'DRAFT' | 'ACTIVE' | 'INACTIVE')
+      : undefined;
+    const where: Prisma.ProductWhereInput = {
+      ...(status ? { status } : {}),
+      ...(input.query
+        ? {
+            OR: [
+              { name: { contains: input.query, mode: 'insensitive' } },
+              { sku: { contains: input.query, mode: 'insensitive' } },
+              { description: { contains: input.query, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+    const orderBy: Prisma.ProductOrderByWithRelationInput =
+      input.sort === 'name-asc'
+        ? { name: 'asc' }
+        : input.sort === 'name-desc'
+          ? { name: 'desc' }
+          : input.sort === 'price-asc'
+            ? { priceMinor: 'asc' }
+            : input.sort === 'price-desc'
+              ? { priceMinor: 'desc' }
+              : { updatedAt: 'desc' };
+    const total = await this.db.client.product.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
+    const page = Math.min(input.page, pageCount);
+    const products = await this.db.client.product.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * input.pageSize,
+      take: input.pageSize,
+    });
+    const images = products.length
+      ? await this.db.client.productImage.findMany({
+          where: { productId: { in: products.map((product) => product.id) } },
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+        })
+      : [];
+    const imagesByProduct = new Map<string, typeof images>();
+    images.forEach((image) => {
+      const current = imagesByProduct.get(image.productId) ?? [];
+      current.push(image);
+      imagesByProduct.set(image.productId, current);
+    });
+    return {
+      items: products.map((product) => ({
+        ...product,
+        images: imagesByProduct.get(product.id) ?? [],
+      })),
+      page,
+      pageSize: input.pageSize,
+      total,
+      pageCount,
+    };
+  }
   async list(input: { categoryId?: string; alcohol?: boolean; take?: number; cursor?: string }) {
     const products = await this.db.client.product.findMany({
       where: {
@@ -96,6 +165,99 @@ export class CatalogService {
         },
       });
       return { variant, inventory };
+    });
+  }
+  async updateVariant(productId: string, variantId: string, raw: unknown) {
+    await this.byId(productId);
+    const current = await this.db.client.productVariant.findFirst({
+      where: { id: variantId, productId },
+    });
+    if (!current) throw new NotFoundException('Product variant not found');
+    const input = variantUpdateSchema.parse(raw);
+    if (input.sku && input.sku !== current.sku) {
+      const duplicate = await this.db.client.productVariant.findFirst({
+        where: { sku: input.sku, id: { not: variantId } },
+        select: { id: true },
+      });
+      if (duplicate) throw new ConflictException('A variant with this SKU already exists');
+    }
+    return this.db.transaction(async (tx, tenantId) => {
+      const updated = await tx.productVariant.update({
+        where: { id: variantId, tenantId },
+        data: {
+          ...(input.sku === undefined ? {} : { sku: input.sku }),
+          ...(input.name === undefined ? {} : { name: input.name }),
+          ...(input.priceMinor === undefined ? {} : { priceMinor: BigInt(input.priceMinor) }),
+          ...(input.currency === undefined ? {} : { currency: input.currency }),
+          ...(input.packSize === undefined ? {} : { packSize: input.packSize }),
+          ...(input.weightGrams === undefined ? {} : { weightGrams: input.weightGrams }),
+          ...(input.abv === undefined
+            ? {}
+            : { abv: input.abv ? new Prisma.Decimal(input.abv) : null }),
+          ...(input.flavour === undefined ? {} : { flavour: input.flavour }),
+          ...(input.attributes === undefined ? {} : { attributes: input.attributes }),
+          ...(input.active === undefined ? {} : { active: input.active }),
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          actorId: TenantContext.get()?.userId ?? null,
+          actorType: TenantContext.get()?.userId ? 'USER' : 'SYSTEM',
+          action: 'PRODUCT_VARIANT_UPDATED',
+          entity: 'ProductVariant',
+          entityId: variantId,
+          before: { sku: current.sku, name: current.name, active: current.active },
+          after: { sku: updated.sku, name: updated.name, active: updated.active },
+          requestId: TenantContext.get()?.requestId ?? variantId,
+        },
+      });
+      return updated;
+    });
+  }
+  async removeVariant(productId: string, variantId: string) {
+    await this.byId(productId);
+    const current = await this.db.client.productVariant.findFirst({
+      where: { id: variantId, productId },
+    });
+    if (!current) throw new NotFoundException('Product variant not found');
+    const inventories = await this.db.client.inventory.findMany({
+      where: { productId, variantId },
+      select: { id: true, onHand: true, reserved: true },
+    });
+    const inventoryIds = inventories.map((item) => item.id);
+    const transactionCount = inventoryIds.length
+      ? await this.db.client.inventoryTransaction.count({
+          where: { inventoryId: { in: inventoryIds } },
+        })
+      : 0;
+    const retainHistory =
+      transactionCount > 0 || inventories.some((item) => item.onHand !== 0 || item.reserved !== 0);
+    return this.db.transaction(async (tx, tenantId) => {
+      if (retainHistory) {
+        await tx.productVariant.update({
+          where: { id: variantId, tenantId },
+          data: { active: false },
+        });
+      } else {
+        await tx.inventory.deleteMany({ where: { tenantId, variantId } });
+        await tx.productImage.deleteMany({ where: { tenantId, variantId } });
+        await tx.productVariant.delete({ where: { id: variantId, tenantId } });
+      }
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          actorId: TenantContext.get()?.userId ?? null,
+          actorType: TenantContext.get()?.userId ? 'USER' : 'SYSTEM',
+          action: retainHistory ? 'PRODUCT_VARIANT_DEACTIVATED' : 'PRODUCT_VARIANT_DELETED',
+          entity: 'ProductVariant',
+          entityId: variantId,
+          before: { sku: current.sku, active: current.active },
+          after: retainHistory ? { active: false } : { deleted: true },
+          requestId: TenantContext.get()?.requestId ?? variantId,
+        },
+      });
+      return { id: variantId, deleted: !retainHistory, deactivated: retainHistory };
     });
   }
   async remove(id: string) {

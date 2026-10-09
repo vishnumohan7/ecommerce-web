@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { STORAGE_PROVIDER, StorageProvider } from '../../common/storage/storage.provider';
@@ -16,6 +16,7 @@ export class ImageService {
     productId: string,
     bytes: Buffer,
     altText: string,
+    featured = false,
   ): Promise<{ primaryUrl: string; assets: string[] }> {
     if (bytes.length === 0 || bytes.length > 10 * 1024 * 1024)
       throw new BadRequestException('Image size is invalid');
@@ -53,19 +54,40 @@ export class ImageService {
     }
     const primaryUrl = assets[4] ?? assets[0];
     if (!primaryUrl) throw new BadRequestException('Image processing failed');
-    const position = await this.db.client.productImage.count({
+    const position = featured ? 0 : await this.db.client.productImage.count({
       where: { productId, variantId: null },
     });
-    await this.db.client.productImage.create({
-      data: {
-        tenantId: TenantContext.requireTenantId(),
-        productId,
-        url: primaryUrl,
-        altText,
-        position,
-      },
+    await this.db.transaction(async (tx, tenantId) => {
+      if (featured)
+        await tx.productImage.updateMany({
+          where: { tenantId, productId, variantId: null },
+          data: { position: { increment: 1 } },
+        });
+      await tx.productImage.create({
+        data: { tenantId, productId, url: primaryUrl, altText, position },
+      });
     });
     return { primaryUrl, assets };
+  }
+  async remove(productId: string, imageId: string) {
+    const image = await this.db.client.productImage.findFirst({
+      where: { id: imageId, productId },
+    });
+    if (!image) throw new NotFoundException('Product image not found');
+    return this.db.transaction(async (tx, tenantId) => {
+      await tx.productImage.delete({ where: { id: imageId, tenantId } });
+      const remaining = await tx.productImage.findMany({
+        where: { tenantId, productId, variantId: image.variantId },
+        orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+        select: { id: true },
+      });
+      await Promise.all(
+        remaining.map((item, position) =>
+          tx.productImage.update({ where: { id: item.id, tenantId }, data: { position } }),
+        ),
+      );
+      return { deleted: true, id: imageId };
+    });
   }
   async uploadTaxonomy(
     kind: 'category' | 'brand',

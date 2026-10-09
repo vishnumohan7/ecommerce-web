@@ -73,4 +73,22 @@ export class CatalogController {
   variant(@Param('id') id: string, @Body() input: unknown) {
     return this.catalog.addVariant(id, input);
   }
+  @Patch(':id/variants/:variantId')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a product variant' })
+  updateVariant(
+    @Param('id') id: string,
+    @Param('variantId') variantId: string,
+    @Body() input: unknown,
+  ) {
+    return this.catalog.updateVariant(id, variantId, input);
+  }
+  @Delete(':id/variants/:variantId')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete an unused variant or deactivate one with stock history' })
+  deleteVariant(@Param('id') id: string, @Param('variantId') variantId: string) {
+    return this.catalog.removeVariant(id, variantId);
+  }
 }

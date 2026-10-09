@@ -6,27 +6,25 @@ import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { ConfirmSubmitButton } from '../components/confirm-submit-button';
 import { Currency } from '../components/currency';
-import { fetchProducts, fetchSearch, type Product } from '../lib/api';
+import { TablePagination } from '../components/table-pagination';
+import { fetchAdminProducts } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Products' };
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string | string[]; success?: string; error?: string }>;
+  searchParams: Promise<{ q?: string | string[]; page?: string; status?: string; sort?: string; success?: string; error?: string }>;
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const q = typeof params.q === 'string' ? params.q.trim() : '';
-  const searchResult = q ? await fetchSearch(q) : null;
-  const productResult = q ? null : await fetchProducts();
-  const result = searchResult ?? productResult;
-  const products: Product[] = searchResult?.ok
-    ? searchResult.data.items
-    : productResult?.ok
-      ? productResult.data
-      : [];
-  const resultCount = searchResult?.ok ? searchResult.data.resultCount : products.length;
+  const page = Math.max(1, Number(params.page) || 1);
+  const status = typeof params.status === 'string' ? params.status : '';
+  const sort = typeof params.sort === 'string' ? params.sort : 'updated-desc';
+  const result = await fetchAdminProducts({ page, q, status, sort });
+  const products = result.ok ? result.data.items : [];
+  const resultCount = result.ok ? result.data.total : 0;
 
   return (
     <>
@@ -44,7 +42,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
       <ActionMessage success={params.success} error={params.error} />
       <article className="panel">
         <div className="catalog-toolbar">
-          <form action="/products" role="search">
+          <form action="/products" role="search" className="catalog-filter-form">
             <label className="sr-only" htmlFor="catalog-search">
               Search products
             </label>
@@ -55,22 +53,34 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               defaultValue={q}
               placeholder="Search name, SKU or description"
             />
+            <select name="status" defaultValue={status} aria-label="Product status">
+              <option value="">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="DRAFT">Draft</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+            <select name="sort" defaultValue={sort} aria-label="Sort products">
+              <option value="updated-desc">Recently updated</option>
+              <option value="name-asc">Name A–Z</option>
+              <option value="name-desc">Name Z–A</option>
+              <option value="price-asc">Price low–high</option>
+              <option value="price-desc">Price high–low</option>
+            </select>
             <button className="button button-primary" type="submit">
               Search
             </button>
-            {q && (
+            {(q || status || sort !== 'updated-desc') && (
               <Link className="clear-link" href="/products">
                 Clear
               </Link>
             )}
           </form>
           <p>
-            <strong>{resultCount.toLocaleString('en-GB')}</strong> {q ? 'matching' : 'loaded'}{' '}
-            products
+            <strong>{resultCount.toLocaleString('en-GB')}</strong> matching products
           </p>
         </div>
-        {!result || !result.ok ? (
-          <ApiNotice message={result?.error ?? 'The API request could not be prepared.'} compact />
+        {!result.ok ? (
+          <ApiNotice message={result.error} compact />
         ) : products.length === 0 ? (
           <div className="empty-state">
             <span>⌕</span>
@@ -177,6 +187,15 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               </tbody>
             </table>
           </div>
+        )}
+        {result.ok && (
+          <TablePagination
+            basePath="/products"
+            page={result.data.page}
+            pageCount={result.data.pageCount}
+            total={result.data.total}
+            params={{ ...(q ? { q } : {}), ...(status ? { status } : {}), ...(sort !== 'updated-desc' ? { sort } : {}) }}
+          />
         )}
       </article>
       <p className="page-note">

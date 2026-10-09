@@ -79,6 +79,11 @@ export const variantInputSchema = z.object({
   stockOnHand: z.number().int().nonnegative(),
   lowStockThreshold: z.number().int().nonnegative().default(5),
 });
+export const variantUpdateSchema = variantInputSchema
+  .omit({ warehouseId: true, stockOnHand: true, lowStockThreshold: true })
+  .partial()
+  .extend({ active: z.boolean().optional() })
+  .refine((value) => Object.keys(value).length > 0, 'At least one variant field is required');
 
 const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 export const categoryCreateSchema = z.object({

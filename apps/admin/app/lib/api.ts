@@ -52,6 +52,7 @@ export interface Product {
     abv: string | null;
     flavour: string | null;
     attributes: Record<string, string>;
+    active: boolean;
   }>;
   images?: Array<{
     id: string;
@@ -85,6 +86,13 @@ export interface SearchResponse {
 export interface PageResult<T> {
   items: T[];
   nextCursor: string | null;
+}
+export interface NumberedPageResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  pageCount: number;
 }
 
 export interface Category {
@@ -588,6 +596,22 @@ export function fetchHealth(kind: 'health' | 'ready' = 'health') {
 export function fetchProducts() {
   return get<Product[]>('/api/v1/products');
 }
+export function fetchAdminProducts(filters: {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  status?: string;
+  sort?: string;
+} = {}) {
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 1),
+    pageSize: String(filters.pageSize ?? 25),
+  });
+  if (filters.q) params.set('q', filters.q);
+  if (filters.status) params.set('status', filters.status);
+  if (filters.sort) params.set('sort', filters.sort);
+  return get<NumberedPageResult<Product>>(`/api/v1/admin/catalog/products?${params}`, true);
+}
 export function fetchProduct(id: string) {
   return get<Product>(`/api/v1/products/${encodeURIComponent(id)}`, true);
 }
@@ -712,6 +736,14 @@ export function fetchInventory(productId = '') {
     `/api/v1/inventory${productId ? `?productId=${encodeURIComponent(productId)}` : ''}`,
     true,
   );
+}
+export function fetchInventoryPage(filters: { page?: number; pageSize?: number; q?: string } = {}) {
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 1),
+    pageSize: String(filters.pageSize ?? 25),
+  });
+  if (filters.q) params.set('q', filters.q);
+  return get<NumberedPageResult<InventoryRow>>(`/api/v1/inventory?${params}`, true);
 }
 export function fetchWarehouses() {
   return get<Warehouse[]>('/api/v1/inventory/warehouses', true);
