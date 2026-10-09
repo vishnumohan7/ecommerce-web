@@ -3903,6 +3903,47 @@ td code {
   width: 100%;
 }
 
+.row-editor {
+  display: inline-block;
+  margin-right: 12px;
+  position: relative;
+}
+.row-editor summary {
+  cursor: pointer;
+  list-style: none;
+}
+.row-editor summary::-webkit-details-marker {
+  display: none;
+}
+.inline-edit-form {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 16px 36px rgb(20 26 38 / 14%);
+  display: grid;
+  gap: 10px;
+  min-width: 280px;
+  padding: 14px;
+  position: absolute;
+  right: 0;
+  top: 28px;
+  z-index: 20;
+}
+.inline-edit-form label {
+  color: var(--muted);
+  display: grid;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 5px;
+}
+.inline-edit-form input {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  min-height: 38px;
+  padding: 0 9px;
+}
+
 .report-filter {
   align-items: stretch;
   display: block;

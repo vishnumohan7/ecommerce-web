@@ -1,22 +1,21 @@
 /* eslint-disable local/no-jsx-literals */
-import { createPromotion, togglePromotion } from '../actions';
+import { createPromotion, togglePromotion, updatePromotion } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
-import { fetchProducts, fetchPromotions } from '../lib/api';
+import { TablePagination } from '../components/table-pagination';
+import { fetchAdminProducts, fetchPromotions } from '../lib/api';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PromotionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{ page?: string; success?: string; error?: string }>;
 }) {
-  const [params, result, productsResult] = await Promise.all([
-    searchParams,
-    fetchPromotions(),
-    fetchProducts(),
-  ]);
-  const products = productsResult.ok ? productsResult.data : [];
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const [result, productsResult] = await Promise.all([fetchPromotions(page), fetchAdminProducts({ pageSize: 100, status: 'ACTIVE', sort: 'name-asc' })]);
+  const products = productsResult.ok ? productsResult.data.items : [];
   return (
     <>
       <section className="page-heading">
@@ -36,9 +35,9 @@ export default async function PromotionsPage({
               <p className="eyebrow">Campaign management</p>
               <h2>Promotions</h2>
             </div>
-            <span className="count-pill">{result.data.length}</span>
+            <span className="count-pill">{result.data.total}</span>
           </header>
-          <details className="create-disclosure" open={result.data.length === 0}>
+          <details className="create-disclosure" open={result.data.total === 0}>
             <summary>
               <span>
                 <strong>Create promotion</strong>
@@ -113,7 +112,7 @@ export default async function PromotionsPage({
               </div>
             </form>
           </details>
-          {result.data.length === 0 ? (
+          {result.data.items.length === 0 ? (
             <div className="empty-state promotion-empty">
               <span aria-hidden="true">%</span>
               <h3>No promotions yet</h3>
@@ -133,7 +132,7 @@ export default async function PromotionsPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {result.data.map((item) => (
+                  {result.data.items.map((item) => (
                     <tr key={item.id}>
                       <td>
                         <strong>{item.name}</strong>
@@ -155,6 +154,16 @@ export default async function PromotionsPage({
                         </span>
                       </td>
                       <td>
+                        <details className="row-editor">
+                          <summary className="text-action">Edit</summary>
+                          <form action={updatePromotion} className="inline-edit-form">
+                            <input type="hidden" name="id" value={item.id} />
+                            <label>Starts<input name="startsAt" type="datetime-local" defaultValue={new Date(item.startsAt).toISOString().slice(0, 16)} required /></label>
+                            <label>Ends<input name="endsAt" type="datetime-local" defaultValue={new Date(item.endsAt).toISOString().slice(0, 16)} required /></label>
+                            <label>Priority<input name="priority" type="number" defaultValue={item.priority} /></label>
+                            <button className="button button-muted">Save</button>
+                          </form>
+                        </details>
                         <form action={togglePromotion}>
                           <input type="hidden" name="id" value={item.id} />
                           <input type="hidden" name="active" value={String(item.active)} />
@@ -169,6 +178,7 @@ export default async function PromotionsPage({
               </table>
             </div>
           )}
+          <TablePagination basePath="/promotions" page={result.data.page} pageCount={result.data.pageCount} total={result.data.total} />
         </article>
       )}
     </>

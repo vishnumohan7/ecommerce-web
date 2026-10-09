@@ -775,8 +775,8 @@ export function fetchReviews(filters: { status?: string; page?: number } = {}) {
   if (filters.status) params.set('status', filters.status);
   return get<NumberedPageResult<ReviewRow>>(`/api/v1/admin/reviews?${params}`, true);
 }
-export function fetchPromotions() {
-  return get<PromotionRow[]>('/api/v1/promotions', true);
+export function fetchPromotions(page = 1) {
+  return get<NumberedPageResult<PromotionRow>>(`/api/v1/promotions?page=${String(page)}&pageSize=25`, true);
 }
 export function fetchNotificationTemplates() {
   return get<NotificationTemplateRow[]>('/api/v1/admin/notification-templates', true);

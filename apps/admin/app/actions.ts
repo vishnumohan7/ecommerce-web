@@ -631,6 +631,16 @@ export async function togglePromotion(data: FormData) {
   finish('/promotions', result, 'Promotion updated.');
 }
 
+export async function updatePromotion(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/promotions/${encodeURIComponent(id)}`, 'PATCH', {
+    startsAt: new Date(textValue(data, 'startsAt')).toISOString(),
+    endsAt: new Date(textValue(data, 'endsAt')).toISOString(),
+    priority: Number(textValue(data, 'priority') || '0'),
+  });
+  finish('/promotions', result, 'Promotion schedule updated.');
+}
+
 export async function createPromotion(data: FormData) {
   const type = textValue(data, 'type');
   const minimumSpendMinor = optionalNumber(data, 'minimumSpendMinor');

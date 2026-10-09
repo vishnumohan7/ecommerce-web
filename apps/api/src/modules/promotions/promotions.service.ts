@@ -19,7 +19,15 @@ export function assertHfssEligible(
 @Injectable()
 export class PromotionsService {
   constructor(private readonly db: TenantScopedPrismaService) {}
-  list() { return this.db.client.promotion.findMany({ orderBy: { createdAt: 'desc' } }); }
+  async list(input: { page?: string; pageSize?: string }) {
+    const pageSize = positiveInteger(input.pageSize, 25, 100);
+    const requestedPage = positiveInteger(input.page, 1, 100_000);
+    const total = await this.db.client.promotion.count();
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, pageCount);
+    const items = await this.db.client.promotion.findMany({ orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+    return { items, page, pageSize, total, pageCount };
+  }
   async update(id: string, input: { active?: boolean; priority?: number; startsAt?: string; endsAt?: string }) {
     return this.db.client.promotion.update({ where: { id }, data: {
       ...(input.active !== undefined ? { active: input.active } : {}),
@@ -90,4 +98,9 @@ export class PromotionsService {
       return promotion;
     });
   }
+}
+
+function positiveInteger(value: string | undefined, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
 }
