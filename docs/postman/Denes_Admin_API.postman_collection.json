@@ -40,12 +40,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["metrics"]
             },
             "description": "GET /metrics"
           }
@@ -63,12 +59,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
             },
             "description": "GET /health\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -101,12 +93,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/ready",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ready"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["ready"]
             },
             "description": "GET /ready\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -139,15 +127,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
             },
             "description": "POST /api/v1/auth/login\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -202,15 +183,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "refresh"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
             },
             "description": "POST /api/v1/auth/refresh\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -265,15 +239,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "logout"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
             },
             "description": "POST /api/v1/auth/logout\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -315,15 +282,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
             },
             "description": "GET /api/v1/auth/me\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -353,15 +313,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/media/{{mediaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "media",
-                "{{mediaId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "media", "{{mediaId}}"]
             },
             "description": "GET /api/v1/media/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -399,15 +352,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/dashboard?from=2026-10-01&to=2026-10-31",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "dashboard"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "dashboard"],
               "query": [
                 {
                   "key": "from",
@@ -447,25 +393,11 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reports/sales?undefined=undefined&undefined=undefined",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reports",
-                "sales"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reports", "sales"],
               "query": [
-                [
-                  "from",
-                  "2026-10-01"
-                ],
-                [
-                  "to",
-                  "2026-10-31"
-                ]
+                ["from", "2026-10-01"],
+                ["to", "2026-10-31"]
               ]
             },
             "description": "GET /api/v1/admin/reports/sales\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
@@ -496,25 +428,11 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reports/customers?undefined=undefined&undefined=undefined",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reports",
-                "customers"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reports", "customers"],
               "query": [
-                [
-                  "from",
-                  "2026-10-01"
-                ],
-                [
-                  "to",
-                  "2026-10-31"
-                ]
+                ["from", "2026-10-01"],
+                ["to", "2026-10-31"]
               ]
             },
             "description": "GET /api/v1/admin/reports/customers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
@@ -545,25 +463,11 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reports/products?undefined=undefined&undefined=undefined",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reports",
-                "products"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reports", "products"],
               "query": [
-                [
-                  "from",
-                  "2026-10-01"
-                ],
-                [
-                  "to",
-                  "2026-10-31"
-                ]
+                ["from", "2026-10-01"],
+                ["to", "2026-10-31"]
               ]
             },
             "description": "GET /api/v1/admin/reports/products\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
@@ -594,25 +498,11 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reports/coupons?undefined=undefined&undefined=undefined",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reports",
-                "coupons"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reports", "coupons"],
               "query": [
-                [
-                  "from",
-                  "2026-10-01"
-                ],
-                [
-                  "to",
-                  "2026-10-31"
-                ]
+                ["from", "2026-10-01"],
+                ["to", "2026-10-31"]
               ]
             },
             "description": "GET /api/v1/admin/reports/coupons\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
@@ -643,25 +533,11 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reports/categories?undefined=undefined&undefined=undefined",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reports",
-                "categories"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reports", "categories"],
               "query": [
-                [
-                  "from",
-                  "2026-10-01"
-                ],
-                [
-                  "to",
-                  "2026-10-31"
-                ]
+                ["from", "2026-10-01"],
+                ["to", "2026-10-31"]
               ]
             },
             "description": "GET /api/v1/admin/reports/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
@@ -697,14 +573,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products?alcohol=false",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"],
               "query": [
                 {
                   "key": "alcohol",
@@ -743,14 +613,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"]
             },
             "description": "POST /api/v1/products\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -792,15 +656,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}"]
             },
             "description": "GET /api/v1/products/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -833,15 +690,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}"]
             },
             "description": "PATCH /api/v1/products/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -883,15 +733,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}"]
             },
             "description": "DELETE /api/v1/products/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -924,16 +767,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}/variants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}",
-                "variants"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}", "variants"]
             },
             "description": "POST /api/v1/products/{id}/variants\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -972,17 +807,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}/variants/{{variantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}",
-                "variants",
-                "{{variantId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}", "variants", "{{variantId}}"]
             },
             "description": "PATCH /api/v1/products/{id}/variants/{variantId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -1021,17 +847,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}/variants/{{variantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}",
-                "variants",
-                "{{variantId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}", "variants", "{{variantId}}"]
             },
             "description": "DELETE /api/v1/products/{id}/variants/{variantId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -1061,16 +878,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/catalog/products?page=1&pageSize=25&q=&status=ALL&sort=newest",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "catalog",
-                "products"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "catalog", "products"],
               "query": [
                 {
                   "key": "page",
@@ -1116,16 +925,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}/images",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}",
-                "images"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}", "images"]
             },
             "description": "POST /api/v1/products/{id}/images\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -1175,17 +976,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/products/{{productId}}/images/{{imageId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "products",
-                "{{productId}}",
-                "images",
-                "{{imageId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{productId}}", "images", "{{imageId}}"]
             },
             "description": "DELETE /api/v1/products/{id}/images/{imageId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -1220,16 +1012,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/catalog/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "catalog",
-                "categories"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "catalog", "categories"]
             },
             "description": "GET /api/v1/admin/catalog/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -1259,16 +1043,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/catalog/brands",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "catalog",
-                "brands"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "catalog", "brands"]
             },
             "description": "GET /api/v1/admin/catalog/brands\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -1298,14 +1074,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/categories?limit=50",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "categories"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories"],
               "query": [
                 {
                   "key": "limit",
@@ -1344,14 +1114,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/categories",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "categories"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories"]
             },
             "description": "POST /api/v1/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1393,15 +1157,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "categories",
-                "{{categoryId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{categoryId}}"]
             },
             "description": "GET /api/v1/categories/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1434,15 +1191,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "categories",
-                "{{categoryId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{categoryId}}"]
             },
             "description": "PATCH /api/v1/categories/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1484,15 +1234,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "categories",
-                "{{categoryId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{categoryId}}"]
             },
             "description": "DELETE /api/v1/categories/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1519,16 +1262,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}/image",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "categories",
-                "{{categoryId}}",
-                "image"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{categoryId}}", "image"]
             },
             "description": "POST /api/v1/categories/{id}/image\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -1568,14 +1303,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/brands?limit=50",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "brands"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "brands"],
               "query": [
                 {
                   "key": "limit",
@@ -1614,14 +1343,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/brands",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "brands"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "brands"]
             },
             "description": "POST /api/v1/brands\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1663,15 +1386,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "brands",
-                "{{brandId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "brands", "{{brandId}}"]
             },
             "description": "GET /api/v1/brands/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1704,15 +1420,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "brands",
-                "{{brandId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "brands", "{{brandId}}"]
             },
             "description": "PATCH /api/v1/brands/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1754,15 +1463,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "brands",
-                "{{brandId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "brands", "{{brandId}}"]
             },
             "description": "DELETE /api/v1/brands/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "auth": {
@@ -1789,16 +1491,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}/image",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "brands",
-                "{{brandId}}",
-                "image"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "brands", "{{brandId}}", "image"]
             },
             "description": "POST /api/v1/brands/{id}/image\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -1838,14 +1532,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/attribute-sets?limit=50",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "attribute-sets"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "attribute-sets"],
               "query": [
                 {
                   "key": "limit",
@@ -1881,14 +1569,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/attribute-sets",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "attribute-sets"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "attribute-sets"]
             },
             "description": "POST /api/v1/attribute-sets\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -1927,15 +1609,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/attribute-sets/{{attributeSetId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "attribute-sets",
-                "{{attributeSetId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "attribute-sets", "{{attributeSetId}}"]
             },
             "description": "GET /api/v1/attribute-sets/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -1965,15 +1640,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/attribute-sets/{{attributeSetId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "attribute-sets",
-                "{{attributeSetId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "attribute-sets", "{{attributeSetId}}"]
             },
             "description": "PATCH /api/v1/attribute-sets/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2012,15 +1680,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/attribute-sets/{{attributeSetId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "attribute-sets",
-                "{{attributeSetId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "attribute-sets", "{{attributeSetId}}"]
             },
             "description": "DELETE /api/v1/attribute-sets/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2055,15 +1716,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/search/synonyms",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "search",
-                "synonyms"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "synonyms"]
             },
             "description": "GET /api/v1/search/synonyms\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2093,15 +1747,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/search/synonyms",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "search",
-                "synonyms"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "synonyms"]
             },
             "description": "POST /api/v1/search/synonyms\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2140,16 +1787,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/search/synonyms/{{synonymId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "search",
-                "synonyms",
-                "{{synonymId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "synonyms", "{{synonymId}}"]
             },
             "description": "PATCH /api/v1/search/synonyms/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2188,16 +1827,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/search/synonyms/{{synonymId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "search",
-                "synonyms",
-                "{{synonymId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "search", "synonyms", "{{synonymId}}"]
             },
             "description": "DELETE /api/v1/search/synonyms/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2221,15 +1852,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/catalog/imports?duplicatePolicy=fail&dryRun=true",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "catalog",
-                "imports"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "catalog", "imports"],
               "query": [
                 {
                   "key": "duplicatePolicy",
@@ -2279,17 +1903,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/catalog/imports/{{importId}}/errors.csv",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "catalog",
-                "imports",
-                "{{importId}}",
-                "errors.csv"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "catalog", "imports", "{{importId}}", "errors.csv"]
             },
             "description": "GET /api/v1/catalog/imports/{id}/errors.csv\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2324,15 +1939,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory/warehouses",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory",
-                "warehouses"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "warehouses"]
             },
             "description": "GET /api/v1/inventory/warehouses\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2362,14 +1970,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory?page=1&pageSize=25&q=",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"],
               "query": [
                 {
                   "key": "page",
@@ -2413,14 +2015,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"]
             },
             "description": "POST /api/v1/inventory\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2459,15 +2055,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory",
-                "{{inventoryId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "{{inventoryId}}"]
             },
             "description": "PATCH /api/v1/inventory/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2506,15 +2095,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory",
-                "{{inventoryId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "{{inventoryId}}"]
             },
             "description": "DELETE /api/v1/inventory/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2544,16 +2126,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}/reservations",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory",
-                "{{inventoryId}}",
-                "reservations"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "{{inventoryId}}", "reservations"]
             },
             "description": "POST /api/v1/inventory/{id}/reservations\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2592,16 +2166,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}/releases",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory",
-                "{{inventoryId}}",
-                "releases"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "{{inventoryId}}", "releases"]
             },
             "description": "POST /api/v1/inventory/{id}/releases\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2640,16 +2206,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}/adjustments",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "inventory",
-                "{{inventoryId}}",
-                "adjustments"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "{{inventoryId}}", "adjustments"]
             },
             "description": "POST /api/v1/inventory/{id}/adjustments\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2688,15 +2246,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/inventory",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "inventory"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "inventory"]
             },
             "description": "GET /api/v1/admin/inventory\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2731,14 +2282,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions?page=1&pageSize=25",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "promotions"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "promotions"],
               "query": [
                 {
                   "key": "page",
@@ -2778,14 +2323,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "promotions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "promotions"]
             },
             "description": "POST /api/v1/promotions\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2824,15 +2363,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions/{{promotionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "promotions",
-                "{{promotionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "promotions", "{{promotionId}}"]
             },
             "description": "PATCH /api/v1/promotions/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2871,15 +2403,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/promotions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "promotions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "promotions"]
             },
             "description": "GET /api/v1/admin/promotions\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2914,15 +2439,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/coupons",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "coupons"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "coupons"]
             },
             "description": "GET /api/v1/admin/coupons\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -2952,15 +2470,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/coupons",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "coupons"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "coupons"]
             },
             "description": "POST /api/v1/admin/coupons\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -2999,16 +2510,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/coupons/{{couponId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "coupons",
-                "{{couponId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "coupons", "{{couponId}}"]
             },
             "description": "PATCH /api/v1/admin/coupons/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3047,15 +2550,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/influencers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "influencers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "influencers"]
             },
             "description": "GET /api/v1/admin/influencers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3085,15 +2581,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/influencers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "influencers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "influencers"]
             },
             "description": "POST /api/v1/admin/influencers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3132,17 +2621,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/influencers/{{influencerId}}/report",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "influencers",
-                "{{influencerId}}",
-                "report"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "influencers", "{{influencerId}}", "report"]
             },
             "description": "GET /api/v1/admin/influencers/{id}/report\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3172,15 +2652,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/tax-rules",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "tax-rules"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "tax-rules"]
             },
             "description": "GET /api/v1/admin/tax-rules\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3210,15 +2683,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/tax-rules",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "tax-rules"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "tax-rules"]
             },
             "description": "POST /api/v1/admin/tax-rules\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3262,16 +2728,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/delivery/zones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "delivery",
-                "zones"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "delivery", "zones"]
             },
             "description": "GET /api/v1/admin/delivery/zones\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3301,16 +2759,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/delivery/zones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "delivery",
-                "zones"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "delivery", "zones"]
             },
             "description": "POST /api/v1/admin/delivery/zones\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3349,17 +2799,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/delivery/zones/{{zoneId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "delivery",
-                "zones",
-                "{{zoneId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "delivery", "zones", "{{zoneId}}"]
             },
             "description": "PATCH /api/v1/admin/delivery/zones/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3398,16 +2839,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/delivery/slots",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "delivery",
-                "slots"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "delivery", "slots"]
             },
             "description": "GET /api/v1/admin/delivery/slots\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3437,16 +2870,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/delivery/slots",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "delivery",
-                "slots"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "delivery", "slots"]
             },
             "description": "POST /api/v1/admin/delivery/slots\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3485,17 +2910,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/delivery/slots/{{slotId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "delivery",
-                "slots",
-                "{{slotId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "delivery", "slots", "{{slotId}}"]
             },
             "description": "PATCH /api/v1/admin/delivery/slots/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3539,17 +2955,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/payments/{{orderId}}/capture",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "payments",
-                "{{orderId}}",
-                "capture"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "payments", "{{orderId}}", "capture"]
             },
             "description": "POST /api/v1/admin/payments/{orderId}/capture\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -3588,15 +2995,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders?page=1&pageSize=25",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
               "query": [
                 {
                   "key": "page",
@@ -3636,16 +3036,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders",
-                "{{orderId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}"]
             },
             "description": "GET /api/v1/admin/orders/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3675,17 +3067,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/invoice",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders",
-                "{{orderId}}",
-                "invoice"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}", "invoice"]
             },
             "description": "GET /api/v1/admin/orders/{id}/invoice\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3715,9 +3098,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/fulfilment-groups/{{fulfilmentGroupId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "api",
                 "v1",
@@ -3765,17 +3146,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders",
-                "{{orderId}}",
-                "pick-list"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}", "pick-list"]
             },
             "description": "GET /api/v1/admin/orders/{id}/pick-list\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3805,17 +3177,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders",
-                "{{orderId}}",
-                "pick-list"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}", "pick-list"]
             },
             "description": "POST /api/v1/admin/orders/{id}/pick-list\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3845,9 +3208,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list/items/{{pickItemId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "api",
                 "v1",
@@ -3896,18 +3257,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list/complete",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders",
-                "{{orderId}}",
-                "pick-list",
-                "complete"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}", "pick-list", "complete"]
             },
             "description": "POST /api/v1/admin/orders/{id}/pick-list/complete\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -3937,16 +3288,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/compliance/alcohol-day-book?date=2026-10-11",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "compliance",
-                "alcohol-day-book"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "compliance", "alcohol-day-book"],
               "query": [
                 {
                   "key": "date",
@@ -3982,14 +3325,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/delivery-age-check",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "delivery-age-check"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "delivery-age-check"]
             },
             "description": "POST /api/v1/delivery-age-check\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4028,17 +3365,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/refunds",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "orders",
-                "{{orderId}}",
-                "refunds"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}", "refunds"]
             },
             "description": "POST /api/v1/admin/orders/{orderId}/refunds\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4082,15 +3410,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/returns?page=1&pageSize=25",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "returns"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "returns"],
               "query": [
                 {
                   "key": "page",
@@ -4130,16 +3451,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/returns/{{returnId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "returns",
-                "{{returnId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "returns", "{{returnId}}"]
             },
             "description": "PATCH /api/v1/admin/returns/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4178,15 +3491,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/refunds",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "refunds"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "refunds"]
             },
             "description": "POST /api/v1/admin/refunds\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4225,16 +3531,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/refunds/{{refundId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "refunds",
-                "{{refundId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "refunds", "{{refundId}}"]
             },
             "description": "GET /api/v1/admin/refunds/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -4269,17 +3567,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reviews/{{reviewId}}/moderation",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reviews",
-                "{{reviewId}}",
-                "moderation"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reviews", "{{reviewId}}", "moderation"]
             },
             "description": "PATCH /api/v1/admin/reviews/{id}/moderation\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4318,15 +3607,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/customers?page=1&pageSize=25&q=",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "customers"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "customers"],
               "query": [
                 {
                   "key": "page",
@@ -4370,16 +3652,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/customers/{{customerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "customers",
-                "{{customerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "customers", "{{customerId}}"]
             },
             "description": "GET /api/v1/admin/customers/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -4409,16 +3683,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/customers/{{customerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "customers",
-                "{{customerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "customers", "{{customerId}}"]
             },
             "description": "PATCH /api/v1/admin/customers/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4457,15 +3723,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/reviews?page=1&pageSize=25&status=PENDING",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "reviews"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reviews"],
               "query": [
                 {
                   "key": "page",
@@ -4514,15 +3773,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/content",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "content"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "content"]
             },
             "description": "GET /api/v1/admin/content\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -4552,16 +3804,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/content/banners",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "content",
-                "banners"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "content", "banners"]
             },
             "description": "POST /api/v1/admin/content/banners\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4600,17 +3844,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/content/banners/{{bannerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "content",
-                "banners",
-                "{{bannerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "content", "banners", "{{bannerId}}"]
             },
             "description": "PATCH /api/v1/admin/content/banners/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4649,16 +3884,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/content/blocks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "content",
-                "blocks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "content", "blocks"]
             },
             "description": "POST /api/v1/admin/content/blocks\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4697,16 +3924,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/content/pages",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "content",
-                "pages"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "content", "pages"]
             },
             "description": "POST /api/v1/admin/content/pages\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4750,15 +3969,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-templates",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-templates"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-templates"]
             },
             "description": "GET /api/v1/admin/notification-templates\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -4788,15 +4000,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-templates",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-templates"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-templates"]
             },
             "description": "POST /api/v1/admin/notification-templates\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4835,16 +4040,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-templates/{{templateId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-templates",
-                "{{templateId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-templates", "{{templateId}}"]
             },
             "description": "PATCH /api/v1/admin/notification-templates/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4883,16 +4080,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-templates/preview",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-templates",
-                "preview"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-templates", "preview"]
             },
             "description": "POST /api/v1/admin/notification-templates/preview\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -4931,9 +4120,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-templates/{{templateId}}/test-send",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "api",
                 "v1",
@@ -4980,17 +4167,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-templates/{{templateId}}/test",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-templates",
-                "{{templateId}}",
-                "test"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-templates", "{{templateId}}", "test"]
             },
             "description": "POST /api/v1/admin/notification-templates/{id}/test\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -5029,15 +4207,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-deliveries?page=1&pageSize=25&status=&q=",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-deliveries"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-deliveries"],
               "query": [
                 {
                   "key": "page",
@@ -5085,17 +4256,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notification-deliveries/{{deliveryId}}/retry",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notification-deliveries",
-                "{{deliveryId}}",
-                "retry"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notification-deliveries", "{{deliveryId}}", "retry"]
             },
             "description": "POST /api/v1/admin/notification-deliveries/{id}/retry\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -5125,16 +4287,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/notifications/process",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "notifications",
-                "process"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "notifications", "process"]
             },
             "description": "POST /api/v1/admin/notifications/process\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -5169,15 +4323,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/rbac",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "rbac"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "rbac"]
             },
             "description": "GET /api/v1/admin/rbac\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -5207,17 +4354,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/rbac/roles/{{roleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "rbac",
-                "roles",
-                "{{roleId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "rbac", "roles", "{{roleId}}"]
             },
             "description": "PATCH /api/v1/admin/rbac/roles/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -5256,28 +4394,175 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/rbac/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "rbac",
-                "users",
-                "{{userId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "rbac", "users", "{{userId}}"]
             },
             "description": "PATCH /api/v1/admin/rbac/users/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"roleKeys\": [\n    \"catalog-manager\"\n  ]\n}",
+              "raw": "{\n  \"roleKeys\": [\n    \"CATALOG_MANAGER\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/staff?page=1&pageSize=25&q=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "staff"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/staff\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / admin / staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "staff"]
+            },
+            "description": "POST /api/v1/admin/staff\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"staff@example.test\",\n  \"firstName\": \"Store\",\n  \"lastName\": \"Operator\",\n  \"roleKeys\": [\n    \"STORE_MANAGER\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH admin / staff / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/staff/{{staffUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "staff", "{{staffUserId}}"]
+            },
+            "description": "PATCH /api/v1/admin/staff/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Store\",\n  \"lastName\": \"Operator\",\n  \"active\": true,\n  \"roleKeys\": [\n    \"STORE_MANAGER\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST staff / {id} / password-reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/staff/{{staffUserId}}/password-reset",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "staff", "{{staffUserId}}", "password-reset"]
+            },
+            "description": "POST /api/v1/admin/staff/{id}/password-reset\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
           "event": [
             {
@@ -5305,15 +4590,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/settings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "settings"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "settings"]
             },
             "description": "GET /api/v1/admin/settings\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
           },
@@ -5343,15 +4621,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/settings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "settings"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "settings"]
             },
             "description": "PATCH /api/v1/admin/settings\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -5390,15 +4661,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/audit-log?page=1&pageSize=25",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "audit-log"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "audit-log"],
               "query": [
                 {
                   "key": "page",
@@ -5438,16 +4702,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/privacy/requests?status=IN_REVIEW",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "privacy",
-                "requests"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "privacy", "requests"],
               "query": [
                 {
                   "key": "status",
@@ -5483,17 +4739,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/privacy/requests/{{privacyRequestId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "privacy",
-                "requests",
-                "{{privacyRequestId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "privacy", "requests", "{{privacyRequestId}}"]
             },
             "description": "PATCH /api/v1/admin/privacy/requests/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
             "body": {
@@ -5653,6 +4900,10 @@
     },
     {
       "key": "importId",
+      "value": ""
+    },
+    {
+      "key": "staffUserId",
       "value": ""
     }
   ]
