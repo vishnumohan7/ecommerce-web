@@ -1,0 +1,5581 @@
+{
+  "info": {
+    "_postman_id": "7b1ec357-a2ac-4d6b-a8b0-b72cd79fd8e9",
+    "name": "Denes Commerce - Admin API",
+    "description": "Admin-only manual testing collection generated from the deployed NestJS OpenAPI document. Customer storefront, cart and checkout routes are excluded.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('baseUrl')) pm.environment.set('baseUrl', 'https://api-theta-jade-1ftquke8hz.vercel.app');"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication and system",
+      "item": [
+        {
+          "name": "Prometheus metrics",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "description": "GET /metrics"
+          }
+        },
+        {
+          "name": "Liveness check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "GET /health\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dependency readiness check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ready"
+              ]
+            },
+            "description": "GET /ready\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create access and refresh tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "POST /api/v1/auth/login\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"<ADMIN_EMAIL>\",\n  \"password\": \"<ADMIN_PASSWORD>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "  if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rotate a refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "POST /api/v1/auth/refresh\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "  if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke a refresh-token family",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "POST /api/v1/auth/logout\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Return current authentication context",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "GET /api/v1/auth/me\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / media / {id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/media/{{mediaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "media",
+                "{{mediaId}}"
+              ]
+            },
+            "description": "GET /api/v1/media/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Dashboard and reports",
+      "item": [
+        {
+          "name": "GET v1 / admin / dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/dashboard?from=2026-10-01&to=2026-10-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-10-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-31"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/dashboard\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / reports / sales",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reports/sales?undefined=undefined&undefined=undefined",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reports",
+                "sales"
+              ],
+              "query": [
+                [
+                  "from",
+                  "2026-10-01"
+                ],
+                [
+                  "to",
+                  "2026-10-31"
+                ]
+              ]
+            },
+            "description": "GET /api/v1/admin/reports/sales\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / reports / customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reports/customers?undefined=undefined&undefined=undefined",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reports",
+                "customers"
+              ],
+              "query": [
+                [
+                  "from",
+                  "2026-10-01"
+                ],
+                [
+                  "to",
+                  "2026-10-31"
+                ]
+              ]
+            },
+            "description": "GET /api/v1/admin/reports/customers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / reports / products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reports/products?undefined=undefined&undefined=undefined",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reports",
+                "products"
+              ],
+              "query": [
+                [
+                  "from",
+                  "2026-10-01"
+                ],
+                [
+                  "to",
+                  "2026-10-31"
+                ]
+              ]
+            },
+            "description": "GET /api/v1/admin/reports/products\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / reports / coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reports/coupons?undefined=undefined&undefined=undefined",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reports",
+                "coupons"
+              ],
+              "query": [
+                [
+                  "from",
+                  "2026-10-01"
+                ],
+                [
+                  "to",
+                  "2026-10-31"
+                ]
+              ]
+            },
+            "description": "GET /api/v1/admin/reports/coupons\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / reports / categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reports/categories?undefined=undefined&undefined=undefined",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reports",
+                "categories"
+              ],
+              "query": [
+                [
+                  "from",
+                  "2026-10-01"
+                ],
+                [
+                  "to",
+                  "2026-10-31"
+                ]
+              ]
+            },
+            "description": "GET /api/v1/admin/reports/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Products, variants and media",
+      "item": [
+        {
+          "name": "List active products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products?alcohol=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "alcohol",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "GET /api/v1/products\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            },
+            "description": "POST /api/v1/products\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"brandId\": \"{{brandId}}\",\n  \"sku\": \"POSTMAN-PRODUCT-001\",\n  \"slug\": \"postman-product-001\",\n  \"name\": \"Postman Product\",\n  \"description\": \"Product created during manual API testing.\",\n  \"priceMinor\": \"499\",\n  \"currency\": \"GBP\",\n  \"vatRateBps\": 2000,\n  \"taxCategory\": \"STANDARD_20\",\n  \"pricingMode\": \"UNIT\",\n  \"pricePerKgMinor\": null,\n  \"estimatedWeightGrams\": null,\n  \"weightToleranceBps\": null,\n  \"abv\": null,\n  \"alcoholType\": null,\n  \"weightGrams\": 500,\n  \"ageRestriction\": 0,\n  \"restrictionReason\": \"NONE\",\n  \"returnPolicy\": \"STANDARD_14_DAY\",\n  \"unitPriceDisplay\": \"GBP 4.99 each\",\n  \"hfssStatus\": \"NOT_IN_SCOPE\",\n  \"hfssCategory\": null,\n  \"dietaryTags\": [],\n  \"allergens\": [],\n  \"countryOfOrigin\": \"GB\",\n  \"storageType\": \"AMBIENT\",\n  \"shelfLifeDays\": 365\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get product details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "GET /api/v1/products/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update a product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/products/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"brandId\": \"{{brandId}}\",\n  \"sku\": \"POSTMAN-PRODUCT-001\",\n  \"slug\": \"postman-product-001\",\n  \"name\": \"Postman Product\",\n  \"description\": \"Product created during manual API testing.\",\n  \"priceMinor\": \"499\",\n  \"currency\": \"GBP\",\n  \"vatRateBps\": 2000,\n  \"taxCategory\": \"STANDARD_20\",\n  \"pricingMode\": \"UNIT\",\n  \"pricePerKgMinor\": null,\n  \"estimatedWeightGrams\": null,\n  \"weightToleranceBps\": null,\n  \"abv\": null,\n  \"alcoholType\": null,\n  \"weightGrams\": 500,\n  \"ageRestriction\": 0,\n  \"restrictionReason\": \"NONE\",\n  \"returnPolicy\": \"STANDARD_14_DAY\",\n  \"unitPriceDisplay\": \"GBP 4.99 each\",\n  \"hfssStatus\": \"NOT_IN_SCOPE\",\n  \"hfssCategory\": null,\n  \"dietaryTags\": [],\n  \"allergens\": [],\n  \"countryOfOrigin\": \"GB\",\n  \"storageType\": \"AMBIENT\",\n  \"shelfLifeDays\": 365\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete an unused product or remove a referenced product from sale",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/products/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a product variant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/variants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "variants"
+              ]
+            },
+            "description": "POST /api/v1/products/{id}/variants\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"POSTMAN-PRODUCT-001-SINGLE\",\n  \"name\": \"Single pack\",\n  \"priceMinor\": \"499\",\n  \"currency\": \"GBP\",\n  \"packSize\": \"1 pack\",\n  \"weightGrams\": 500,\n  \"abv\": null,\n  \"flavour\": null,\n  \"attributes\": {\n    \"size\": \"single\"\n  },\n  \"warehouseId\": \"{{warehouseId}}\",\n  \"stockOnHand\": 20,\n  \"lowStockThreshold\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update a product variant",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/variants/{{variantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "variants",
+                "{{variantId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/products/{id}/variants/{variantId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Case of 6\",\n  \"priceMinor\": \"1499\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete an unused variant or deactivate one with stock history",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/variants/{{variantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "variants",
+                "{{variantId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/products/{id}/variants/{variantId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all products with server-side pagination and filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/catalog/products?page=1&pageSize=25&q=&status=ALL&sort=newest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "catalog",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": "ALL"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/catalog/products\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload and safely re-encode a product image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "images"
+              ]
+            },
+            "description": "POST /api/v1/products/{id}/images\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "altText",
+                  "type": "text",
+                  "value": "Postman product image"
+                },
+                {
+                  "key": "featured",
+                  "type": "text",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove a product image and compact gallery positions",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/images/{{imageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "images",
+                "{{imageId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/products/{id}/images/{imageId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Categories, brands and attributes",
+      "item": [
+        {
+          "name": "List active category tree nodes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "GET /api/v1/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST api / v1 / categories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            },
+            "description": "POST /api/v1/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentId\": null,\n  \"slug\": \"postman-category\",\n  \"name\": \"Postman Category\",\n  \"position\": 99,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get an active category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "GET /api/v1/categories/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH v1 / categories / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/categories/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fresh Food\",\n  \"position\": 2,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE v1 / categories / {id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/categories/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST categories / {id} / image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{categoryId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "{{categoryId}}",
+                "image"
+              ]
+            },
+            "description": "POST /api/v1/categories/{id}/image\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List brands",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "GET /api/v1/brands\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST api / v1 / brands",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands"
+              ]
+            },
+            "description": "POST /api/v1/brands\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"postman-brand\",\n  \"name\": \"Postman Brand\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get a brand",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands",
+                "{{brandId}}"
+              ]
+            },
+            "description": "GET /api/v1/brands/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH v1 / brands / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands",
+                "{{brandId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/brands/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Brand\",\n  \"slug\": \"updated-brand\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE v1 / brands / {id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands",
+                "{{brandId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/brands/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST brands / {id} / image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands",
+                "{{brandId}}",
+                "image"
+              ]
+            },
+            "description": "POST /api/v1/brands/{id}/image\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET api / v1 / attribute-sets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attribute-sets?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attribute-sets"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "GET /api/v1/attribute-sets\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST api / v1 / attribute-sets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attribute-sets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attribute-sets"
+              ]
+            },
+            "description": "POST /api/v1/attribute-sets\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"pack_details\",\n  \"name\": \"Pack details\",\n  \"definitions\": [\n    {\n      \"key\": \"size\",\n      \"label\": \"Size\",\n      \"type\": \"TEXT\",\n      \"required\": true\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / attribute-sets / {id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attribute-sets/{{attributeSetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attribute-sets",
+                "{{attributeSetId}}"
+              ]
+            },
+            "description": "GET /api/v1/attribute-sets/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH v1 / attribute-sets / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attribute-sets/{{attributeSetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attribute-sets",
+                "{{attributeSetId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/attribute-sets/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated pack details\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE v1 / attribute-sets / {id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attribute-sets/{{attributeSetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attribute-sets",
+                "{{attributeSetId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/attribute-sets/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Imports and search synonyms",
+      "item": [
+        {
+          "name": "GET v1 / search / synonyms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/synonyms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "synonyms"
+              ]
+            },
+            "description": "GET /api/v1/search/synonyms\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / search / synonyms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/synonyms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "synonyms"
+              ]
+            },
+            "description": "POST /api/v1/search/synonyms\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"terms\": [\n    \"soft drink\",\n    \"soda\",\n    \"pop\"\n  ],\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH search / synonyms / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/synonyms/{{synonymId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "synonyms",
+                "{{synonymId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/search/synonyms/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"terms\": [\n    \"soft drink\",\n    \"soda\",\n    \"pop\"\n  ],\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE search / synonyms / {id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/synonyms/{{synonymId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "synonyms",
+                "{{synonymId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/search/synonyms/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate or import a CSV/XLSX catalogue atomically",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalog/imports?duplicatePolicy=fail&dryRun=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalog",
+                "imports"
+              ],
+              "query": [
+                {
+                  "key": "duplicatePolicy",
+                  "value": "fail"
+                },
+                {
+                  "key": "dryRun",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "POST /api/v1/catalog/imports\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download a row-keyed import error report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalog/imports/{{importId}}/errors.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalog",
+                "imports",
+                "{{importId}}",
+                "errors.csv"
+              ]
+            },
+            "description": "GET /api/v1/catalog/imports/{id}/errors.csv\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Inventory",
+      "item": [
+        {
+          "name": "List active stock warehouses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/warehouses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "warehouses"
+              ]
+            },
+            "description": "GET /api/v1/inventory/warehouses\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List inventory with product details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory?page=1&pageSize=25&q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "GET /api/v1/inventory\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create stock for a product and warehouse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory"
+              ]
+            },
+            "description": "POST /api/v1/inventory\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"warehouseId\": \"{{warehouseId}}\",\n  \"onHand\": 20,\n  \"lowStockThreshold\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update stock control settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "{{inventoryId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/inventory/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lowStockThreshold\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete an unused empty stock record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "{{inventoryId}}"
+              ]
+            },
+            "description": "DELETE /api/v1/inventory/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve stock atomically",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "{{inventoryId}}",
+                "reservations"
+              ]
+            },
+            "description": "POST /api/v1/inventory/{id}/reservations\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2,\n  \"reference\": \"POSTMAN-STOCK-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Release reserved stock atomically",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}/releases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "{{inventoryId}}",
+                "releases"
+              ]
+            },
+            "description": "POST /api/v1/inventory/{id}/releases\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2,\n  \"reference\": \"POSTMAN-STOCK-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Adjust physical stock with a reason ledger",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/{{inventoryId}}/adjustments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "inventory",
+                "{{inventoryId}}",
+                "adjustments"
+              ]
+            },
+            "description": "POST /api/v1/inventory/{id}/adjustments\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 5,\n  \"reason\": \"ADJUSTMENT\",\n  \"reference\": \"POSTMAN-ADJUST-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "inventory"
+              ]
+            },
+            "description": "GET /api/v1/admin/inventory\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Promotions",
+      "item": [
+        {
+          "name": "List promotions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/promotions?page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "GET /api/v1/promotions\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create an HFSS-aware promotion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/promotions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions"
+              ]
+            },
+            "description": "POST /api/v1/promotions\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman 10 Percent Promotion\",\n  \"type\": \"PERCENTAGE\",\n  \"startsAt\": \"2026-10-11T00:00:00.000Z\",\n  \"endsAt\": \"2026-12-31T23:59:59.000Z\",\n  \"productIds\": [\n    \"{{productId}}\"\n  ],\n  \"conditions\": {},\n  \"effect\": {\n    \"percentageBps\": 1000\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update promotion schedule or status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/promotions/{{promotionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions",
+                "{{promotionId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/promotions/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true,\n  \"priority\": 10,\n  \"endsAt\": \"2026-12-31T23:59:59.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / promotions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/promotions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "promotions"
+              ]
+            },
+            "description": "GET /api/v1/admin/promotions\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Pricing, coupons and tax",
+      "item": [
+        {
+          "name": "GET v1 / admin / coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "coupons"
+              ]
+            },
+            "description": "GET /api/v1/admin/coupons\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / admin / coupons",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "coupons"
+              ]
+            },
+            "description": "POST /api/v1/admin/coupons\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"POSTMAN10\",\n  \"type\": \"PERCENTAGE\",\n  \"valueBps\": 1000,\n  \"valueMinor\": null,\n  \"currency\": \"GBP\",\n  \"minimumSpendMinor\": \"2000\",\n  \"maximumDiscountMinor\": \"1000\",\n  \"startsAt\": \"2026-10-11T00:00:00.000Z\",\n  \"endsAt\": \"2026-12-31T23:59:59.000Z\",\n  \"maxUses\": 100,\n  \"couponClass\": \"SITE_WIDE\",\n  \"appliesTo\": \"BOTH\",\n  \"perCustomerLimit\": 1,\n  \"firstOrderOnly\": false,\n  \"productIds\": [],\n  \"categoryIds\": [],\n  \"brandIds\": [],\n  \"attributionWindowDays\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH admin / coupons / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/coupons/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false,\n  \"maximumDiscountMinor\": \"1000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / influencers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/influencers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "influencers"
+              ]
+            },
+            "description": "GET /api/v1/admin/influencers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / admin / influencers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/influencers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "influencers"
+              ]
+            },
+            "description": "POST /api/v1/admin/influencers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CREATOR10\",\n  \"displayName\": \"Sample Creator\",\n  \"commissionBps\": 500,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET influencers / {id} / report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/influencers/{{influencerId}}/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "influencers",
+                "{{influencerId}}",
+                "report"
+              ]
+            },
+            "description": "GET /api/v1/admin/influencers/{id}/report\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / tax-rules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/tax-rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tax-rules"
+              ]
+            },
+            "description": "GET /api/v1/admin/tax-rules\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / admin / tax-rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/tax-rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "tax-rules"
+              ]
+            },
+            "description": "POST /api/v1/admin/tax-rules\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taxCategory\": \"STANDARD_20\",\n  \"rateBps\": 2000,\n  \"effectiveFrom\": \"2026-10-01T00:00:00.000Z\",\n  \"effectiveTo\": null,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Delivery administration",
+      "item": [
+        {
+          "name": "GET admin / delivery / zones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/delivery/zones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "delivery",
+                "zones"
+              ]
+            },
+            "description": "GET /api/v1/admin/delivery/zones\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / delivery / zones",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/delivery/zones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "delivery",
+                "zones"
+              ]
+            },
+            "description": "POST /api/v1/admin/delivery/zones\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"LONDON_1\",\n  \"name\": \"Central London\",\n  \"postcodePatterns\": [\n    \"SW1*\"\n  ],\n  \"postcodeIncludes\": [],\n  \"postcodeExcludes\": [],\n  \"groceryFeeMinor\": 299,\n  \"alcoholFeeMinor\": 399,\n  \"freeDeliveryThresholdMinor\": 4000,\n  \"minimumOrderMinor\": 1000,\n  \"maximumOrderMinor\": null,\n  \"alcoholMinimumSubtotalMinor\": null,\n  \"feeSchedule\": [],\n  \"supportedStorageTypes\": [\n    \"AMBIENT\",\n    \"CHILLED\",\n    \"FROZEN\"\n  ],\n  \"currency\": \"GBP\",\n  \"alcoholDeliveryAllowed\": true,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH delivery / zones / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/delivery/zones/{{zoneId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "delivery",
+                "zones",
+                "{{zoneId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/delivery/zones/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groceryFeeMinor\": 349,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / delivery / slots",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/delivery/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "delivery",
+                "slots"
+              ]
+            },
+            "description": "GET /api/v1/admin/delivery/slots\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / delivery / slots",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/delivery/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "delivery",
+                "slots"
+              ]
+            },
+            "description": "POST /api/v1/admin/delivery/slots\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zoneId\": \"{{zoneId}}\",\n  \"startsAt\": \"2026-10-20T10:00:00.000Z\",\n  \"endsAt\": \"2026-10-20T12:00:00.000Z\",\n  \"capacity\": 20,\n  \"surchargeMinor\": 0,\n  \"cutoffMinutes\": 120,\n  \"allowsAgeRestricted\": true,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH delivery / slots / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/delivery/slots/{{slotId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "delivery",
+                "slots",
+                "{{slotId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/delivery/slots/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacity\": 25,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 - Orders and fulfilment",
+      "item": [
+        {
+          "name": "Capture a picked variable-weight order up to its authorisation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/payments/{{orderId}}/capture",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "payments",
+                "{{orderId}}",
+                "capture"
+              ]
+            },
+            "description": "POST /api/v1/admin/payments/{orderId}/capture\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recomputedAmountMinor\": \"1499\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/orders\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / orders / {id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": "GET /api/v1/admin/orders/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET orders / {id} / invoice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/invoice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "invoice"
+              ]
+            },
+            "description": "GET /api/v1/admin/orders/{id}/invoice\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply one guarded per-category fulfilment transition",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/fulfilment-groups/{{fulfilmentGroupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "fulfilment-groups",
+                "{{fulfilmentGroupId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/orders/{id}/fulfilment-groups/{groupId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PICKING\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET orders / {id} / pick-list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "pick-list"
+              ]
+            },
+            "description": "GET /api/v1/admin/orders/{id}/pick-list\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST orders / {id} / pick-list",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "pick-list"
+              ]
+            },
+            "description": "POST /api/v1/admin/orders/{id}/pick-list\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH pick-list / items / {itemId}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list/items/{{pickItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "pick-list",
+                "items",
+                "{{pickItemId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/orders/{id}/pick-list/items/{itemId}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"PICKED\",\n  \"picked\": 1,\n  \"actualWeightGrams\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST {id} / pick-list / complete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/pick-list/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "pick-list",
+                "complete"
+              ]
+            },
+            "description": "POST /api/v1/admin/orders/{id}/pick-list/complete\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / compliance / alcohol-day-book",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/compliance/alcohol-day-book?date=2026-10-11",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "compliance",
+                "alcohol-day-book"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-10-11"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/compliance/alcohol-day-book\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Capture delivery Challenge 25 proof without storing an ID number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/delivery-age-check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "delivery-age-check"
+              ]
+            },
+            "description": "POST /api/v1/delivery-age-check\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"outcome\": \"PASSED\",\n  \"challengeAge\": 25,\n  \"idType\": \"PASSPORT\",\n  \"recipientPresent\": true,\n  \"note\": \"Manual test; no ID number retained\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST orders / {orderId} / refunds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/refunds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "refunds"
+              ]
+            },
+            "description": "POST /api/v1/admin/orders/{orderId}/refunds\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnRequestId\": \"{{returnId}}\",\n  \"idempotencyKey\": \"postman-refund-0001\",\n  \"reason\": \"Approved returned item\",\n  \"method\": \"CARD\",\n  \"items\": [\n    {\n      \"orderItemId\": \"<ORDER_ITEM_UUID>\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 - Returns and refunds",
+      "item": [
+        {
+          "name": "GET v1 / admin / returns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/returns?page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "returns"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/returns\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve or reject a requested return",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/returns/{{returnId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "returns",
+                "{{returnId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/returns/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"adminNote\": \"Evidence checked\",\n  \"disposition\": \"WRITE_OFF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / admin / refunds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/refunds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "refunds"
+              ]
+            },
+            "description": "POST /api/v1/admin/refunds\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"returnRequestId\": \"{{returnId}}\",\n  \"idempotencyKey\": \"postman-refund-0001\",\n  \"reason\": \"Approved returned item\",\n  \"method\": \"CARD\",\n  \"items\": [\n    {\n      \"orderItemId\": \"<ORDER_ITEM_UUID>\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / refunds / {id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/refunds/{{refundId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "refunds",
+                "{{refundId}}"
+              ]
+            },
+            "description": "GET /api/v1/admin/refunds/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12 - Customers and reviews",
+      "item": [
+        {
+          "name": "Approve or reject a verified-purchase review",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reviews/{{reviewId}}/moderation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reviews",
+                "{{reviewId}}",
+                "moderation"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/reviews/{id}/moderation\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"reason\": \"Verified purchase and acceptable content\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/customers?page=1&pageSize=25&q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/customers\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / customers / {id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "customers",
+                "{{customerId}}"
+              ]
+            },
+            "description": "GET /api/v1/admin/customers/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH admin / customers / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "customers",
+                "{{customerId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/customers/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Manual\",\n  \"lastName\": \"Tester\",\n  \"phone\": \"+447700900123\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reviews?page=1&pageSize=25&status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/reviews\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "13 - Content management",
+      "item": [
+        {
+          "name": "GET v1 / admin / content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/content",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "content"
+              ]
+            },
+            "description": "GET /api/v1/admin/content\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / content / banners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/content/banners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "content",
+                "banners"
+              ]
+            },
+            "description": "POST /api/v1/admin/content/banners\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Banner\",\n  \"subtitle\": \"Manual testing banner\",\n  \"imageUrl\": \"https://example.test/banner.jpg\",\n  \"mobileImageUrl\": null,\n  \"linkUrl\": \"https://example.test/offers\",\n  \"position\": 1,\n  \"startsAt\": null,\n  \"endsAt\": null,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH content / banners / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/content/banners/{{bannerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "content",
+                "banners",
+                "{{bannerId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/content/banners/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Postman Banner\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / content / blocks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/content/blocks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "content",
+                "blocks"
+              ]
+            },
+            "description": "POST /api/v1/admin/content/blocks\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"FEATURED_PRODUCTS\",\n  \"title\": \"Featured products\",\n  \"content\": {\n    \"productIds\": [\n      \"{{productId}}\"\n    ]\n  },\n  \"position\": 1,\n  \"startsAt\": null,\n  \"endsAt\": null,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / content / pages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/content/pages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "content",
+                "pages"
+              ]
+            },
+            "description": "POST /api/v1/admin/content/pages\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TERMS\",\n  \"locale\": \"en-GB\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"<p>Approved content</p>\",\n  \"published\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "14 - Notifications",
+      "item": [
+        {
+          "name": "GET v1 / admin / notification-templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-templates"
+              ]
+            },
+            "description": "GET /api/v1/admin/notification-templates\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST v1 / admin / notification-templates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-templates"
+              ]
+            },
+            "description": "POST /api/v1/admin/notification-templates\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"ORDER_CONFIRMED\",\n  \"channel\": \"EMAIL\",\n  \"locale\": \"en-GB\",\n  \"subject\": \"Order {{orderNumber}} confirmed\",\n  \"body\": \"Hello {{firstName}}, your order is confirmed.\",\n  \"mjml\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH admin / notification-templates / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-templates/{{templateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-templates",
+                "{{templateId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/notification-templates/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"ORDER_CONFIRMED\",\n  \"channel\": \"EMAIL\",\n  \"locale\": \"en-GB\",\n  \"subject\": \"Order {{orderNumber}} confirmed\",\n  \"body\": \"Hello {{firstName}}, your order is confirmed.\",\n  \"mjml\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / notification-templates / preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-templates/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-templates",
+                "preview"
+              ]
+            },
+            "description": "POST /api/v1/admin/notification-templates/preview\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Order {{orderNumber}} confirmed\",\n  \"body\": \"Hello {{firstName}}\",\n  \"data\": {\n    \"orderNumber\": \"DEN-1001\",\n    \"firstName\": \"Manual\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST notification-templates / {id} / test-send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-templates/{{templateId}}/test-send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-templates",
+                "{{templateId}}",
+                "test-send"
+              ]
+            },
+            "description": "POST /api/v1/admin/notification-templates/{id}/test-send\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient\": \"tester@example.test\",\n  \"data\": {\n    \"orderNumber\": \"DEN-1001\",\n    \"firstName\": \"Manual\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST notification-templates / {id} / test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-templates/{{templateId}}/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-templates",
+                "{{templateId}}",
+                "test"
+              ]
+            },
+            "description": "POST /api/v1/admin/notification-templates/{id}/test\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient\": \"tester@example.test\",\n  \"data\": {\n    \"orderNumber\": \"DEN-1001\",\n    \"firstName\": \"Manual\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / notification-deliveries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-deliveries?page=1&pageSize=25&status=&q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-deliveries"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/notification-deliveries\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST notification-deliveries / {id} / retry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notification-deliveries/{{deliveryId}}/retry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notification-deliveries",
+                "{{deliveryId}}",
+                "retry"
+              ]
+            },
+            "description": "POST /api/v1/admin/notification-deliveries/{id}/retry\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST admin / notifications / process",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/notifications/process",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "notifications",
+                "process"
+              ]
+            },
+            "description": "POST /api/v1/admin/notifications/process\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "15 - RBAC, settings, audit and privacy",
+      "item": [
+        {
+          "name": "GET v1 / admin / rbac",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rbac",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rbac"
+              ]
+            },
+            "description": "GET /api/v1/admin/rbac\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH rbac / roles / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rbac/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rbac",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/rbac/roles/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionKeys\": [\n    \"catalog.read\",\n    \"catalog.write\",\n    \"inventory.read\",\n    \"orders.read\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH rbac / users / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rbac/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rbac",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/rbac/users/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleKeys\": [\n    \"catalog-manager\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": "GET /api/v1/admin/settings\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH v1 / admin / settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/settings\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"settings\": {\n    \"minimumOrderMinor\": 2000,\n    \"supportEmail\": \"support@example.test\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET v1 / admin / audit-log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-log?page=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "audit-log"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/audit-log\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET admin / privacy / requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/privacy/requests?status=IN_REVIEW",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "privacy",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "IN_REVIEW"
+                }
+              ]
+            },
+            "description": "GET /api/v1/admin/privacy/requests\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH privacy / requests / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/privacy/requests/{{privacyRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "privacy",
+                "requests",
+                "{{privacyRequestId}}"
+              ]
+            },
+            "description": "PATCH /api/v1/admin/privacy/requests/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_REVIEW\",\n  \"adminNote\": \"Identity check started\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api-theta-jade-1ftquke8hz.vercel.app"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "variantId",
+      "value": ""
+    },
+    {
+      "key": "imageId",
+      "value": ""
+    },
+    {
+      "key": "mediaId",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "brandId",
+      "value": ""
+    },
+    {
+      "key": "attributeSetId",
+      "value": ""
+    },
+    {
+      "key": "warehouseId",
+      "value": ""
+    },
+    {
+      "key": "inventoryId",
+      "value": ""
+    },
+    {
+      "key": "promotionId",
+      "value": ""
+    },
+    {
+      "key": "couponId",
+      "value": ""
+    },
+    {
+      "key": "influencerId",
+      "value": ""
+    },
+    {
+      "key": "taxRuleId",
+      "value": ""
+    },
+    {
+      "key": "zoneId",
+      "value": ""
+    },
+    {
+      "key": "slotId",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "fulfilmentGroupId",
+      "value": ""
+    },
+    {
+      "key": "pickItemId",
+      "value": ""
+    },
+    {
+      "key": "returnId",
+      "value": ""
+    },
+    {
+      "key": "refundId",
+      "value": ""
+    },
+    {
+      "key": "customerId",
+      "value": ""
+    },
+    {
+      "key": "reviewId",
+      "value": ""
+    },
+    {
+      "key": "bannerId",
+      "value": ""
+    },
+    {
+      "key": "roleId",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "templateId",
+      "value": ""
+    },
+    {
+      "key": "deliveryId",
+      "value": ""
+    },
+    {
+      "key": "privacyRequestId",
+      "value": ""
+    },
+    {
+      "key": "synonymId",
+      "value": ""
+    },
+    {
+      "key": "importId",
+      "value": ""
+    }
+  ]
+}
