@@ -1,0 +1,863 @@
+DENES COMMERCE - ADMIN API MANUAL TESTING REFERENCE
+===================================================
+
+Generated: 11 October 2026
+Scope: Admin panel and admin-operated backend endpoints only
+Source checked: Current NestJS controllers and validation schemas
+
+
+1. ENVIRONMENT
+--------------
+
+Production API base URL:
+https://api-theta-jade-1ftquke8hz.vercel.app
+
+Production admin panel:
+https://denes-commerce-admin.vercel.app
+
+Swagger UI:
+{{baseUrl}}/api/docs
+
+Live OpenAPI JSON:
+{{baseUrl}}/api/docs-json
+
+Health check:
+GET {{baseUrl}}/health
+
+Verified health response on 11 October 2026:
+HTTP 200
+{"status":"ok"}
+
+
+2. POSTMAN SETUP
+----------------
+
+Create these environment variables:
+
+baseUrl     = https://api-theta-jade-1ftquke8hz.vercel.app
+accessToken = value returned by the login endpoint
+refreshToken = value returned by the login endpoint
+
+Create additional variables from list/create responses as required:
+
+productId, variantId, imageId, categoryId, brandId, attributeSetId,
+warehouseId, inventoryId, promotionId, couponId, influencerId, taxRuleId,
+zoneId, slotId, orderId, fulfilmentGroupId, pickItemId, returnId, refundId,
+customerId, reviewId, bannerId, roleId, userId, templateId, deliveryId,
+privacyRequestId, synonymId, importId
+
+For every protected endpoint send:
+
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+Do not send an x-tenant-id header. This is a single-client deployment and the
+API selects its configured store internally.
+
+For file uploads let Postman generate the multipart Content-Type boundary.
+All monetary request values ending in "Minor" are integer minor units:
+499 = GBP 4.99. Product and variant priceMinor values are JSON strings.
+
+Do not place real credentials or production secrets in a shared Postman file.
+
+
+3. ADMIN AUTHENTICATION AND SYSTEM
+----------------------------------
+
+[ ] GET    /health
+    Auth: Public
+    Purpose: API liveness.
+
+[ ] GET    /ready
+    Auth: Public
+    Purpose: Database, Redis and object-storage readiness.
+
+[ ] GET    /metrics
+    Auth: Public
+    Purpose: Prometheus metrics.
+
+[ ] POST   /api/v1/auth/login
+    Auth: Public, rate limited
+    Body: J1
+    Save response accessToken and refreshToken into Postman variables.
+
+[ ] POST   /api/v1/auth/refresh
+    Auth: Public
+    Body: {"refreshToken":"{{refreshToken}}"}
+
+[ ] POST   /api/v1/auth/logout
+    Auth: Public
+    Body: {"refreshToken":"{{refreshToken}}"}
+
+[ ] GET    /api/v1/auth/me
+    Auth: Bearer; catalog.read
+    Purpose: Verify the authenticated user and permission set.
+
+[ ] GET    /api/v1/media/{id}
+    Auth: Public
+    Purpose: Return uploaded image bytes for an existing media asset.
+
+
+4. DASHBOARD AND REPORTING
+--------------------------
+
+Common report filters:
+from=2026-10-01
+to=2026-10-31
+productId={{productId}}
+categoryId={{categoryId}}
+customerId={{customerId}}
+couponId={{couponId}}
+basketType=GROCERY|ALCOHOL|MIXED
+paymentStatus=PENDING|REQUIRES_ACTION|AUTHORISED|CAPTURED|FAILED|CANCELLED|PARTIALLY_REFUNDED|REFUNDED
+fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REFUSED|CANCELLED
+
+[ ] GET    /api/v1/admin/dashboard?from=2026-10-01&to=2026-10-31
+    Auth: Bearer; reports.read
+
+[ ] GET    /api/v1/admin/reports/sales?[common report filters]
+    Auth: Bearer; reports.read
+
+[ ] GET    /api/v1/admin/reports/customers?[common report filters]
+    Auth: Bearer; reports.read
+
+[ ] GET    /api/v1/admin/reports/products?[common report filters]
+    Auth: Bearer; reports.read
+
+[ ] GET    /api/v1/admin/reports/categories?[common report filters]
+    Auth: Bearer; reports.read
+
+[ ] GET    /api/v1/admin/reports/coupons?[common report filters]
+    Auth: Bearer; reports.read
+
+
+5. PRODUCTS, VARIANTS AND MEDIA
+-------------------------------
+
+[ ] GET    /api/v1/products?categoryId=&alcohol=false&cursor=
+    Auth: Public
+    Purpose: Active product list used by admin selectors. Alcohol results also
+    require a valid age-gate token, so use the admin catalogue route for the
+    complete unrestricted management list.
+
+[ ] GET    /api/v1/admin/catalog/products?page=1&pageSize=25&q=&status=ALL&sort=newest
+    Auth: Bearer; catalog.read
+    status: ALL|ACTIVE|INACTIVE|ARCHIVED
+    sort: newest|oldest|name-asc|name-desc|price-asc|price-desc
+
+[ ] GET    /api/v1/products/{productId}
+    Auth: Public
+    Purpose: Retrieve full product, variants, images and inventory details.
+
+[ ] POST   /api/v1/products
+    Auth: Bearer; catalog.write
+    Body: J2
+
+[ ] PATCH  /api/v1/products/{productId}
+    Auth: Bearer; catalog.write
+    Body: Full validated product body J2.
+
+[ ] DELETE /api/v1/products/{productId}
+    Auth: Bearer; catalog.write
+    Purpose: Hard-delete an unused product or safely remove a referenced
+    product from sale while preserving order history.
+
+[ ] POST   /api/v1/products/{productId}/variants
+    Auth: Bearer; catalog.write
+    Body: J3
+
+[ ] PATCH  /api/v1/products/{productId}/variants/{variantId}
+    Auth: Bearer; catalog.write
+    Body example:
+    {"name":"Case of 6","priceMinor":"1499","active":true}
+
+[ ] DELETE /api/v1/products/{productId}/variants/{variantId}
+    Auth: Bearer; catalog.write
+    Purpose: Delete an unused variant or deactivate one with stock history.
+
+[ ] POST   /api/v1/products/{productId}/images
+    Auth: Bearer; catalog.write
+    Body type: multipart/form-data
+    file     = PNG/JPEG/WEBP, maximum 10 MB
+    altText  = Product front image
+    featured = true or false
+
+[ ] DELETE /api/v1/products/{productId}/images/{imageId}
+    Auth: Bearer; catalog.write
+    Purpose: Delete media and compact gallery positions.
+
+
+6. CATEGORIES, BRANDS AND ATTRIBUTES
+------------------------------------
+
+[ ] GET    /api/v1/categories?limit=50&cursor=
+    Auth: Public
+
+[ ] GET    /api/v1/categories/{categoryId}
+    Auth: Public
+
+[ ] POST   /api/v1/categories
+    Auth: Bearer; catalog.write
+    Body: J4
+
+[ ] PATCH  /api/v1/categories/{categoryId}
+    Auth: Bearer; catalog.write
+    Body example: {"name":"Fresh Food","position":2,"active":true}
+
+[ ] DELETE /api/v1/categories/{categoryId}
+    Auth: Bearer; catalog.write
+    Query: cascade=true to delete/deactivate the complete child hierarchy.
+    Without cascade=true, a parent with children returns a dependency error.
+
+[ ] POST   /api/v1/categories/{categoryId}/image
+    Auth: Bearer; catalog.write
+    Body type: multipart/form-data; field file, maximum 10 MB.
+
+[ ] GET    /api/v1/brands?limit=50&cursor=
+    Auth: Public
+
+[ ] GET    /api/v1/brands/{brandId}
+    Auth: Public
+
+[ ] POST   /api/v1/brands
+    Auth: Bearer; catalog.write
+    Body: {"slug":"sample-brand","name":"Sample Brand"}
+
+[ ] PATCH  /api/v1/brands/{brandId}
+    Auth: Bearer; catalog.write
+    Body example: {"name":"Updated Brand","slug":"updated-brand"}
+
+[ ] DELETE /api/v1/brands/{brandId}
+    Auth: Bearer; catalog.write
+
+[ ] POST   /api/v1/brands/{brandId}/image
+    Auth: Bearer; catalog.write
+    Body type: multipart/form-data; field file, maximum 10 MB.
+
+[ ] GET    /api/v1/attribute-sets?limit=50&cursor=
+    Auth: Bearer; catalog.read
+
+[ ] GET    /api/v1/attribute-sets/{attributeSetId}
+    Auth: Bearer; catalog.read
+
+[ ] POST   /api/v1/attribute-sets
+    Auth: Bearer; catalog.write
+    Body: J5
+
+[ ] PATCH  /api/v1/attribute-sets/{attributeSetId}
+    Auth: Bearer; catalog.write
+    Body: Any changed fields from J5.
+
+[ ] DELETE /api/v1/attribute-sets/{attributeSetId}
+    Auth: Bearer; catalog.write
+
+
+7. CATALOG IMPORT AND SEARCH SYNONYMS
+-------------------------------------
+
+[ ] POST   /api/v1/catalog/imports?duplicatePolicy=fail&dryRun=true
+    Auth: Bearer; catalog.write
+    duplicatePolicy: fail|skip|update
+    Body type: multipart/form-data; field file, CSV/XLSX, maximum 25 MB.
+
+[ ] GET    /api/v1/catalog/imports/{importId}/errors.csv
+    Auth: Bearer; catalog.write
+
+[ ] GET    /api/v1/search/synonyms
+    Auth: Bearer; catalog.write
+
+[ ] POST   /api/v1/search/synonyms
+    Auth: Bearer; catalog.write
+    Body: {"terms":["soft drink","soda","pop"],"enabled":true}
+
+[ ] PATCH  /api/v1/search/synonyms/{synonymId}
+    Auth: Bearer; catalog.write
+    Body: {"terms":["soft drink","soda"],"enabled":true}
+
+[ ] DELETE /api/v1/search/synonyms/{synonymId}
+    Auth: Bearer; catalog.write
+
+
+8. INVENTORY
+------------
+
+[ ] GET    /api/v1/inventory/warehouses
+    Auth: Bearer; inventory.read
+
+[ ] GET    /api/v1/inventory?page=1&pageSize=25&q=
+    Auth: Bearer; inventory.read
+    Alternative filter: productId={{productId}} without page.
+
+[ ] POST   /api/v1/inventory
+    Auth: Bearer; inventory.write
+    Body: J6
+
+[ ] PATCH  /api/v1/inventory/{inventoryId}
+    Auth: Bearer; inventory.write
+    Body: {"lowStockThreshold":5}
+
+[ ] DELETE /api/v1/inventory/{inventoryId}
+    Auth: Bearer; inventory.write
+    Only an unused, empty stock record can be deleted.
+
+[ ] POST   /api/v1/inventory/{inventoryId}/reservations
+    Auth: Bearer; inventory.write
+    Body: {"quantity":2,"reference":"POSTMAN-RESERVE-001"}
+
+[ ] POST   /api/v1/inventory/{inventoryId}/releases
+    Auth: Bearer; inventory.write
+    Body: {"quantity":2,"reference":"POSTMAN-RELEASE-001"}
+
+[ ] POST   /api/v1/inventory/{inventoryId}/adjustments
+    Auth: Bearer; inventory.write
+    Body: {"quantity":5,"reason":"ADJUSTMENT","reference":"POSTMAN-ADJUST-001"}
+    Use a negative quantity to reduce stock. Allowed reasons here are PURCHASE,
+    SALE, ADJUSTMENT, RETURN, WASTAGE and PICK_SHORTFALL.
+
+[ ] GET    /api/v1/admin/inventory
+    Auth: Bearer; inventory.read
+    Purpose: Legacy compact admin inventory summary (maximum 250 records).
+
+
+9. PROMOTIONS
+-------------
+
+[ ] GET    /api/v1/promotions?page=1&pageSize=25
+    Auth: Bearer; catalog.read
+
+[ ] POST   /api/v1/promotions
+    Auth: Bearer; catalog.write
+    Body: J7
+
+[ ] PATCH  /api/v1/promotions/{promotionId}
+    Auth: Bearer; catalog.write
+    Body example:
+    {"active":true,"priority":10,"endsAt":"2026-12-31T23:59:59.000Z"}
+
+[ ] GET    /api/v1/admin/promotions
+    Auth: Bearer; catalog.read
+    Purpose: Legacy compact admin promotion summary.
+
+
+10. COUPONS, INFLUENCERS AND TAX
+--------------------------------
+
+[ ] GET    /api/v1/admin/coupons
+    Auth: Bearer; catalog.read
+
+[ ] POST   /api/v1/admin/coupons
+    Auth: Bearer; catalog.write
+    Body: J8
+
+[ ] PATCH  /api/v1/admin/coupons/{couponId}
+    Auth: Bearer; catalog.write
+    Body example: {"active":false,"maximumDiscountMinor":"1000"}
+
+[ ] GET    /api/v1/admin/influencers
+    Auth: Bearer; catalog.read
+
+[ ] POST   /api/v1/admin/influencers
+    Auth: Bearer; catalog.write
+    Body:
+    {"code":"CREATOR10","displayName":"Sample Creator","commissionBps":500,"active":true}
+
+[ ] GET    /api/v1/admin/influencers/{influencerId}/report
+    Auth: Bearer; catalog.read
+
+[ ] GET    /api/v1/admin/tax-rules
+    Auth: Bearer; catalog.read
+
+[ ] POST   /api/v1/admin/tax-rules
+    Auth: Bearer; catalog.write
+    Body:
+    {"taxCategory":"STANDARD_20","rateBps":2000,"effectiveFrom":"2026-10-01T00:00:00.000Z","effectiveTo":null,"active":true}
+
+
+11. DELIVERY ADMINISTRATION
+---------------------------
+
+[ ] GET    /api/v1/admin/delivery/zones
+    Auth: Bearer; delivery.read
+
+[ ] POST   /api/v1/admin/delivery/zones
+    Auth: Bearer; delivery.write
+    Body: J9
+
+[ ] PATCH  /api/v1/admin/delivery/zones/{zoneId}
+    Auth: Bearer; delivery.write
+    Body example: {"groceryFeeMinor":349,"active":true}
+
+[ ] GET    /api/v1/admin/delivery/slots
+    Auth: Bearer; delivery.read
+
+[ ] POST   /api/v1/admin/delivery/slots
+    Auth: Bearer; delivery.write
+    Body: J10
+
+[ ] PATCH  /api/v1/admin/delivery/slots/{slotId}
+    Auth: Bearer; delivery.write
+    Body example: {"capacity":25,"active":true}
+
+
+12. ORDERS, FULFILMENT, PICKING AND COMPLIANCE
+------------------------------------------------
+
+[ ] GET    /api/v1/admin/orders?page=1&pageSize=25
+    Auth: Bearer; orders.read
+    Optional filters: basketType, paymentStatus, fulfilmentStatus,
+    ageVerificationStatus, deliveryAgeCheckStatus, search.
+
+[ ] GET    /api/v1/admin/orders/{orderId}
+    Auth: Bearer; orders.read
+
+[ ] GET    /api/v1/admin/orders/{orderId}/invoice
+    Auth: Bearer; orders.read
+    Response: application/pdf attachment.
+
+[ ] PATCH  /api/v1/admin/orders/{orderId}/fulfilment-groups/{fulfilmentGroupId}
+    Auth: Bearer; orders.write
+    Body: {"status":"PICKING"}
+    Status values: PENDING, CONFIRMED, PICKING, PICKED, OUT_FOR_DELIVERY,
+    DELIVERED, REFUSED, CANCELLED. Illegal transitions must be rejected.
+
+[ ] POST   /api/v1/admin/orders/{orderId}/pick-list
+    Auth: Bearer; orders.write
+
+[ ] GET    /api/v1/admin/orders/{orderId}/pick-list
+    Auth: Bearer; orders.read
+
+[ ] PATCH  /api/v1/admin/orders/{orderId}/pick-list/items/{pickItemId}
+    Auth: Bearer; orders.write
+    Body: J11
+
+[ ] POST   /api/v1/admin/orders/{orderId}/pick-list/complete
+    Auth: Bearer; orders.write
+
+[ ] POST   /api/v1/admin/payments/{orderId}/capture
+    Auth: Bearer; orders.write
+    Body: {"recomputedAmountMinor":"1499"}
+
+[ ] GET    /api/v1/admin/compliance/alcohol-day-book?date=2026-10-11
+    Auth: Bearer; orders.read
+    Optional format=csv or format=pdf; omit format for JSON.
+
+[ ] POST   /api/v1/delivery-age-check
+    Auth: Bearer; delivery.write
+    Body: J12
+    Never send or store an identity-document number.
+
+
+13. RETURNS AND REFUNDS
+-----------------------
+
+[ ] GET    /api/v1/admin/returns?page=1&pageSize=25
+    Auth: Bearer; orders.read
+    Optional filters: status, orderId.
+
+[ ] PATCH  /api/v1/admin/returns/{returnId}
+    Auth: Bearer; orders.write
+    Body: {"status":"APPROVED","adminNote":"Evidence checked","disposition":"WRITE_OFF"}
+    For APPROVED, disposition must be RESTOCK or WRITE_OFF.
+
+[ ] POST   /api/v1/admin/refunds
+    Auth: Bearer; orders.write
+    Body: J13
+
+[ ] POST   /api/v1/admin/orders/{orderId}/refunds
+    Auth: Bearer; orders.write
+    Body: J13 without the orderId property.
+
+[ ] GET    /api/v1/admin/refunds/{refundId}
+    Auth: Bearer; orders.read
+
+
+14. CUSTOMERS AND REVIEW MODERATION
+-----------------------------------
+
+[ ] GET    /api/v1/admin/customers?page=1&pageSize=25&q=
+    Auth: Bearer; users.read
+
+[ ] GET    /api/v1/admin/customers/{customerId}
+    Auth: Bearer; users.read
+    Includes addresses, recent orders and reviews.
+
+[ ] PATCH  /api/v1/admin/customers/{customerId}
+    Auth: Bearer; users.write
+    Body example:
+    {"firstName":"Manual","lastName":"Tester","phone":"+447700900123","active":true}
+
+[ ] GET    /api/v1/admin/reviews?page=1&pageSize=25&status=PENDING
+    Auth: Bearer; catalog.read
+    status: PENDING|APPROVED|REJECTED
+
+[ ] PATCH  /api/v1/admin/reviews/{reviewId}/moderation
+    Auth: Bearer; catalog.write
+    Body: {"status":"APPROVED","reason":"Verified purchase and acceptable content"}
+
+
+15. CONTENT MANAGEMENT
+----------------------
+
+[ ] GET    /api/v1/admin/content
+    Auth: Bearer; settings.read
+
+[ ] POST   /api/v1/admin/content/banners
+    Auth: Bearer; settings.write
+    Body: J14
+
+[ ] PATCH  /api/v1/admin/content/banners/{bannerId}
+    Auth: Bearer; settings.write
+    Body: Any changed J14 fields.
+
+[ ] POST   /api/v1/admin/content/blocks
+    Auth: Bearer; settings.write
+    Body:
+    {"type":"FEATURED_PRODUCTS","title":"Featured products","content":{"productIds":["{{productId}}"]},"position":1,"startsAt":null,"endsAt":null,"active":true}
+
+[ ] POST   /api/v1/admin/content/pages
+    Auth: Bearer; settings.write
+    Body:
+    {"type":"TERMS","locale":"en-GB","title":"Terms and Conditions","content":"<p>Approved content</p>","published":true}
+
+
+16. NOTIFICATION ADMINISTRATION
+-------------------------------
+
+[ ] GET    /api/v1/admin/notification-templates
+    Auth: Bearer; settings.read
+
+[ ] POST   /api/v1/admin/notification-templates
+    Auth: Bearer; settings.write
+    Body: J15
+
+[ ] PATCH  /api/v1/admin/notification-templates/{templateId}
+    Auth: Bearer; settings.write
+    Body: Full replacement body J15.
+
+[ ] POST   /api/v1/admin/notification-templates/preview
+    Auth: Bearer; settings.read
+    Body:
+    {"subject":"Order {{orderNumber}} confirmed","body":"Hello {{firstName}}","data":{"orderNumber":"DEN-1001","firstName":"Manual"}}
+
+[ ] POST   /api/v1/admin/notification-templates/{templateId}/test-send
+    Auth: Bearer; settings.write
+    Body:
+    {"recipient":"tester@example.test","data":{"orderNumber":"DEN-1001","firstName":"Manual"}}
+
+[ ] POST   /api/v1/admin/notification-templates/{templateId}/test
+    Auth: Bearer; settings.write
+    Purpose: Alias of test-send; use the same body.
+
+[ ] GET    /api/v1/admin/notification-deliveries?page=1&pageSize=25&status=&q=
+    Auth: Bearer; settings.read
+    q searches recipient and event.
+
+[ ] POST   /api/v1/admin/notification-deliveries/{deliveryId}/retry
+    Auth: Bearer; settings.write
+    Only FAILED or DEAD_LETTER deliveries can be retried.
+
+[ ] POST   /api/v1/admin/notifications/process
+    Auth: Bearer; settings.write
+    Purpose: Process queued notification outbox and delivery records.
+
+
+17. RBAC, SETTINGS, AUDIT AND PRIVACY
+-------------------------------------
+
+[ ] GET    /api/v1/admin/rbac
+    Auth: Bearer; users.read
+
+[ ] PATCH  /api/v1/admin/rbac/roles/{roleId}
+    Auth: Bearer; users.write
+    Body:
+    {"permissionKeys":["catalog.read","catalog.write","inventory.read","orders.read"]}
+
+[ ] PATCH  /api/v1/admin/rbac/users/{userId}
+    Auth: Bearer; users.write
+    Body: {"roleKeys":["catalog-manager"]}
+
+[ ] GET    /api/v1/admin/settings
+    Auth: Bearer; settings.read
+
+[ ] PATCH  /api/v1/admin/settings
+    Auth: Bearer; settings.write
+    Body: J16. Omit secret fields when they are not being changed.
+
+[ ] GET    /api/v1/admin/audit-log?page=1&pageSize=25
+    Auth: Bearer; audit.read
+    Optional filters: action, entity, actorId.
+
+[ ] GET    /api/v1/admin/privacy/requests?status=IN_REVIEW
+    Auth: Bearer; users.read
+
+[ ] PATCH  /api/v1/admin/privacy/requests/{privacyRequestId}
+    Auth: Bearer; users.write
+    Body:
+    {"status":"IN_REVIEW","adminNote":"Identity check started"}
+    status: IN_REVIEW|COMPLETED|REJECTED
+
+
+18. JSON BODY SAMPLES
+---------------------
+
+J1 - Admin login
+{
+  "email": "<ADMIN_EMAIL>",
+  "password": "<ADMIN_PASSWORD>"
+}
+
+J2 - Create/update product
+{
+  "categoryId": "{{categoryId}}",
+  "brandId": "{{brandId}}",
+  "sku": "POSTMAN-PRODUCT-001",
+  "slug": "postman-product-001",
+  "name": "Postman Product",
+  "description": "Product created during manual API testing.",
+  "priceMinor": "499",
+  "currency": "GBP",
+  "vatRateBps": 2000,
+  "taxCategory": "STANDARD_20",
+  "pricingMode": "UNIT",
+  "pricePerKgMinor": null,
+  "estimatedWeightGrams": null,
+  "weightToleranceBps": null,
+  "abv": null,
+  "alcoholType": null,
+  "weightGrams": 500,
+  "ageRestriction": 0,
+  "restrictionReason": "NONE",
+  "returnPolicy": "STANDARD_14_DAY",
+  "unitPriceDisplay": "GBP 4.99 each",
+  "hfssStatus": "NOT_IN_SCOPE",
+  "hfssCategory": null,
+  "dietaryTags": [],
+  "allergens": [],
+  "countryOfOrigin": "GB",
+  "storageType": "AMBIENT",
+  "shelfLifeDays": 365
+}
+
+J3 - Create variant with opening stock
+{
+  "sku": "POSTMAN-PRODUCT-001-SINGLE",
+  "name": "Single pack",
+  "priceMinor": "499",
+  "currency": "GBP",
+  "packSize": "1 pack",
+  "weightGrams": 500,
+  "abv": null,
+  "flavour": null,
+  "attributes": {"size":"single"},
+  "warehouseId": "{{warehouseId}}",
+  "stockOnHand": 20,
+  "lowStockThreshold": 5
+}
+
+J4 - Create category
+{
+  "parentId": null,
+  "slug": "postman-category",
+  "name": "Postman Category",
+  "position": 99,
+  "active": true
+}
+
+J5 - Create attribute set
+{
+  "key": "pack_details",
+  "name": "Pack details",
+  "definitions": [
+    {"key":"size","label":"Size","type":"TEXT","required":true}
+  ]
+}
+
+J6 - Create inventory record
+{
+  "productId": "{{productId}}",
+  "warehouseId": "{{warehouseId}}",
+  "onHand": 20,
+  "lowStockThreshold": 5
+}
+
+J7 - Create promotion
+{
+  "name": "Postman 10 Percent Promotion",
+  "type": "PERCENTAGE",
+  "startsAt": "2026-10-11T00:00:00.000Z",
+  "endsAt": "2026-12-31T23:59:59.000Z",
+  "productIds": ["{{productId}}"],
+  "conditions": {},
+  "effect": {"percentageBps":1000}
+}
+
+J8 - Create percentage coupon
+{
+  "code": "POSTMAN10",
+  "type": "PERCENTAGE",
+  "valueBps": 1000,
+  "valueMinor": null,
+  "currency": "GBP",
+  "minimumSpendMinor": "2000",
+  "maximumDiscountMinor": "1000",
+  "startsAt": "2026-10-11T00:00:00.000Z",
+  "endsAt": "2026-12-31T23:59:59.000Z",
+  "maxUses": 100,
+  "couponClass": "SITE_WIDE",
+  "appliesTo": "BOTH",
+  "perCustomerLimit": 1,
+  "firstOrderOnly": false,
+  "productIds": [],
+  "categoryIds": [],
+  "brandIds": [],
+  "attributionWindowDays": 30
+}
+
+J9 - Create delivery zone
+{
+  "code": "LONDON_1",
+  "name": "Central London",
+  "postcodePatterns": ["SW1*"],
+  "postcodeIncludes": [],
+  "postcodeExcludes": [],
+  "groceryFeeMinor": 299,
+  "alcoholFeeMinor": 399,
+  "freeDeliveryThresholdMinor": 4000,
+  "minimumOrderMinor": 1000,
+  "maximumOrderMinor": null,
+  "alcoholMinimumSubtotalMinor": null,
+  "feeSchedule": [],
+  "supportedStorageTypes": ["AMBIENT","CHILLED","FROZEN"],
+  "currency": "GBP",
+  "alcoholDeliveryAllowed": true,
+  "active": true
+}
+
+J10 - Create delivery slot
+{
+  "zoneId": "{{zoneId}}",
+  "startsAt": "2026-10-20T10:00:00.000Z",
+  "endsAt": "2026-10-20T12:00:00.000Z",
+  "capacity": 20,
+  "surchargeMinor": 0,
+  "cutoffMinutes": 120,
+  "allowsAgeRestricted": true,
+  "active": true
+}
+
+J11 - Record picked item
+{
+  "outcome": "PICKED",
+  "picked": 1,
+  "actualWeightGrams": 500
+}
+
+J12 - Record Challenge 25 delivery result
+{
+  "orderId": "{{orderId}}",
+  "outcome": "PASSED",
+  "challengeAge": 25,
+  "idType": "PASSPORT",
+  "recipientPresent": true,
+  "note": "Manual test; no ID number retained"
+}
+
+J13 - Create refund
+{
+  "orderId": "{{orderId}}",
+  "returnRequestId": "{{returnId}}",
+  "idempotencyKey": "postman-refund-0001",
+  "reason": "Approved returned item",
+  "method": "CARD",
+  "items": [
+    {"orderItemId":"<ORDER_ITEM_UUID>","quantity":1}
+  ]
+}
+
+J14 - Create content banner
+{
+  "title": "Postman Banner",
+  "subtitle": "Manual testing banner",
+  "imageUrl": "https://example.test/banner.jpg",
+  "mobileImageUrl": null,
+  "linkUrl": "https://example.test/offers",
+  "position": 1,
+  "startsAt": null,
+  "endsAt": null,
+  "active": true
+}
+
+J15 - Create/replace notification template
+{
+  "event": "ORDER_CONFIRMED",
+  "channel": "EMAIL",
+  "locale": "en-GB",
+  "subject": "Order {{orderNumber}} confirmed",
+  "body": "Hello {{firstName}}, your order is confirmed.",
+  "mjml": null
+}
+
+J16 - Update email integration settings
+{
+  "integrations": {
+    "email": {
+      "provider": "SMTP",
+      "fromName": "Denes Commerce",
+      "fromEmail": "orders@example.test",
+      "replyTo": "support@example.test",
+      "smtpHost": "smtp.example.test",
+      "smtpPort": 465,
+      "smtpSecure": true,
+      "smtpUsername": "<SMTP_USERNAME>",
+      "smtpPassword": "<SMTP_PASSWORD>"
+    },
+    "socialLogin": {
+      "googleEnabled": false,
+      "appleEnabled": false
+    }
+  }
+}
+
+
+19. EXPECTED RESPONSES AND TESTING NOTES
+----------------------------------------
+
+Typical success codes:
+GET    -> 200
+POST   -> 201 or 200 depending on the action
+PATCH  -> 200
+DELETE -> 200
+
+Typical failure codes:
+400 = invalid request JSON or validation failure
+401 = missing/invalid token or access denied
+403 = permission/policy rejection where applicable
+404 = record not found or outside the current store
+409 = duplicate, dependency, invalid state transition, capacity or stock conflict
+422 = business-rule rejection
+429 = rate limit exceeded
+500 = unexpected server error; record the x-request-id response header
+
+Representative error envelope:
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request failed",
+    "requestId": "<REQUEST_UUID>"
+  },
+  "path": "/api/v1/example",
+  "timestamp": "2026-10-11T10:00:00.000Z"
+}
+
+For every destructive or financial test:
+1. Create dedicated TEST/POSTMAN records.
+2. Save the IDs and original values.
+3. Do not delete or modify client records.
+4. Use a unique refund idempotencyKey for each intended refund.
+5. Repeat the same refund key once to verify that it does not duplicate money.
+6. Confirm list pagination metadata: page, pageSize, total and pageCount.
+7. Confirm a missing token and a token without the required permission are rejected.
+
+The removed licence and multitenancy APIs are intentionally not included.
+Customer storefront, basket, checkout and customer self-service APIs are also
+intentionally excluded from this admin-only hand-off.
