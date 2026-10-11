@@ -7,8 +7,9 @@
   --card: #fff;
   --sidebar: #17191f;
   --sidebar-muted: #9197a4;
-  --orange: #f3933e;
-  --orange-deep: #e77522;
+  /* Legacy variable names remain to avoid a risky component-wide rename. */
+  --orange: #74c69d;
+  --orange-deep: #2d6a4f;
   --green: #29a36a;
   --blue: #4285d4;
   --purple: #8068c7;
@@ -2337,8 +2338,8 @@ td code {
 :root {
   --larkon-navy: #171a23;
   --larkon-nav: #1c202b;
-  --larkon-orange: #ff9f43;
-  --larkon-orange-dark: #ee8324;
+  --larkon-orange: #74c69d;
+  --larkon-orange-dark: #2d6a4f;
   --larkon-bg: #f2f4f7;
   --larkon-border: #e4e8ee;
 }
@@ -3126,6 +3127,7 @@ td code {
     grid-column: 1;
   }
 }
+
 .report-metrics {
   display: grid;
   gap: 16px;
@@ -4204,4 +4206,72 @@ td code {
   .report-filter-actions .button {
     width: 100%;
   }
+}
+
+/* Denes green brand theme. Keep warning and error states semantically distinct. */
+.brand-mark {
+  background: linear-gradient(135deg, #95d5b2, var(--orange-deep));
+  box-shadow: 0 6px 16px rgb(116 198 157 / 22%);
+}
+.larkon-sidebar .brand-mark {
+  background: var(--larkon-orange);
+  box-shadow: 0 7px 18px rgb(116 198 157 / 25%);
+  color: #12382a;
+}
+.larkon-sidebar .desktop-nav a.active {
+  background: rgb(116 198 157 / 14%);
+  color: #95d5b2;
+}
+.global-search input:focus,
+.catalog-toolbar input:focus,
+.inline-create input:focus,
+.inline-create select:focus,
+.login-input:focus-within,
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus,
+.report-filter input:focus,
+.report-filter select:focus {
+  box-shadow: 0 0 0 3px rgb(116 198 157 / 18%);
+}
+.button-primary,
+.larkon-shell .button-primary,
+.login-submit {
+  background: #74c69d;
+  color: #12382a;
+}
+.button-primary:hover,
+.larkon-shell .button-primary:hover,
+.login-submit:hover {
+  background: #2d6a4f;
+  color: #fff;
+}
+.preview-pill,
+.role-chip-list input:checked + span,
+.staff-avatar,
+.create-disclosure > summary b,
+.promotion-empty > span {
+  background: #e8f5ed;
+  border-color: #b7e4c7;
+  color: #2d6a4f;
+}
+.product-thumbnail,
+.taxonomy-name-cell img,
+.taxonomy-image-placeholder {
+  background-color: #eef8f2;
+  border-color: #d8eee1;
+}
+.login-showcase::before {
+  background: radial-gradient(circle, rgb(116 198 157 / 25%) 0 1px, transparent 1.5px);
+}
+.showcase-brand > span,
+.login-mobile-brand > span {
+  color: #12382a;
+}
+.login-submit {
+  box-shadow: 0 8px 20px rgb(116 198 157 / 25%);
+}
+.route-loading-bar {
+  background: #74c69d;
+  box-shadow: 0 0 14px rgb(116 198 157 / 55%);
 }
