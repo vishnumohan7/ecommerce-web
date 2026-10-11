@@ -91,6 +91,7 @@ export interface NumberedPageResult<T> {
   items: T[];
   page: number;
   pageSize: number;
+  // eslint-disable-next-line local/no-money-number -- record count, not currency
   total: number;
   pageCount: number;
 }
@@ -104,6 +105,7 @@ export interface Category {
   path: string;
   position: number;
   active: boolean;
+  parentName?: string | null;
 }
 
 export interface Brand {
@@ -537,6 +539,24 @@ async function get<T>(path: string, admin = false): Promise<ApiResult<T>> {
   }
 }
 
+async function fetchAllCursorPages<T>(path: string): Promise<ApiResult<PageResult<T>>> {
+  const items: T[] = [];
+  let cursor: string | null = null;
+
+  for (let page = 0; page < 100; page += 1) {
+    const separator = path.includes('?') ? '&' : '?';
+    const result: ApiResult<PageResult<T>> = await get<PageResult<T>>(
+      `${path}${separator}limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+    );
+    if (!result.ok) return result;
+    items.push(...result.data.items);
+    cursor = result.data.nextCursor;
+    if (!cursor) return { ok: true, data: { items, nextCursor: null } };
+  }
+
+  return { ok: false, error: 'The catalogue contains too many records to load safely.' };
+}
+
 export async function adminMutation<T>(
   path: string,
   method: 'POST' | 'PATCH' | 'DELETE',
@@ -603,13 +623,15 @@ export function fetchHealth(kind: 'health' | 'ready' = 'health') {
 export function fetchProducts() {
   return get<Product[]>('/api/v1/products');
 }
-export function fetchAdminProducts(filters: {
-  page?: number;
-  pageSize?: number;
-  q?: string;
-  status?: string;
-  sort?: string;
-} = {}) {
+export function fetchAdminProducts(
+  filters: {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+    status?: string;
+    sort?: string;
+  } = {},
+) {
   const params = new URLSearchParams({
     page: String(filters.page ?? 1),
     pageSize: String(filters.pageSize ?? 25),
@@ -623,13 +645,47 @@ export function fetchProduct(id: string) {
   return get<Product>(`/api/v1/products/${encodeURIComponent(id)}`, true);
 }
 export function fetchCategories() {
-  return get<PageResult<Category>>('/api/v1/categories?limit=100');
+  return fetchAllCursorPages<Category>('/api/v1/categories');
+}
+export function fetchAdminCategories(
+  filters: {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+    status?: string;
+    sort?: string;
+  } = {},
+) {
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 1),
+    pageSize: String(filters.pageSize ?? 25),
+  });
+  if (filters.q) params.set('q', filters.q);
+  if (filters.status) params.set('status', filters.status);
+  if (filters.sort) params.set('sort', filters.sort);
+  return get<NumberedPageResult<Category>>(`/api/v1/admin/catalog/categories?${params}`, true);
 }
 export function fetchCategory(id: string) {
   return get<Category>(`/api/v1/categories/${encodeURIComponent(id)}`);
 }
 export function fetchBrands() {
-  return get<PageResult<Brand>>('/api/v1/brands?limit=100');
+  return fetchAllCursorPages<Brand>('/api/v1/brands');
+}
+export function fetchAdminBrands(
+  filters: {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+    sort?: string;
+  } = {},
+) {
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 1),
+    pageSize: String(filters.pageSize ?? 25),
+  });
+  if (filters.q) params.set('q', filters.q);
+  if (filters.sort) params.set('sort', filters.sort);
+  return get<NumberedPageResult<Brand>>(`/api/v1/admin/catalog/brands?${params}`, true);
 }
 export function fetchBrand(id: string) {
   return get<Brand>(`/api/v1/brands/${encodeURIComponent(id)}`);
@@ -650,7 +706,10 @@ export function fetchTaxRules() {
   return get<TaxRule[]>('/api/v1/admin/tax-rules', true);
 }
 export function fetchOrders(filters: Record<string, string | undefined> = {}) {
-  const params = new URLSearchParams({ page: filters.page ?? '1', pageSize: filters.pageSize ?? '25' });
+  const params = new URLSearchParams({
+    page: filters.page ?? '1',
+    pageSize: filters.pageSize ?? '25',
+  });
   Object.entries(filters).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
@@ -683,7 +742,18 @@ export function fetchDashboard() {
 }
 function reportQuery(filters: ReportFilters = {}) {
   const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
+  const entries: Array<[string, string | undefined]> = [
+    ['from', filters.from],
+    ['to', filters.to],
+    ['productId', filters.productId],
+    ['categoryId', filters.categoryId],
+    ['customerId', filters.customerId],
+    ['couponId', filters.couponId],
+    ['basketType', filters.basketType],
+    ['paymentStatus', filters.paymentStatus],
+    ['fulfilmentStatus', filters.fulfilmentStatus],
+  ];
+  entries.forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
   return params.size ? `?${params}` : '';
@@ -730,7 +800,10 @@ export function fetchInfluencerReport(id: string) {
   }>(`/api/v1/admin/influencers/${encodeURIComponent(id)}/report`, true);
 }
 export function fetchCustomerPage(filters: { q?: string; page?: number; pageSize?: number } = {}) {
-  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: String(filters.pageSize ?? 25) });
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 1),
+    pageSize: String(filters.pageSize ?? 25),
+  });
   if (filters.q) params.set('q', filters.q);
   return get<NumberedPageResult<CustomerSummary>>(`/api/v1/admin/customers?${params}`, true);
 }
@@ -776,16 +849,24 @@ export function fetchReviews(filters: { status?: string; page?: number } = {}) {
   return get<NumberedPageResult<ReviewRow>>(`/api/v1/admin/reviews?${params}`, true);
 }
 export function fetchPromotions(page = 1) {
-  return get<NumberedPageResult<PromotionRow>>(`/api/v1/promotions?page=${String(page)}&pageSize=25`, true);
+  return get<NumberedPageResult<PromotionRow>>(
+    `/api/v1/promotions?page=${String(page)}&pageSize=25`,
+    true,
+  );
 }
 export function fetchNotificationTemplates() {
   return get<NotificationTemplateRow[]>('/api/v1/admin/notification-templates', true);
 }
-export function fetchNotificationDeliveries(filters: { page?: number; status?: string; q?: string } = {}) {
+export function fetchNotificationDeliveries(
+  filters: { page?: number; status?: string; q?: string } = {},
+) {
   const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
   if (filters.status) params.set('status', filters.status);
   if (filters.q) params.set('q', filters.q);
-  return get<NumberedPageResult<NotificationDeliveryRow>>(`/api/v1/admin/notification-deliveries?${params}`, true);
+  return get<NumberedPageResult<NotificationDeliveryRow>>(
+    `/api/v1/admin/notification-deliveries?${params}`,
+    true,
+  );
 }
 export function fetchContent() {
   return get<ContentData>('/api/v1/admin/content', true);

@@ -190,6 +190,11 @@ fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REF
 6. CATEGORIES, BRANDS AND ATTRIBUTES
 ------------------------------------
 
+[ ] GET    /api/v1/admin/catalog/categories?page=1&pageSize=25&q=&status=&sort=name-asc
+    Auth: Bearer; catalog.read
+    status: ACTIVE|INACTIVE (empty returns all)
+    sort: name-asc|name-desc|position|newest|oldest
+
 [ ] GET    /api/v1/categories?limit=50&cursor=
     Auth: Public
 
@@ -208,6 +213,10 @@ fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REF
     Auth: Bearer; catalog.write
     Query: cascade=true to delete/deactivate the complete child hierarchy.
     Without cascade=true, a parent with children returns a dependency error.
+
+[ ] GET    /api/v1/admin/catalog/brands?page=1&pageSize=25&q=&sort=name-asc
+    Auth: Bearer; catalog.read
+    sort: name-asc|name-desc|newest|oldest
 
 [ ] POST   /api/v1/categories/{categoryId}/image
     Auth: Bearer; catalog.write

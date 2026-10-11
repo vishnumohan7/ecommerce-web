@@ -1,6 +1,6 @@
 # Production Readiness Milestone Checklist
 
-Last audited: 2026-10-09
+Last audited: 2026-10-11
 
 This is the authoritative go-live checklist for the bespoke single-client UK grocery and alcohol commerce platform. It supersedes optimistic completion labels in historical milestone notes, while retaining those notes as implementation evidence.
 
@@ -20,20 +20,20 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 
 Milestones are strict release gates: a milestone is marked complete only when every item in that gate is complete. The progress column distinguishes completed implementation from remaining launch verification and external configuration.
 
-| Milestone | Gate                                     | Checklist progress | Gate status                         |
-| --------- | ---------------------------------------- | ------------------ | ----------------------------------- |
-| 0         | Scope and architecture cleanup           | 7/10 (70%)         | In progress                         |
-| 1         | Production infrastructure and data       | 5/14 (36%)         | In progress                         |
-| 2         | Authentication and customer accounts     | 9/13 (69%)         | In progress                         |
-| 3         | Transactional email and notifications    | 5/13 (38%)         | Awaiting provider configuration     |
-| 4         | Catalogue, media and inventory           | 9/15 (60%)         | In progress                         |
-| 5         | Customer storefront                      | 3/12 (25%)         | In progress                         |
-| 6         | Checkout, Stripe and order finalisation  | 2/12 (17%)         | Stripe intentionally postponed      |
-| 7         | Orders, fulfilment, invoices and refunds | 3/11 (27%)         | In progress                         |
-| 8         | Admin operations and reporting           | 5/14 (36%)         | In progress                         |
-| 9         | Security, privacy and compliance         | 2/11 (18%)         | Review and client approval required |
-| 10        | Reliability, monitoring and performance  | 1/10 (10%)         | Production verification required    |
-| 11        | UAT and go-live                          | 0/11 (0%)          | Starts after release gates          |
+| Milestone | Gate                                     | Checklist progress | Gate status                           |
+| --------- | ---------------------------------------- | ------------------ | ------------------------------------- |
+| 0         | Scope and architecture cleanup           | 7/10 (70%)         | In progress                           |
+| 1         | Production infrastructure and data       | 5/14 (36%)         | In progress                           |
+| 2         | Authentication and customer accounts     | 9/13 (69%)         | In progress                           |
+| 3         | Transactional email and notifications    | 6/13 (46%)         | Provider connected; lifecycle pending |
+| 4         | Catalogue, media and inventory           | 11/15 (73%)        | In progress                           |
+| 5         | Customer storefront                      | 3/12 (25%)         | In progress                           |
+| 6         | Checkout, Stripe and order finalisation  | 2/12 (17%)         | Stripe intentionally postponed        |
+| 7         | Orders, fulfilment, invoices and refunds | 3/11 (27%)         | In progress                           |
+| 8         | Admin operations and reporting           | 5/14 (36%)         | In progress                           |
+| 9         | Security, privacy and compliance         | 2/11 (18%)         | Review and client approval required   |
+| 10        | Reliability, monitoring and performance  | 1/10 (10%)         | Production verification required      |
+| 11        | UAT and go-live                          | 0/11 (0%)          | Starts after release gates            |
 
 ## Admin-only production gate
 
@@ -48,7 +48,7 @@ This gate separates the administrator application from unfinished storefront, St
 - [x] Fulfilment, invoice download and refund foundations are implemented; missing seeded payment aggregates were repaired.
 - [ ] Finish pagination and polished empty/error states on the remaining long-list screens.
 - [ ] Positively verify every admin create/edit/delete and operational workflow against the deployed API.
-- [ ] Configure a real email provider and verify delivery/resend from the admin.
+- [x] Configure a real email provider and verify an admin test delivery through the production queue.
 - [ ] Complete RBAC/IDOR, accessibility and common-desktop visual review.
 - [ ] Remove or anonymise fixture catalogue and personal data before launch.
 
@@ -110,7 +110,7 @@ Exit gate: a new customer can register, verify, log in, reset a password and mai
 
 - [x] Notification templates, queue records, retries, dead-letter states and invoice attachment rendering exist.
 - [x] Admin settings support SMTP and Resend credentials.
-- [ ] Configure and verify one real production provider: SMTP or Resend.
+- [x] Configure and verify one real production provider: SMTP or Resend.
 - [ ] Configure authenticated sender domain, SPF, DKIM and DMARC.
 - [x] Replace the development `LOG` provider with a fail-closed production configuration.
 - [x] Automatically process notification outbox records after authentication, payment and fulfilment events, with a secured scheduled retry endpoint.
@@ -135,8 +135,8 @@ Exit gate: the complete lifecycle reaches a real mailbox automatically and is tr
 - [x] Implement variant create, edit and safe delete/deactivate controls with independent SKU and price; stock remains variant-owned.
 - [ ] Verify initial stock and subsequent stock adjustments from product edit and inventory screens.
 - [ ] Replace archive wording/actions with the agreed delete/deactivate behaviour and safe dependency errors.
-- [ ] Finish separate category and brand pages with image upload/edit/delete.
-- [ ] Add server-side pagination, search, sorting and filters to every catalogue table.
+- [x] Finish separate category and brand pages with image upload/edit/delete.
+- [x] Add server-side pagination, search, sorting and filters to every catalogue table.
 - [x] Add authenticated server-side pagination, search, sorting and status filters to the product catalogue table.
 - [x] Add authenticated server-side pagination and search to the inventory table.
 - [ ] Verify CSV/XLSX dry-run, error report, atomic import and image handling from the UI.

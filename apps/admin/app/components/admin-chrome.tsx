@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable local/no-jsx-literals */
+
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -25,41 +27,61 @@ type IconName =
   | 'audit'
   | 'privacy'
   | 'system';
-type Item = { href: string; label: string; icon: IconName };
+type Item = { href: string; label: string; icon: IconName; permission?: string };
 const groups: Array<{ label: string; items: Item[] }> = [
   {
     label: 'Commerce',
     items: [
-      { href: '/', label: 'Dashboard', icon: 'dashboard' },
-      { href: '/products', label: 'Products', icon: 'product' },
-      { href: '/categories', label: 'Categories', icon: 'catalogue' },
-      { href: '/brands', label: 'Brands', icon: 'catalogue' },
-      { href: '/inventory', label: 'Inventory', icon: 'inventory' },
-      { href: '/promotions', label: 'Promotions', icon: 'promotion' },
-      { href: '/orders', label: 'Orders', icon: 'orders' },
-      { href: '/returns', label: 'Returns & refunds', icon: 'returns' },
-      { href: '/delivery', label: 'Delivery', icon: 'delivery' },
-      { href: '/pricing', label: 'Pricing & tax', icon: 'pricing' },
+      { href: '/', label: 'Dashboard', icon: 'dashboard', permission: 'reports.read' },
+      { href: '/products', label: 'Products', icon: 'product', permission: 'catalog.read' },
+      { href: '/categories', label: 'Categories', icon: 'catalogue', permission: 'catalog.read' },
+      { href: '/brands', label: 'Brands', icon: 'catalogue', permission: 'catalog.read' },
+      { href: '/inventory', label: 'Inventory', icon: 'inventory', permission: 'inventory.read' },
+      { href: '/promotions', label: 'Promotions', icon: 'promotion', permission: 'catalog.read' },
+      { href: '/orders', label: 'Orders', icon: 'orders', permission: 'orders.read' },
+      { href: '/returns', label: 'Returns & refunds', icon: 'returns', permission: 'orders.read' },
+      { href: '/delivery', label: 'Delivery', icon: 'delivery', permission: 'delivery.read' },
+      { href: '/pricing', label: 'Pricing & tax', icon: 'pricing', permission: 'catalog.read' },
     ],
   },
   {
     label: 'Customers',
     items: [
-      { href: '/customers', label: 'Customer accounts', icon: 'customers' },
-      { href: '/reviews', label: 'Reviews', icon: 'reviews' },
-      { href: '/content', label: 'Content & banners', icon: 'content' },
-      { href: '/notifications', label: 'Notifications', icon: 'notifications' },
-      { href: '/reports', label: 'Reports', icon: 'reports' },
+      {
+        href: '/customers',
+        label: 'Customer accounts',
+        icon: 'customers',
+        permission: 'users.read',
+      },
+      { href: '/reviews', label: 'Reviews', icon: 'reviews', permission: 'catalog.read' },
+      {
+        href: '/content',
+        label: 'Content & banners',
+        icon: 'content',
+        permission: 'settings.read',
+      },
+      {
+        href: '/notifications',
+        label: 'Notifications',
+        icon: 'notifications',
+        permission: 'settings.read',
+      },
+      { href: '/reports', label: 'Reports', icon: 'reports', permission: 'reports.read' },
     ],
   },
   {
     label: 'Administration',
     items: [
-      { href: '/access', label: 'Roles & permissions', icon: 'access' },
-      { href: '/settings', label: 'Settings & branding', icon: 'settings' },
-      { href: '/audit', label: 'Audit logs', icon: 'audit' },
-      { href: '/privacy', label: 'GDPR requests', icon: 'privacy' },
-      { href: '/system', label: 'System health', icon: 'system' },
+      { href: '/access', label: 'Roles & permissions', icon: 'access', permission: 'users.read' },
+      {
+        href: '/settings',
+        label: 'Settings & branding',
+        icon: 'settings',
+        permission: 'settings.read',
+      },
+      { href: '/audit', label: 'Audit logs', icon: 'audit', permission: 'audit.read' },
+      { href: '/privacy', label: 'GDPR requests', icon: 'privacy', permission: 'users.read' },
+      { href: '/system', label: 'System health', icon: 'system', permission: 'settings.read' },
     ],
   },
 ];
@@ -112,8 +134,8 @@ function TablePaginationManager() {
         rows.forEach((row, index) => {
           row.hidden = index < start || index >= start + pageSize;
         });
-        summary.textContent = `Showing ${start + 1}–${Math.min(start + pageSize, rows.length)} of ${rows.length}`;
-        current.textContent = `${page} / ${pages}`;
+        summary.textContent = `Showing ${String(start + 1)}–${String(Math.min(start + pageSize, rows.length))} of ${String(rows.length)}`;
+        current.textContent = `${String(page)} / ${String(pages)}`;
         previous.disabled = page === 1;
         next.disabled = page === pages;
       };
@@ -134,12 +156,12 @@ function TablePaginationManager() {
       });
       render();
     };
-    const scan = () => document.querySelectorAll<HTMLTableElement>('.content table').forEach(setup);
+    const scan = () => { document.querySelectorAll<HTMLTableElement>('.content table').forEach(setup); };
     scan();
     const observer = new MutationObserver(scan);
     const content = document.querySelector('.content');
     if (content) observer.observe(content, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); };
   }, [pathname]);
   return null;
 }
@@ -201,13 +223,21 @@ function NavIcon({ name }: { name: IconName }) {
   );
 }
 
-export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
+export function AdminChrome({
+  children,
+  permissions,
+}: Readonly<{ children: ReactNode; permissions: string[] | null }>) {
   const pathname = usePathname();
   const router = useRouter();
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
-  useEffect(() => setNavigatingTo(null), [pathname]);
+  useEffect(() => { setNavigatingTo(null); }, [pathname]);
   if (pathname === '/login') return <>{children}</>;
-  const item = groups
+  const canView = (entry: Item) =>
+    permissions === null || !entry.permission || permissions.includes(entry.permission);
+  const visibleGroups = groups
+    .map((group) => ({ ...group, items: group.items.filter(canView) }))
+    .filter((group) => group.items.length > 0);
+  const item = visibleGroups
     .flatMap((group) => group.items)
     .find((entry) => isActive(pathname, entry.href));
   const title = item?.label ?? 'Dashboard';
@@ -222,7 +252,7 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
           </span>
         </Link>
         <nav className="desktop-nav">
-          {groups.map((group) => (
+          {visibleGroups.map((group) => (
             <section className="nav-group" key={group.label}>
               <p className="nav-caption">{group.label}</p>
               {group.items.map((entry) => (
@@ -233,8 +263,8 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
                   onClick={() => {
                     if (!isActive(pathname, entry.href)) setNavigatingTo(entry.href);
                   }}
-                  onFocus={() => router.prefetch(entry.href)}
-                  onMouseEnter={() => router.prefetch(entry.href)}
+                  onFocus={() => { router.prefetch(entry.href); }}
+                  onMouseEnter={() => { router.prefetch(entry.href); }}
                 >
                   <span className="larkon-nav-icon">
                     <NavIcon name={entry.icon} />
@@ -266,7 +296,7 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
               <span />
             </summary>
             <nav>
-              {groups
+              {visibleGroups
                 .flatMap((group) => group.items)
                 .map((entry) => (
                   <Link href={entry.href} key={entry.href}>
@@ -279,17 +309,31 @@ export function AdminChrome({ children }: Readonly<{ children: ReactNode }>) {
             <span>Operations</span>
             <strong>{title}</strong>
           </div>
-          <form className="global-search" action="/products" role="search">
-            <span aria-hidden="true" />
-            <label className="sr-only" htmlFor="global-search">
-              Search products
-            </label>
-            <input id="global-search" name="q" placeholder="Search products and SKUs" />
-          </form>
+          {canView({
+            href: '/products',
+            label: 'Products',
+            icon: 'product',
+            permission: 'catalog.read',
+          }) && (
+            <form className="global-search" action="/products" role="search">
+              <span aria-hidden="true" />
+              <label className="sr-only" htmlFor="global-search">
+                Search products
+              </label>
+              <input id="global-search" name="q" placeholder="Search products and SKUs" />
+            </form>
+          )}
           <div className="topbar-actions">
-            <Link className="icon-button" href="/notifications" aria-label="Notifications">
-              <NavIcon name="notifications" />
-            </Link>
+            {canView({
+              href: '/notifications',
+              label: 'Notifications',
+              icon: 'notifications',
+              permission: 'settings.read',
+            }) && (
+              <Link className="icon-button" href="/notifications" aria-label="Notifications">
+                <NavIcon name="notifications" />
+              </Link>
+            )}
             <details className="profile-menu">
               <summary>
                 <span className="avatar">DA</span>

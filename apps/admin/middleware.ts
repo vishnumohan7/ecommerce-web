@@ -20,6 +20,61 @@ function accessTokenIsCurrent(token: string | undefined): boolean {
   }
 }
 
+function tokenPermissions(token: string | undefined): string[] {
+  if (!token) return [];
+  try {
+    const part = token.split('.')[1];
+    if (!part) return [];
+    const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(normalized)) as { permissions?: unknown };
+    return Array.isArray(payload.permissions)
+      ? payload.permissions.filter((value): value is string => typeof value === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function landingFor(permissions: string[]): string {
+  const destinations: Array<[string, string]> = [
+    ['reports.read', '/'],
+    ['catalog.read', '/products'],
+    ['inventory.read', '/inventory'],
+    ['orders.read', '/orders'],
+    ['delivery.read', '/delivery'],
+    ['users.read', '/customers'],
+    ['settings.read', '/settings'],
+    ['audit.read', '/audit'],
+  ];
+  return destinations.find(([permission]) => permissions.includes(permission))?.[1] ?? '/login';
+}
+
+function permissionFor(pathname: string): string | null {
+  if (pathname === '/') return 'reports.read';
+  const routes: Array<[string, string]> = [
+    ['/products', 'catalog.read'],
+    ['/categories', 'catalog.read'],
+    ['/brands', 'catalog.read'],
+    ['/promotions', 'catalog.read'],
+    ['/pricing', 'catalog.read'],
+    ['/reviews', 'catalog.read'],
+    ['/inventory', 'inventory.read'],
+    ['/orders', 'orders.read'],
+    ['/returns', 'orders.read'],
+    ['/delivery', 'delivery.read'],
+    ['/customers', 'users.read'],
+    ['/privacy', 'users.read'],
+    ['/content', 'settings.read'],
+    ['/notifications', 'settings.read'],
+    ['/settings', 'settings.read'],
+    ['/system', 'settings.read'],
+    ['/reports', 'reports.read'],
+    ['/access', 'users.read'],
+    ['/audit', 'audit.read'],
+  ];
+  return routes.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? null;
+}
+
 async function rotate(refreshToken: string): Promise<TokenPair | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
@@ -31,8 +86,10 @@ async function rotate(refreshToken: string): Promise<TokenPair | null> {
     });
     if (!response.ok) return null;
     const pair = (await response.json()) as Partial<TokenPair>;
-    return typeof pair.accessToken === 'string' && typeof pair.refreshToken === 'string' && typeof pair.accessExpiresInSeconds === 'number'
-      ? pair as TokenPair
+    return typeof pair.accessToken === 'string' &&
+      typeof pair.refreshToken === 'string' &&
+      typeof pair.accessExpiresInSeconds === 'number'
+      ? (pair as TokenPair)
       : null;
   } catch {
     return null;
@@ -54,7 +111,12 @@ export async function middleware(request: NextRequest) {
   const configuredToken = process.env.ADMIN_API_TOKEN;
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   if (configuredToken || accessTokenIsCurrent(accessToken)) {
-    if (isLogin) return NextResponse.redirect(new URL('/', request.url));
+    const permissions = configuredToken ? [] : tokenPermissions(accessToken);
+    const landing = configuredToken ? '/' : landingFor(permissions);
+    if (isLogin) return NextResponse.redirect(new URL(landing, request.url));
+    const required = configuredToken ? null : permissionFor(request.nextUrl.pathname);
+    if (required && !permissions.includes(required))
+      return NextResponse.redirect(new URL(landing, request.url));
     return NextResponse.next();
   }
 
@@ -63,7 +125,9 @@ export async function middleware(request: NextRequest) {
   if (!pair) {
     if (isLogin) return NextResponse.next();
     const hadSession = Boolean(accessToken || refreshToken);
-    const target = hadSession ? '/login?error=Your+session+expired.+Please+sign+in+again.' : '/login';
+    const target = hadSession
+      ? '/login?error=Your+session+expired.+Please+sign+in+again.'
+      : '/login';
     const response = NextResponse.redirect(new URL(target, request.url));
     response.cookies.delete(ACCESS_COOKIE);
     response.cookies.delete(REFRESH_COOKIE);
@@ -75,7 +139,9 @@ export async function middleware(request: NextRequest) {
   const accessMaxAge = remembered ? pair.accessExpiresInSeconds : undefined;
   const refreshMaxAge = remembered ? 30 * 24 * 60 * 60 : undefined;
   if (isLogin) {
-    const response = NextResponse.redirect(new URL('/', request.url));
+    const response = NextResponse.redirect(
+      new URL(landingFor(tokenPermissions(pair.accessToken)), request.url),
+    );
     response.cookies.set(ACCESS_COOKIE, pair.accessToken, sessionCookieOptions(accessMaxAge));
     response.cookies.set(REFRESH_COOKIE, pair.refreshToken, sessionCookieOptions(refreshMaxAge));
     return response;

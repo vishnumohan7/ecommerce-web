@@ -6,9 +6,29 @@ import { API_BASE_URL } from './lib/api';
 
 function jwtPermissions(token: string): string[] {
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1] ?? '', 'base64url').toString()) as { permissions?: unknown };
-    return Array.isArray(payload.permissions) ? payload.permissions.filter((value): value is string => typeof value === 'string') : [];
-  } catch { return []; }
+    const payload = JSON.parse(Buffer.from(token.split('.')[1] ?? '', 'base64url').toString()) as {
+      permissions?: unknown;
+    };
+    return Array.isArray(payload.permissions)
+      ? payload.permissions.filter((value): value is string => typeof value === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function adminLanding(permissions: string[]): string | null {
+  const destinations: Array<[string, string]> = [
+    ['reports.read', '/'],
+    ['catalog.write', '/products'],
+    ['inventory.write', '/inventory'],
+    ['orders.write', '/orders'],
+    ['delivery.write', '/delivery'],
+    ['users.read', '/customers'],
+    ['settings.read', '/settings'],
+    ['audit.read', '/audit'],
+  ];
+  return destinations.find(([permission]) => permissions.includes(permission))?.[1] ?? null;
 }
 
 export async function adminLogin(data: FormData) {
@@ -17,17 +37,46 @@ export async function adminLogin(data: FormData) {
   const remember = data.get('remember') === 'on';
   const email = typeof emailValue === 'string' ? emailValue.trim() : '';
   const password = typeof passwordValue === 'string' ? passwordValue : '';
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }), cache: 'no-store' });
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    cache: 'no-store',
+  });
   if (!response.ok) redirect('/login?error=Invalid+email+or+password');
-  const pair = await response.json() as { accessToken: string; refreshToken: string; accessExpiresInSeconds: number };
+  const pair = (await response.json()) as {
+    accessToken: string;
+    refreshToken: string;
+    accessExpiresInSeconds: number;
+  };
   const permissions = jwtPermissions(pair.accessToken);
-  if (!permissions.some((permission) => ['users.read', 'settings.read', 'reports.read', 'orders.write', 'catalog.write'].includes(permission))) redirect('/login?error=This+account+does+not+have+admin+access');
+  const landing = adminLanding(permissions);
+  if (!landing) redirect('/login?error=This+account+does+not+have+admin+access');
   const store = await cookies();
-  store.set('denes_admin_access', pair.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', ...(remember ? { maxAge: pair.accessExpiresInSeconds } : {}) });
-  store.set('denes_admin_refresh', pair.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', ...(remember ? { maxAge: 30 * 24 * 60 * 60 } : {}) });
-  if (remember) store.set('denes_admin_remember', '1', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/', maxAge: 30 * 24 * 60 * 60 });
+  store.set('denes_admin_access', pair.accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    ...(remember ? { maxAge: pair.accessExpiresInSeconds } : {}),
+  });
+  store.set('denes_admin_refresh', pair.refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    ...(remember ? { maxAge: 30 * 24 * 60 * 60 } : {}),
+  });
+  if (remember)
+    store.set('denes_admin_remember', '1', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+    });
   else store.delete('denes_admin_remember');
-  redirect('/');
+  redirect(landing);
 }
 
 export async function adminLogout() {

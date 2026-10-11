@@ -15,6 +15,95 @@ import {
 export class TaxonomyService {
   constructor(private readonly db: TenantScopedPrismaService) {}
 
+  async adminCategories(input: {
+    page: number;
+    pageSize: number;
+    query?: string;
+    status?: string;
+    sort?: string;
+  }) {
+    const active =
+      input.status === 'ACTIVE' ? true : input.status === 'INACTIVE' ? false : undefined;
+    const where: Prisma.CategoryWhereInput = {
+      ...(active === undefined ? {} : { active }),
+      ...(input.query
+        ? {
+            OR: [
+              { name: { contains: input.query, mode: 'insensitive' } },
+              { slug: { contains: input.query, mode: 'insensitive' } },
+              { path: { contains: input.query, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+    const orderBy: Prisma.CategoryOrderByWithRelationInput =
+      input.sort === 'name-desc'
+        ? { name: 'desc' }
+        : input.sort === 'position'
+          ? { position: 'asc' }
+          : input.sort === 'oldest'
+            ? { createdAt: 'asc' }
+            : input.sort === 'newest'
+              ? { createdAt: 'desc' }
+              : { name: 'asc' };
+    const total = await this.db.client.category.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
+    const pageNumber = Math.min(input.page, pageCount);
+    const items = await this.db.client.category.findMany({
+      where,
+      orderBy,
+      skip: (pageNumber - 1) * input.pageSize,
+      take: input.pageSize,
+    });
+    const parentIds = [...new Set(items.flatMap((item) => (item.parentId ? [item.parentId] : [])))];
+    const parents = parentIds.length
+      ? await this.db.client.category.findMany({
+          where: { id: { in: parentIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const parentNames = new Map(parents.map((parent) => [parent.id, parent.name]));
+    return {
+      items: items.map((item) => ({
+        ...item,
+        parentName: item.parentId ? (parentNames.get(item.parentId) ?? 'Unavailable') : null,
+      })),
+      page: pageNumber,
+      pageSize: input.pageSize,
+      total,
+      pageCount,
+    };
+  }
+
+  async adminBrands(input: { page: number; pageSize: number; query?: string; sort?: string }) {
+    const where: Prisma.BrandWhereInput = input.query
+      ? {
+          OR: [
+            { name: { contains: input.query, mode: 'insensitive' } },
+            { slug: { contains: input.query, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+    const orderBy: Prisma.BrandOrderByWithRelationInput =
+      input.sort === 'name-desc'
+        ? { name: 'desc' }
+        : input.sort === 'oldest'
+          ? { createdAt: 'asc' }
+          : input.sort === 'newest'
+            ? { createdAt: 'desc' }
+            : { name: 'asc' };
+    const total = await this.db.client.brand.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
+    const pageNumber = Math.min(input.page, pageCount);
+    const items = await this.db.client.brand.findMany({
+      where,
+      orderBy,
+      skip: (pageNumber - 1) * input.pageSize,
+      take: input.pageSize,
+    });
+    return { items, page: pageNumber, pageSize: input.pageSize, total, pageCount };
+  }
+
   async categories(cursor?: string, requestedLimit?: number) {
     const limit = Math.min(Math.max(requestedLimit ?? 100, 1), 100);
     const items = await this.db.client.category.findMany({
@@ -112,7 +201,8 @@ export class TaxonomyService {
     if (descendants.length > 0 && !cascade)
       throw new ConflictException({
         code: 'CATEGORY_HAS_CHILDREN',
-        message: 'This category contains child categories. Confirm deletion of the complete category group.',
+        message:
+          'This category contains child categories. Confirm deletion of the complete category group.',
         details: { children: descendants.length },
       });
     const ids = subtree.map((category) => category.id);

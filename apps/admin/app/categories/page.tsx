@@ -5,18 +5,37 @@ import { createCategory, removeTaxonomy } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { ConfirmSubmitButton } from '../components/confirm-submit-button';
-import { fetchCategories } from '../lib/api';
+import { TablePagination } from '../components/table-pagination';
+import { fetchAdminCategories, fetchCategories } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Categories' };
 export const dynamic = 'force-dynamic';
 interface Props {
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    status?: string;
+    sort?: string;
+    success?: string;
+    error?: string;
+  }>;
 }
 
 export default async function CategoriesPage({ searchParams }: Props) {
-  const [query, result] = await Promise.all([searchParams, fetchCategories()]);
+  const query = await searchParams;
+  const [result, parentResult] = await Promise.all([
+    fetchAdminCategories({
+      page: Number(query.page) || 1,
+      ...(query.q ? { q: query.q } : {}),
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.sort ? { sort: query.sort } : {}),
+    }),
+    fetchCategories(),
+  ]);
   if (!result.ok) return <ApiNotice message={result.error} />;
+  if (!parentResult.ok) return <ApiNotice message={parentResult.error} />;
   const categories = result.data.items;
+  const parentOptions = parentResult.data.items;
   return (
     <>
       <section className="page-heading">
@@ -37,7 +56,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
             <h2>Add category</h2>
             <p>Upload its storefront image and choose its position in the hierarchy.</p>
           </div>
-          <span className="count-badge">{categories.length} categories</span>
+          <span className="count-badge">{result.data.total} categories</span>
         </div>
         <form action={createCategory} className="taxonomy-page-form">
           <label className="form-field">
@@ -57,7 +76,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
             <span>Parent category</span>
             <select name="parentId" defaultValue="">
               <option value="">None — top level</option>
-              {categories.map((item) => (
+              {parentOptions.map((item) => (
                 <option value={item.id} key={item.id}>
                   {item.name}
                 </option>
@@ -82,67 +101,110 @@ export default async function CategoriesPage({ searchParams }: Props) {
             Add category
           </button>
         </form>
-        <div className="table-wrap">
-          <table className="taxonomy-table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Parent</th>
-                <th>Position</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <div className="taxonomy-name-cell">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt="" />
-                      ) : (
-                        <span className="taxonomy-image-placeholder">{item.name.charAt(0)}</span>
-                      )}
-                      <div>
-                        <strong>{item.name}</strong>
-                        <small>{item.path}</small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    {categories.find((candidate) => candidate.id === item.parentId)?.name ??
-                      'Top level'}
-                  </td>
-                  <td>{item.position}</td>
-                  <td>
-                    <span className="status-badge status-active">
-                      <span />
-                      Active
-                    </span>
-                  </td>
-                  <td>
-                    <div className="row-actions">
-                      <Link className="text-action" href={`/categories/${item.id}`}>
-                        Edit
-                      </Link>
-                      <form action={removeTaxonomy}>
-                        <input type="hidden" name="kind" value="category" />
-                        <input type="hidden" name="id" value={item.id} />
-                        <input type="hidden" name="cascade" value="true" />
-                        <ConfirmSubmitButton
-                          className="text-action danger-action"
-                          message={`Delete ${item.name} and all of its child categories? This is permanent and will be blocked if any products still use the category group.`}
-                        >
-                          Delete
-                        </ConfirmSubmitButton>
-                      </form>
-                    </div>
-                  </td>
+        <form action="/categories" className="order-filters taxonomy-filters">
+          <input
+            aria-label="Search categories"
+            name="q"
+            defaultValue={query.q}
+            placeholder="Search name, slug or path"
+          />
+          <select aria-label="Category status" name="status" defaultValue={query.status ?? ''}>
+            <option value="">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+          <select aria-label="Sort categories" name="sort" defaultValue={query.sort ?? 'name-asc'}>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="position">Display position</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+          <button className="button button-muted">Filter</button>
+          {(query.q || query.status || query.sort) && (
+            <Link className="clear-link" href="/categories">
+              Clear
+            </Link>
+          )}
+        </form>
+        {categories.length === 0 ? (
+          <div className="empty-state compact-empty">
+            <h3>No categories found</h3>
+            <p>Try another search or clear the current filters.</p>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table className="taxonomy-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Parent</th>
+                  <th>Position</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {categories.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <div className="taxonomy-name-cell">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt="" />
+                        ) : (
+                          <span className="taxonomy-image-placeholder">{item.name.charAt(0)}</span>
+                        )}
+                        <div>
+                          <strong>{item.name}</strong>
+                          <small>{item.path}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{item.parentName ?? 'Top level'}</td>
+                    <td>{item.position}</td>
+                    <td>
+                      <span
+                        className={`status-badge ${item.active ? 'status-active' : 'status-inactive'}`}
+                      >
+                        <span />
+                        {item.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <Link className="text-action" href={`/categories/${item.id}`}>
+                          Edit
+                        </Link>
+                        <form action={removeTaxonomy}>
+                          <input type="hidden" name="kind" value="category" />
+                          <input type="hidden" name="id" value={item.id} />
+                          <input type="hidden" name="cascade" value="true" />
+                          <ConfirmSubmitButton
+                            className="text-action danger-action"
+                            message={`Delete ${item.name} and all of its child categories? This is permanent and will be blocked if any products still use the category group.`}
+                          >
+                            Delete
+                          </ConfirmSubmitButton>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <TablePagination
+          basePath="/categories"
+          page={result.data.page}
+          pageCount={result.data.pageCount}
+          total={result.data.total}
+          params={{
+            ...(query.q ? { q: query.q } : {}),
+            ...(query.status ? { status: query.status } : {}),
+            ...(query.sort ? { sort: query.sort } : {}),
+          }}
+        />
       </article>
     </>
   );
