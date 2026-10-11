@@ -63,6 +63,7 @@ function permissionFor(pathname: string): string | null {
     ['/returns', 'orders.read'],
     ['/delivery', 'delivery.read'],
     ['/customers', 'users.read'],
+    ['/users', 'users.read'],
     ['/privacy', 'users.read'],
     ['/content', 'settings.read'],
     ['/notifications', 'settings.read'],

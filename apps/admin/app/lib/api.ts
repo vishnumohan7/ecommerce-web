@@ -432,6 +432,23 @@ export interface RbacData {
   assignments: Array<{ userId: string; roleId: string }>;
   users: Array<{ id: string; email: string; firstName: string; lastName: string; active: boolean }>;
 }
+export interface StaffPageData {
+  items: Array<{
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    active: boolean;
+    createdAt: string;
+    roleKeys: string[];
+  }>;
+  roles: Array<{ id: string; key: string; name: string; description: string }>;
+  page: number;
+  pageSize: number;
+  // eslint-disable-next-line local/no-money-number -- record count, not currency
+  total: number;
+  pageCount: number;
+}
 export interface ReviewRow {
   id: string;
   userId: string;
@@ -842,6 +859,11 @@ export function fetchAdminSettings() {
 }
 export function fetchRbac() {
   return get<RbacData>('/api/v1/admin/rbac', true);
+}
+export function fetchStaff(filters: { page?: number; q?: string } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
+  if (filters.q) params.set('q', filters.q);
+  return get<StaffPageData>(`/api/v1/admin/staff?${params}`, true);
 }
 export function fetchReviews(filters: { status?: string; page?: number } = {}) {
   const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });

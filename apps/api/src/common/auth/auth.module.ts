@@ -8,6 +8,6 @@ import { NotificationModule } from '../../modules/notifications/notification.mod
   imports: [JwtModule.register({}), NotificationModule],
   controllers: [AuthController],
   providers: [AuthService, AuthGuard],
-  exports: [AuthGuard],
+  exports: [AuthGuard, AuthService],
 })
 export class AuthModule {}

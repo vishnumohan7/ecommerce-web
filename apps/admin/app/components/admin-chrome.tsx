@@ -72,6 +72,7 @@ const groups: Array<{ label: string; items: Item[] }> = [
   {
     label: 'Administration',
     items: [
+      { href: '/users', label: 'User management', icon: 'customers', permission: 'users.read' },
       { href: '/access', label: 'Roles & permissions', icon: 'access', permission: 'users.read' },
       {
         href: '/settings',
@@ -156,12 +157,16 @@ function TablePaginationManager() {
       });
       render();
     };
-    const scan = () => { document.querySelectorAll<HTMLTableElement>('.content table').forEach(setup); };
+    const scan = () => {
+      document.querySelectorAll<HTMLTableElement>('.content table').forEach(setup);
+    };
     scan();
     const observer = new MutationObserver(scan);
     const content = document.querySelector('.content');
     if (content) observer.observe(content, { childList: true, subtree: true });
-    return () => { observer.disconnect(); };
+    return () => {
+      observer.disconnect();
+    };
   }, [pathname]);
   return null;
 }
@@ -230,7 +235,9 @@ export function AdminChrome({
   const pathname = usePathname();
   const router = useRouter();
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
-  useEffect(() => { setNavigatingTo(null); }, [pathname]);
+  useEffect(() => {
+    setNavigatingTo(null);
+  }, [pathname]);
   if (pathname === '/login') return <>{children}</>;
   const canView = (entry: Item) =>
     permissions === null || !entry.permission || permissions.includes(entry.permission);
@@ -263,8 +270,12 @@ export function AdminChrome({
                   onClick={() => {
                     if (!isActive(pathname, entry.href)) setNavigatingTo(entry.href);
                   }}
-                  onFocus={() => { router.prefetch(entry.href); }}
-                  onMouseEnter={() => { router.prefetch(entry.href); }}
+                  onFocus={() => {
+                    router.prefetch(entry.href);
+                  }}
+                  onMouseEnter={() => {
+                    router.prefetch(entry.href);
+                  }}
                 >
                   <span className="larkon-nav-icon">
                     <NavIcon name={entry.icon} />

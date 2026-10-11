@@ -583,7 +583,27 @@ fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REF
 
 [ ] PATCH  /api/v1/admin/rbac/users/{userId}
     Auth: Bearer; users.write
-    Body: {"roleKeys":["catalog-manager"]}
+    Body: {"roleKeys":["CATALOG_MANAGER"]}
+
+[ ] GET    /api/v1/admin/staff?page=1&pageSize=25&q=
+    Auth: Bearer; users.read
+    Purpose: Paginated staff-account list with assigned roles.
+
+[ ] POST   /api/v1/admin/staff
+    Auth: Bearer; users.write
+    Body:
+    {"email":"staff@example.test","firstName":"Store","lastName":"Operator","roleKeys":["STORE_MANAGER"]}
+    Note: Creates the account with an unknown random password and sends a secure password-setup email.
+
+[ ] PATCH  /api/v1/admin/staff/{userId}
+    Auth: Bearer; users.write
+    Body:
+    {"firstName":"Store","lastName":"Operator","active":true,"roleKeys":["STORE_MANAGER"]}
+    Note: A user cannot disable or change the roles of their own signed-in account.
+
+[ ] POST   /api/v1/admin/staff/{userId}/password-reset
+    Auth: Bearer; users.write
+    Purpose: Invalidates older reset links and sends a new password-setup email.
 
 [ ] GET    /api/v1/admin/settings
     Auth: Bearer; settings.read

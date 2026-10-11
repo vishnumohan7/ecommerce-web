@@ -1,8 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { randomUUID } from 'node:crypto';
+import { Prisma, UserRole } from '@prisma/client';
+import { hash as argonHash, argon2id } from 'argon2';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { AuthService } from '../../common/auth/auth.service';
 import { AppConfigService } from '../../common/config/app-config.service';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
+// Permissions are global records; tenant scoping does not apply to this lookup.
+// eslint-disable-next-line no-restricted-imports
 import { PrismaService } from '../../common/database/prisma.service';
 import { encryptConfigSecret } from '../../common/security/config-secret';
 import { TenantContext } from '../../common/tenancy/tenant-context';
@@ -16,6 +20,8 @@ import {
   contentBlockCreateSchema,
   cmsPageUpsertSchema,
   reportFilterSchema,
+  staffCreateSchema,
+  staffUpdateSchema,
 } from './admin.schemas';
 
 type RangeInput = { from?: string | undefined; to?: string | undefined };
@@ -26,21 +32,31 @@ export class AdminService {
     private readonly db: TenantScopedPrismaService,
     private readonly root: PrismaService,
     private readonly config: AppConfigService,
+    private readonly auth: AuthService,
   ) {}
 
   async dashboard(input: RangeInput) {
     const range = this.range(input);
     const [orders, customers, items, refunds, lowStock, couponRedemptions] = await Promise.all([
-      this.db.client.order.findMany({ where: { createdAt: range }, select: { userId: true, totalMinor: true, basketType: true } }),
+      this.db.client.order.findMany({
+        where: { createdAt: range },
+        select: { userId: true, totalMinor: true, basketType: true },
+      }),
       this.db.client.user.count({ where: { role: 'CUSTOMER', createdAt: range } }),
       this.db.client.orderItem.aggregate({ where: { createdAt: range }, _sum: { quantity: true } }),
-      this.db.client.refund.aggregate({ where: { createdAt: range }, _sum: { amountMinor: true }, _count: true }),
+      this.db.client.refund.aggregate({
+        where: { createdAt: range },
+        _sum: { amountMinor: true },
+        _count: true,
+      }),
       this.db.client.inventory.count({ where: { stockAvailable: { lte: 5 } } }),
       this.db.client.couponRedemption.count({ where: { createdAt: range } }),
     ]);
     const revenue = orders.reduce((sum, order) => sum + order.totalMinor, 0n);
     const customerCounts = new Map<string, number>();
-    for (const order of orders) if (order.userId) customerCounts.set(order.userId, (customerCounts.get(order.userId) ?? 0) + 1);
+    for (const order of orders)
+      if (order.userId)
+        customerCounts.set(order.userId, (customerCounts.get(order.userId) ?? 0) + 1);
     return {
       range: this.serialiseRange(range),
       orders: orders.length,
@@ -68,15 +84,23 @@ export class AdminService {
       where: this.reportLineWhere(scope),
       _sum: { lineTotalMinor: true, quantity: true },
     });
-    const byCategory = Object.fromEntries(lineGroups.map((row) => [row.orderCategory.toLowerCase(), {
-      revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString(),
-      units: row._sum.quantity ?? 0,
-    }]));
+    const byCategory = Object.fromEntries(
+      lineGroups.map((row) => [
+        row.orderCategory.toLowerCase(),
+        {
+          revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString(),
+          units: row._sum.quantity ?? 0,
+        },
+      ]),
+    );
     return {
       range: this.serialiseRange(scope.range),
       orders: scope.orders.length,
       totalRevenueMinor: scope.productIds
-        ? (BigInt(byCategory.grocery?.revenueMinor ?? '0') + BigInt(byCategory.alcohol?.revenueMinor ?? '0')).toString()
+        ? (
+            BigInt(byCategory.grocery?.revenueMinor ?? '0') +
+            BigInt(byCategory.alcohol?.revenueMinor ?? '0')
+          ).toString()
         : scope.orders.reduce((sum, order) => sum + order.totalMinor, 0n).toString(),
       groceryRevenueMinor: byCategory.grocery?.revenueMinor ?? '0',
       alcoholRevenueMinor: byCategory.alcohol?.revenueMinor ?? '0',
@@ -123,15 +147,36 @@ export class AdminService {
 
   async productReport(input: Record<string, string | undefined>) {
     const scope = await this.reportScope(input);
-    const rows = await this.db.client.orderItem.groupBy({ by: ['productId', 'productName', 'sku'], where: this.reportLineWhere(scope), _sum: { quantity: true, lineTotalMinor: true }, orderBy: { _sum: { lineTotalMinor: 'desc' } }, take: 100 });
-    return rows.map((row) => ({ productId: row.productId, name: row.productName, sku: row.sku, units: row._sum.quantity ?? 0, revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString() }));
+    const rows = await this.db.client.orderItem.groupBy({
+      by: ['productId', 'productName', 'sku'],
+      where: this.reportLineWhere(scope),
+      _sum: { quantity: true, lineTotalMinor: true },
+      orderBy: { _sum: { lineTotalMinor: 'desc' } },
+      take: 100,
+    });
+    return rows.map((row) => ({
+      productId: row.productId,
+      name: row.productName,
+      sku: row.sku,
+      units: row._sum.quantity ?? 0,
+      revenueMinor: (row._sum.lineTotalMinor ?? 0n).toString(),
+    }));
   }
 
   async categoryReport(input: Record<string, string | undefined>) {
     const scope = await this.reportScope(input);
-    const lines = await this.db.client.orderItem.findMany({ where: this.reportLineWhere(scope), select: { productId: true, quantity: true, lineTotalMinor: true } });
-    const products = await this.db.client.product.findMany({ where: { id: { in: [...new Set(lines.map((line) => line.productId))] } }, select: { id: true, categoryId: true } });
-    const categories = await this.db.client.category.findMany({ where: { id: { in: [...new Set(products.map((product) => product.categoryId))] } }, select: { id: true, name: true } });
+    const lines = await this.db.client.orderItem.findMany({
+      where: this.reportLineWhere(scope),
+      select: { productId: true, quantity: true, lineTotalMinor: true },
+    });
+    const products = await this.db.client.product.findMany({
+      where: { id: { in: [...new Set(lines.map((line) => line.productId))] } },
+      select: { id: true, categoryId: true },
+    });
+    const categories = await this.db.client.category.findMany({
+      where: { id: { in: [...new Set(products.map((product) => product.categoryId))] } },
+      select: { id: true, name: true },
+    });
     const productCategory = new Map(products.map((product) => [product.id, product.categoryId]));
     const totals = new Map<string, { units: number; revenueMinor: bigint }>();
     for (const line of lines) {
@@ -142,7 +187,14 @@ export class AdminService {
       current.revenueMinor += line.lineTotalMinor;
       totals.set(categoryId, current);
     }
-    return categories.map((category) => ({ categoryId: category.id, name: category.name, units: totals.get(category.id)?.units ?? 0, revenueMinor: (totals.get(category.id)?.revenueMinor ?? 0n).toString() })).sort((a, b) => Number(BigInt(b.revenueMinor) - BigInt(a.revenueMinor)));
+    return categories
+      .map((category) => ({
+        categoryId: category.id,
+        name: category.name,
+        units: totals.get(category.id)?.units ?? 0,
+        revenueMinor: (totals.get(category.id)?.revenueMinor ?? 0n).toString(),
+      }))
+      .sort((a, b) => Number(BigInt(b.revenueMinor) - BigInt(a.revenueMinor)));
   }
 
   async couponReport(input: Record<string, string | undefined>) {
@@ -157,36 +209,111 @@ export class AdminService {
       _count: true,
       _sum: { discountMinor: true },
     });
-    const coupons = await this.db.client.coupon.findMany({ where: { id: { in: rows.map((row) => row.couponId) } }, select: { id: true, code: true } });
+    const coupons = await this.db.client.coupon.findMany({
+      where: { id: { in: rows.map((row) => row.couponId) } },
+      select: { id: true, code: true },
+    });
     const codes = new Map(coupons.map((coupon) => [coupon.id, coupon.code]));
-    return rows.map((row) => ({ couponId: row.couponId, code: codes.get(row.couponId) ?? 'Unknown', uses: row._count, discountMinor: (row._sum.discountMinor ?? 0n).toString() }));
+    return rows.map((row) => ({
+      couponId: row.couponId,
+      code: codes.get(row.couponId) ?? 'Unknown',
+      uses: row._count,
+      discountMinor: (row._sum.discountMinor ?? 0n).toString(),
+    }));
   }
 
   async customers(input: Record<string, string | undefined>) {
     const query = input.q?.trim();
     const pageSize = boundedInteger(input.pageSize, 25, 100);
     const requestedPage = boundedInteger(input.page, 1, 100_000);
-    const where: Prisma.UserWhereInput = { role: 'CUSTOMER', ...(query ? { OR: [{ email: { contains: query, mode: 'insensitive' } }, { firstName: { contains: query, mode: 'insensitive' } }, { lastName: { contains: query, mode: 'insensitive' } }] } : {}) };
+    const where: Prisma.UserWhereInput = {
+      role: 'CUSTOMER',
+      ...(query
+        ? {
+            OR: [
+              { email: { contains: query, mode: 'insensitive' } },
+              { firstName: { contains: query, mode: 'insensitive' } },
+              { lastName: { contains: query, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
     const total = await this.db.client.user.count({ where });
     const pageCount = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, pageCount);
     const users = await this.db.client.user.findMany({
       where,
-      orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize,
-      select: { id: true, email: true, firstName: true, lastName: true, phone: true, active: true, tombstonedAt: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        active: true,
+        tombstonedAt: true,
+        createdAt: true,
+      },
     });
-    const aggregates = await this.db.client.order.groupBy({ by: ['userId'], where: { userId: { in: users.map((user) => user.id) } }, _count: true, _sum: { totalMinor: true } });
+    const aggregates = await this.db.client.order.groupBy({
+      by: ['userId'],
+      where: { userId: { in: users.map((user) => user.id) } },
+      _count: true,
+      _sum: { totalMinor: true },
+    });
     const stats = new Map(aggregates.map((row) => [row.userId, row]));
-    return { items: users.map((user) => ({ ...user, orderCount: stats.get(user.id)?._count ?? 0, spendMinor: (stats.get(user.id)?._sum.totalMinor ?? 0n).toString() })), page, pageSize, total, pageCount };
+    return {
+      items: users.map((user) => ({
+        ...user,
+        orderCount: stats.get(user.id)?._count ?? 0,
+        spendMinor: (stats.get(user.id)?._sum.totalMinor ?? 0n).toString(),
+      })),
+      page,
+      pageSize,
+      total,
+      pageCount,
+    };
   }
 
   async customer(id: string) {
-    const user = await this.db.client.user.findFirst({ where: { id, role: 'CUSTOMER' }, select: { id: true, email: true, firstName: true, lastName: true, phone: true, active: true, tombstonedAt: true, createdAt: true, updatedAt: true } });
+    const user = await this.db.client.user.findFirst({
+      where: { id, role: 'CUSTOMER' },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        active: true,
+        tombstonedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
     if (!user) throw new NotFoundException('Customer not found');
     const [addresses, orders, reviews] = await Promise.all([
       this.db.client.address.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' } }),
-      this.db.client.order.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 50, select: { id: true, orderNumber: true, orderNumberYear: true, totalMinor: true, paymentStatus: true, fulfilmentStatus: true, createdAt: true } }),
-      this.db.client.review.findMany({ where: { userId: id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+      this.db.client.order.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: {
+          id: true,
+          orderNumber: true,
+          orderNumberYear: true,
+          totalMinor: true,
+          paymentStatus: true,
+          fulfilmentStatus: true,
+          createdAt: true,
+        },
+      }),
+      this.db.client.review.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
     ]);
     return { ...user, addresses, orders, reviews };
   }
@@ -201,7 +328,19 @@ export class AdminService {
       ...(data.phone !== undefined ? { phone: data.phone } : {}),
       ...(data.active !== undefined ? { active: data.active } : {}),
     };
-    const updated = await this.db.client.user.update({ where: { id }, data: updateData, select: { id: true, email: true, firstName: true, lastName: true, phone: true, active: true, updatedAt: true } });
+    const updated = await this.db.client.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        active: true,
+        updatedAt: true,
+      },
+    });
     await this.audit('CUSTOMER_UPDATED', 'User', id, existing, updated);
     return updated;
   }
@@ -211,33 +350,62 @@ export class AdminService {
       this.db.client.role.findMany({ orderBy: { name: 'asc' } }),
       this.root.permission.findMany({ orderBy: { key: 'asc' } }),
       this.db.client.userRoleAssignment.findMany(),
-      this.db.client.user.findMany({ where: { role: { not: 'CUSTOMER' } }, select: { id: true, email: true, firstName: true, lastName: true, active: true }, orderBy: { email: 'asc' } }),
+      this.db.client.user.findMany({
+        where: { role: { not: 'CUSTOMER' } },
+        select: { id: true, email: true, firstName: true, lastName: true, active: true },
+        orderBy: { email: 'asc' },
+      }),
     ]);
     const mappings = await this.db.client.rolePermission.findMany();
     return {
       permissions,
-      roles: roles.map((role) => ({ ...role, permissionKeys: mappings.filter((mapping) => mapping.roleId === role.id).map((mapping) => permissions.find((permission) => permission.id === mapping.permissionId)?.key).filter(Boolean) })),
+      roles: roles.map((role) => ({
+        ...role,
+        permissionKeys: mappings
+          .filter((mapping) => mapping.roleId === role.id)
+          .map(
+            (mapping) =>
+              permissions.find((permission) => permission.id === mapping.permissionId)?.key,
+          )
+          .filter(Boolean),
+      })),
       assignments,
       users,
     };
   }
 
-  inventory() { return this.db.client.inventory.findMany({ orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }], take: 250 }); }
+  inventory() {
+    return this.db.client.inventory.findMany({
+      orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }],
+      take: 250,
+    });
+  }
   async reviews(input: Record<string, string | undefined>) {
     const pageSize = boundedInteger(input.pageSize, 25, 100);
     const requestedPage = boundedInteger(input.page, 1, 100_000);
-    const where: Prisma.ReviewWhereInput = input.status ? { status: input.status as 'PENDING' | 'APPROVED' | 'REJECTED' } : {};
+    const where: Prisma.ReviewWhereInput = input.status
+      ? { status: input.status as 'PENDING' | 'APPROVED' | 'REJECTED' }
+      : {};
     const total = await this.db.client.review.count({ where });
     const pageCount = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, pageCount);
-    const items = await this.db.client.review.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+    const items = await this.db.client.review.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
     return { items, page, pageSize, total, pageCount };
   }
-  promotions() { return this.db.client.promotion.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }); }
+  promotions() {
+    return this.db.client.promotion.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+  }
   async content() {
     const [banners, blocks, pages] = await Promise.all([
       this.db.client.banner.findMany({ orderBy: [{ position: 'asc' }, { createdAt: 'desc' }] }),
-      this.db.client.cmsContentBlock.findMany({ orderBy: [{ position: 'asc' }, { createdAt: 'desc' }] }),
+      this.db.client.cmsContentBlock.findMany({
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+      }),
       this.db.client.cmsPage.findMany({ orderBy: [{ type: 'asc' }, { locale: 'asc' }] }),
     ]);
     return { banners, blocks, pages };
@@ -245,7 +413,17 @@ export class AdminService {
 
   async createBanner(body: unknown) {
     const input = bannerCreateSchema.parse(body);
-    const created = await this.db.client.banner.create({ data: { tenantId: TenantContext.requireTenantId(), ...input, subtitle: input.subtitle ?? null, mobileImageUrl: input.mobileImageUrl ?? null, linkUrl: input.linkUrl ?? null, startsAt: input.startsAt ?? null, endsAt: input.endsAt ?? null } });
+    const created = await this.db.client.banner.create({
+      data: {
+        tenantId: TenantContext.requireTenantId(),
+        ...input,
+        subtitle: input.subtitle ?? null,
+        mobileImageUrl: input.mobileImageUrl ?? null,
+        linkUrl: input.linkUrl ?? null,
+        startsAt: input.startsAt ?? null,
+        endsAt: input.endsAt ?? null,
+      },
+    });
     await this.audit('BANNER_CREATED', 'Banner', created.id, undefined, created);
     return created;
   }
@@ -254,7 +432,9 @@ export class AdminService {
     const input = bannerCreateSchema.partial().parse(body);
     const existing = await this.db.client.banner.findFirst({ where: { id } });
     if (!existing) throw new NotFoundException('Banner not found');
-    const data = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined)) as Prisma.BannerUncheckedUpdateInput;
+    const data = Object.fromEntries(
+      Object.entries(input).filter(([, value]) => value !== undefined),
+    ) as Prisma.BannerUncheckedUpdateInput;
     const updated = await this.db.client.banner.update({ where: { id }, data });
     await this.audit('BANNER_UPDATED', 'Banner', id, existing, updated);
     return updated;
@@ -262,7 +442,16 @@ export class AdminService {
 
   async createContentBlock(body: unknown) {
     const input = contentBlockCreateSchema.parse(body);
-    const created = await this.db.client.cmsContentBlock.create({ data: { tenantId: TenantContext.requireTenantId(), ...input, content: input.content as Prisma.InputJsonValue, title: input.title ?? null, startsAt: input.startsAt ?? null, endsAt: input.endsAt ?? null } });
+    const created = await this.db.client.cmsContentBlock.create({
+      data: {
+        tenantId: TenantContext.requireTenantId(),
+        ...input,
+        content: input.content as Prisma.InputJsonValue,
+        title: input.title ?? null,
+        startsAt: input.startsAt ?? null,
+        endsAt: input.endsAt ?? null,
+      },
+    });
     await this.audit('CONTENT_BLOCK_CREATED', 'CmsContentBlock', created.id, undefined, created);
     return created;
   }
@@ -270,8 +459,16 @@ export class AdminService {
   async upsertCmsPage(body: unknown) {
     const input = cmsPageUpsertSchema.parse(body);
     const tenantId = TenantContext.requireTenantId();
-    const page = await this.db.client.cmsPage.upsert({ where: { tenantId_type_locale: { tenantId, type: input.type, locale: input.locale } }, create: { tenantId, ...input }, update: { title: input.title, content: input.content, published: input.published } });
-    await this.audit('CMS_PAGE_SAVED', 'CmsPage', page.id, undefined, { type: page.type, locale: page.locale, published: page.published });
+    const page = await this.db.client.cmsPage.upsert({
+      where: { tenantId_type_locale: { tenantId, type: input.type, locale: input.locale } },
+      create: { tenantId, ...input },
+      update: { title: input.title, content: input.content, published: input.published },
+    });
+    await this.audit('CMS_PAGE_SAVED', 'CmsPage', page.id, undefined, {
+      type: page.type,
+      locale: page.locale,
+      published: page.published,
+    });
     return page;
   }
 
@@ -282,10 +479,17 @@ export class AdminService {
       this.root.permission.findMany({ where: { key: { in: permissionKeys } } }),
     ]);
     if (!role) throw new NotFoundException('Role not found');
-    if (permissions.length !== permissionKeys.length) throw new BadRequestException('One or more permissions do not exist');
+    if (permissions.length !== permissionKeys.length)
+      throw new BadRequestException('One or more permissions do not exist');
     await this.db.transaction(async (tx, tenantId) => {
       await tx.rolePermission.deleteMany({ where: { tenantId, roleId: id } });
-      await tx.rolePermission.createMany({ data: permissions.map((permission) => ({ tenantId, roleId: id, permissionId: permission.id })) });
+      await tx.rolePermission.createMany({
+        data: permissions.map((permission) => ({
+          tenantId,
+          roleId: id,
+          permissionId: permission.id,
+        })),
+      });
     });
     await this.audit('ROLE_PERMISSIONS_UPDATED', 'Role', id, undefined, { permissionKeys });
     return { id, permissionKeys };
@@ -294,13 +498,190 @@ export class AdminService {
   async updateUserRoles(userId: string, body: unknown) {
     const { roleKeys } = userRoleUpdateSchema.parse(body);
     const roles = await this.db.client.role.findMany({ where: { key: { in: roleKeys } } });
-    if (roles.length !== roleKeys.length) throw new BadRequestException('One or more roles do not exist');
+    if (roles.length !== roleKeys.length)
+      throw new BadRequestException('One or more roles do not exist');
     await this.db.transaction(async (tx, tenantId) => {
       await tx.userRoleAssignment.deleteMany({ where: { tenantId, userId } });
-      await tx.userRoleAssignment.createMany({ data: roles.map((role) => ({ tenantId, userId, roleId: role.id })) });
+      await tx.userRoleAssignment.createMany({
+        data: roles.map((role) => ({ tenantId, userId, roleId: role.id })),
+      });
     });
     await this.audit('USER_ROLES_UPDATED', 'User', userId, undefined, { roleKeys });
     return { userId, roleKeys };
+  }
+
+  async staff(input: Record<string, string | undefined>) {
+    const pageSize = boundedInteger(input.pageSize, 25, 100);
+    const requestedPage = boundedInteger(input.page, 1, 100_000);
+    const q = input.q?.trim();
+    const where: Prisma.UserWhereInput = {
+      role: { not: 'CUSTOMER' },
+      ...(q
+        ? {
+            OR: [
+              { email: { contains: q, mode: 'insensitive' } },
+              { firstName: { contains: q, mode: 'insensitive' } },
+              { lastName: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+    const total = await this.db.client.user.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, pageCount);
+    const [users, assignments, roles] = await Promise.all([
+      this.db.client.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          active: true,
+          createdAt: true,
+        },
+        orderBy: [{ active: 'desc' }, { firstName: 'asc' }, { lastName: 'asc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.db.client.userRoleAssignment.findMany(),
+      this.db.client.role.findMany({ orderBy: { name: 'asc' } }),
+    ]);
+    return {
+      items: users.map((user) => ({
+        ...user,
+        roleKeys: assignments
+          .filter((assignment) => assignment.userId === user.id)
+          .map((assignment) => roles.find((role) => role.id === assignment.roleId)?.key)
+          .filter((key): key is string => Boolean(key)),
+      })),
+      roles: roles.map(({ id, key, name, description }) => ({ id, key, name, description })),
+      page,
+      pageSize,
+      total,
+      pageCount,
+    };
+  }
+
+  async createStaff(body: unknown) {
+    const input = staffCreateSchema.parse(body);
+    const email = input.email.toLowerCase();
+    const existing = await this.db.client.user.findFirst({ where: { email } });
+    if (existing) throw new BadRequestException('A user with this email already exists');
+    const roles = await this.rolesForKeys(input.roleKeys);
+    const passwordHash = await argonHash(randomBytes(48).toString('base64url'), {
+      type: argon2id,
+      memoryCost: 19_456,
+      timeCost: 2,
+      parallelism: 1,
+    });
+    const legacyRole = this.legacyRole(input.roleKeys);
+    const created = await this.db.transaction(async (tx, tenantId) => {
+      const user = await tx.user.create({
+        data: {
+          tenantId,
+          email,
+          passwordHash,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          role: legacyRole,
+          active: true,
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          active: true,
+          createdAt: true,
+        },
+      });
+      await tx.userRoleAssignment.createMany({
+        data: roles.map((role) => ({ tenantId, userId: user.id, roleId: role.id })),
+      });
+      return user;
+    });
+    await this.audit('STAFF_USER_CREATED', 'User', created.id, undefined, {
+      email,
+      roleKeys: input.roleKeys,
+    });
+    await this.auth.createPasswordReset(email);
+    return { ...created, roleKeys: input.roleKeys, invitationSent: true };
+  }
+
+  async updateStaff(id: string, body: unknown) {
+    const input = staffUpdateSchema.parse(body);
+    const existing = await this.db.client.user.findFirst({
+      where: { id, role: { not: 'CUSTOMER' } },
+    });
+    if (!existing) throw new NotFoundException('Staff user not found');
+    const roles = await this.rolesForKeys(input.roleKeys);
+    if (TenantContext.get()?.userId === id) {
+      if (!input.active) throw new BadRequestException('You cannot disable your own account');
+      const currentAssignments = await this.db.client.userRoleAssignment.findMany({
+        where: { userId: id },
+      });
+      const currentRoleIds = currentAssignments.map((assignment) => assignment.roleId).sort();
+      const nextRoleIds = roles.map((role) => role.id).sort();
+      if (currentRoleIds.join(',') !== nextRoleIds.join(','))
+        throw new BadRequestException('Ask another administrator to change your own roles');
+    }
+    const updated = await this.db.transaction(async (tx, tenantId) => {
+      const user = await tx.user.update({
+        where: { id },
+        data: {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          active: input.active,
+          role: this.legacyRole(input.roleKeys),
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          active: true,
+          createdAt: true,
+        },
+      });
+      await tx.userRoleAssignment.deleteMany({ where: { tenantId, userId: id } });
+      await tx.userRoleAssignment.createMany({
+        data: roles.map((role) => ({ tenantId, userId: id, roleId: role.id })),
+      });
+      if (!input.active)
+        await tx.refreshToken.updateMany({
+          where: { tenantId, userId: id },
+          data: { revokedAt: new Date() },
+        });
+      return user;
+    });
+    await this.audit('STAFF_USER_UPDATED', 'User', id, existing, {
+      ...updated,
+      roleKeys: input.roleKeys,
+    });
+    return { ...updated, roleKeys: input.roleKeys };
+  }
+
+  async resetStaffPassword(id: string) {
+    const user = await this.db.client.user.findFirst({ where: { id, role: { not: 'CUSTOMER' } } });
+    if (!user) throw new NotFoundException('Staff user not found');
+    await this.auth.createPasswordReset(user.email);
+    await this.audit('STAFF_PASSWORD_RESET_SENT', 'User', id, undefined, { email: user.email });
+    return { accepted: true };
+  }
+
+  private async rolesForKeys(roleKeys: string[]) {
+    const roles = await this.db.client.role.findMany({ where: { key: { in: roleKeys } } });
+    if (roles.length !== new Set(roleKeys).size)
+      throw new BadRequestException('One or more roles do not exist');
+    return roles;
+  }
+
+  private legacyRole(roleKeys: string[]): UserRole {
+    const known = roleKeys.find((key): key is UserRole =>
+      Object.values(UserRole).includes(key as UserRole),
+    );
+    return known ?? UserRole.ADMINISTRATOR;
   }
 
   async settings() {
@@ -312,7 +693,8 @@ export class AdminService {
     const integrations = this.record(stored.integrations);
     const email = this.record(integrations.email);
     const social = this.record(integrations.socialLogin);
-    const { integrations: _hidden, ...businessSettings } = stored;
+    const businessSettings = { ...stored };
+    delete businessSettings.integrations;
     return {
       settings: businessSettings,
       settingsVersion: settings?.version ?? 0,
@@ -327,8 +709,10 @@ export class AdminService {
           smtpPort: typeof email.smtpPort === 'number' ? email.smtpPort : 587,
           smtpSecure: email.smtpSecure === true,
           smtpUsername: typeof email.smtpUsername === 'string' ? email.smtpUsername : '',
-          smtpPasswordConfigured: typeof email.smtpPassword === 'string' && email.smtpPassword.length > 0,
-          resendApiKeyConfigured: typeof email.resendApiKey === 'string' && email.resendApiKey.length > 0,
+          smtpPasswordConfigured:
+            typeof email.smtpPassword === 'string' && email.smtpPassword.length > 0,
+          resendApiKeyConfigured:
+            typeof email.resendApiKey === 'string' && email.resendApiKey.length > 0,
         },
         socialLogin: {
           googleEnabled: social.googleEnabled === true,
@@ -357,18 +741,27 @@ export class AdminService {
           ...input.settings,
           ...(currentSettings.integrations ? { integrations: currentSettings.integrations } : {}),
         } as Prisma.InputJsonValue;
-        await tx.tenantSettings.upsert({ where: { tenantId }, create: { tenantId, settings, version: 1 }, update: { settings, version: { increment: 1 } } });
+        await tx.tenantSettings.upsert({
+          where: { tenantId },
+          create: { tenantId, settings, version: 1 },
+          update: { settings, version: { increment: 1 } },
+        });
       }
       if (input.integrations) {
         const existing = this.record(currentSettings.integrations);
         const existingEmail = this.record(existing.email);
         const existingSocial = this.record(existing.socialLogin);
         const email = input.integrations.email;
-        if (email.provider === 'SMTP' && (!email.smtpHost || !email.smtpUsername) && !existingEmail.smtpHost)
+        if (
+          email.provider === 'SMTP' &&
+          (!email.smtpHost || !email.smtpUsername) &&
+          !existingEmail.smtpHost
+        )
           throw new BadRequestException('SMTP host and username are required');
         if (email.provider === 'RESEND' && !email.resendApiKey && !existingEmail.resendApiKey)
           throw new BadRequestException('A Resend API key is required');
-        const protect = (secret: string) => encryptConfigSecret(secret, this.config.values.JWT_ACCESS_SECRET);
+        const protect = (secret: string) =>
+          encryptConfigSecret(secret, this.config.values.JWT_ACCESS_SECRET);
         const integrations = {
           email: {
             provider: email.provider,
@@ -379,22 +772,26 @@ export class AdminService {
             smtpPort: email.smtpPort ?? 587,
             smtpSecure: email.smtpSecure,
             smtpUsername: email.smtpUsername ?? '',
-            smtpPassword: email.smtpPassword ? protect(email.smtpPassword) : existingEmail.smtpPassword ?? '',
-            resendApiKey: email.resendApiKey ? protect(email.resendApiKey) : existingEmail.resendApiKey ?? '',
+            smtpPassword: email.smtpPassword
+              ? protect(email.smtpPassword)
+              : (existingEmail.smtpPassword ?? ''),
+            resendApiKey: email.resendApiKey
+              ? protect(email.resendApiKey)
+              : (existingEmail.resendApiKey ?? ''),
           },
           socialLogin: {
             googleEnabled: input.integrations.socialLogin.googleEnabled,
             googleClientId: input.integrations.socialLogin.googleClientId ?? '',
             googleClientSecret: input.integrations.socialLogin.googleClientSecret
               ? protect(input.integrations.socialLogin.googleClientSecret)
-              : existingSocial.googleClientSecret ?? '',
+              : (existingSocial.googleClientSecret ?? ''),
             appleEnabled: input.integrations.socialLogin.appleEnabled,
             appleClientId: input.integrations.socialLogin.appleClientId ?? '',
             appleTeamId: input.integrations.socialLogin.appleTeamId ?? '',
             appleKeyId: input.integrations.socialLogin.appleKeyId ?? '',
             applePrivateKey: input.integrations.socialLogin.applePrivateKey
               ? protect(input.integrations.socialLogin.applePrivateKey)
-              : existingSocial.applePrivateKey ?? '',
+              : (existingSocial.applePrivateKey ?? ''),
           },
         };
         const settings = { ...currentSettings, integrations } as Prisma.InputJsonValue;
@@ -416,7 +813,11 @@ export class AdminService {
           typography: input.branding.typography as Prisma.InputJsonValue,
           emailBranding: input.branding.emailBranding as Prisma.InputJsonValue,
         };
-        await tx.brandingProfile.upsert({ where: { tenantId }, create: { tenantId, ...branding }, update: branding });
+        await tx.brandingProfile.upsert({
+          where: { tenantId },
+          create: { tenantId, ...branding },
+          update: branding,
+        });
       }
       return { updated: true };
     });
@@ -436,18 +837,31 @@ export class AdminService {
   async auditLog(filters: Record<string, string | undefined>) {
     const pageSize = boundedInteger(filters.pageSize, 25, 100);
     const requestedPage = boundedInteger(filters.page, 1, 100_000);
-    const where: Prisma.AuditLogWhereInput = { ...(filters.entity ? { entity: filters.entity } : {}), ...(filters.action ? { action: filters.action } : {}), ...(filters.actorId ? { actorId: filters.actorId } : {}) };
+    const where: Prisma.AuditLogWhereInput = {
+      ...(filters.entity ? { entity: filters.entity } : {}),
+      ...(filters.action ? { action: filters.action } : {}),
+      ...(filters.actorId ? { actorId: filters.actorId } : {}),
+    };
     const total = await this.db.client.auditLog.count({ where });
     const pageCount = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(requestedPage, pageCount);
-    const items = await this.db.client.auditLog.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+    const items = await this.db.client.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
     return { items, page, pageSize, total, pageCount };
   }
 
   private range(input: RangeInput) {
     const parsed = dateRangeSchema.parse(input);
-    if (parsed.from && parsed.to && parsed.from > parsed.to) throw new BadRequestException('from must be before to');
-    return { ...(parsed.from ? { gte: parsed.from } : {}), ...(parsed.to ? { lte: parsed.to } : {}) };
+    if (parsed.from && parsed.to && parsed.from > parsed.to)
+      throw new BadRequestException('from must be before to');
+    return {
+      ...(parsed.from ? { gte: parsed.from } : {}),
+      ...(parsed.to ? { lte: parsed.to } : {}),
+    };
   }
 
   private async reportScope(input: Record<string, string | undefined>) {
@@ -482,9 +896,10 @@ export class AdminService {
           })
         ).flatMap((redemption) => (redemption.orderId ? [redemption.orderId] : []))
       : null;
-    const constrainedOrderIds = productOrderIds && couponOrderIds
-      ? productOrderIds.filter((id) => couponOrderIds.includes(id))
-      : productOrderIds ?? couponOrderIds;
+    const constrainedOrderIds =
+      productOrderIds && couponOrderIds
+        ? productOrderIds.filter((id) => couponOrderIds.includes(id))
+        : (productOrderIds ?? couponOrderIds);
     const orders = await this.db.client.order.findMany({
       where: {
         createdAt: range,
@@ -499,7 +914,9 @@ export class AdminService {
     return { filters, range, orders, orderIds: orders.map((order) => order.id), productIds };
   }
 
-  private reportLineWhere(scope: Awaited<ReturnType<AdminService['reportScope']>>): Prisma.OrderItemWhereInput {
+  private reportLineWhere(
+    scope: Awaited<ReturnType<AdminService['reportScope']>>,
+  ): Prisma.OrderItemWhereInput {
     return {
       orderId: { in: scope.orderIds },
       ...(scope.productIds ? { productId: { in: scope.productIds } } : {}),
@@ -515,18 +932,31 @@ export class AdminService {
     return { ...(start ? { gte: start } : {}), ...(end ? { lte: end } : {}) };
   }
 
-  private serialiseRange(range: { gte?: Date; lte?: Date }) { return { from: range.gte?.toISOString() ?? null, to: range.lte?.toISOString() ?? null }; }
+  private serialiseRange(range: { gte?: Date; lte?: Date }) {
+    return { from: range.gte?.toISOString() ?? null, to: range.lte?.toISOString() ?? null };
+  }
 
-  private async audit(action: string, entity: string, entityId: string, before?: unknown, after?: unknown) {
+  private async audit(
+    action: string,
+    entity: string,
+    entityId: string,
+    before?: unknown,
+    after?: unknown,
+  ) {
     const actorId = TenantContext.get()?.userId;
-    await this.db.client.auditLog.create({ data: {
-      tenantId: TenantContext.requireTenantId(),
-      ...(actorId ? { actorId } : {}),
-      actorType: 'USER', action, entity, entityId,
-      ...(before !== undefined ? { before: before as Prisma.InputJsonValue } : {}),
-      ...(after !== undefined ? { after: after as Prisma.InputJsonValue } : {}),
-      requestId: TenantContext.get()?.requestId ?? randomUUID(),
-    } });
+    await this.db.client.auditLog.create({
+      data: {
+        tenantId: TenantContext.requireTenantId(),
+        ...(actorId ? { actorId } : {}),
+        actorType: 'USER',
+        action,
+        entity,
+        entityId,
+        ...(before !== undefined ? { before: before as Prisma.InputJsonValue } : {}),
+        ...(after !== undefined ? { after: after as Prisma.InputJsonValue } : {}),
+        requestId: TenantContext.get()?.requestId ?? randomUUID(),
+      },
+    });
   }
 }
 

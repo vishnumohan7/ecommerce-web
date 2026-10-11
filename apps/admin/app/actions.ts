@@ -131,7 +131,7 @@ export async function createProduct(data: FormData) {
     if (!galleryImage) continue;
     const galleryUpload = new FormData();
     galleryUpload.set('file', galleryImage);
-    galleryUpload.set('altText', `${textValue(data, 'name')} gallery image ${index + 1}`);
+    galleryUpload.set('altText', `${textValue(data, 'name')} gallery image ${String(index + 1)}`);
     const galleryResult = await adminFormMutation(
       `/api/v1/products/${encodeURIComponent(result.data.id)}/images`,
       galleryUpload,
@@ -181,8 +181,8 @@ export async function createProduct(data: FormData) {
     `/products/${result.data.id}`,
     { ok: true },
     names.length
-      ? `Product, ${galleryImages.length + 1} image${galleryImages.length === 0 ? '' : 's'}, opening stock and ${names.length} variant${names.length === 1 ? '' : 's'} created.`
-      : `Product, ${galleryImages.length + 1} image${galleryImages.length === 0 ? '' : 's'} and opening stock created.`,
+      ? `Product, ${String(galleryImages.length + 1)} image${galleryImages.length === 0 ? '' : 's'}, opening stock and ${String(names.length)} variant${names.length === 1 ? '' : 's'} created.`
+      : `Product, ${String(galleryImages.length + 1)} image${galleryImages.length === 0 ? '' : 's'} and opening stock created.`,
   );
 }
 
@@ -214,7 +214,7 @@ export async function importCatalogue(data: FormData) {
     upload,
   );
   const success = result.ok
-    ? `${dryRun ? 'Validation complete' : 'Import complete'} · ${result.data.applied} rows applied · job ${result.data.jobId}`
+    ? `${dryRun ? 'Validation complete' : 'Import complete'} · ${String(result.data.applied)} rows applied · job ${result.data.jobId}`
     : '';
   finish('/products/import', result, success);
 }
@@ -285,7 +285,11 @@ export async function updateProductVariant(data: FormData) {
       ? (JSON.parse(textValue(data, 'attributes')) as Record<string, string>)
       : {};
   } catch {
-    finish(`/products/${productId}`, { ok: false, error: 'Variant attributes must be valid JSON.' }, '');
+    finish(
+      `/products/${productId}`,
+      { ok: false, error: 'Variant attributes must be valid JSON.' },
+      '',
+    );
   }
   const result = await adminMutation(
     `/api/v1/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
@@ -694,6 +698,42 @@ export async function saveUserRoles(data: FormData) {
   finish('/access', result, 'Staff role assignments updated.');
 }
 
+export async function createStaffUser(data: FormData) {
+  const roleKeys = data
+    .getAll('roleKeys')
+    .filter((value): value is string => typeof value === 'string');
+  const result = await adminMutation('/api/v1/admin/staff', 'POST', {
+    email: textValue(data, 'email'),
+    firstName: textValue(data, 'firstName'),
+    lastName: textValue(data, 'lastName'),
+    roleKeys,
+  });
+  finish('/users', result, 'Staff account created and password setup email sent.');
+}
+
+export async function updateStaffUser(data: FormData) {
+  const id = textValue(data, 'id');
+  const roleKeys = data
+    .getAll('roleKeys')
+    .filter((value): value is string => typeof value === 'string');
+  const result = await adminMutation(`/api/v1/admin/staff/${encodeURIComponent(id)}`, 'PATCH', {
+    firstName: textValue(data, 'firstName'),
+    lastName: textValue(data, 'lastName'),
+    active: data.get('active') === 'on',
+    roleKeys,
+  });
+  finish('/users', result, 'Staff account updated.');
+}
+
+export async function sendStaffPasswordReset(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(
+    `/api/v1/admin/staff/${encodeURIComponent(id)}/password-reset`,
+    'POST',
+  );
+  finish('/users', result, 'Password setup email sent.');
+}
+
 export async function saveSettings(data: FormData) {
   try {
     const settings = JSON.parse(textValue(data, 'settings')) as Record<string, unknown>;
@@ -787,7 +827,10 @@ export async function processNotifications() {
 
 export async function retryNotification(data: FormData) {
   const id = textValue(data, 'id');
-  const result = await adminMutation(`/api/v1/admin/notification-deliveries/${encodeURIComponent(id)}/retry`, 'POST');
+  const result = await adminMutation(
+    `/api/v1/admin/notification-deliveries/${encodeURIComponent(id)}/retry`,
+    'POST',
+  );
   finish('/notifications', result, 'Notification queued for retry.');
 }
 

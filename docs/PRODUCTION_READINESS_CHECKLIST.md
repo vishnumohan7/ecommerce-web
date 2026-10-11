@@ -198,6 +198,7 @@ Exit gate: one paid order can be fulfilled, invoiced, returned/refunded and audi
 
 - [x] Admin shell and core operational modules are deployed.
 - [x] Products, categories, brands, inventory, promotions, orders, returns, delivery, pricing, customers, reviews, content, reports, roles, settings and audit routes exist.
+- [x] Dedicated staff user management supports secure invitation, activation, role assignment and password-reset email.
 - [ ] Resolve all create/edit/delete form refreshes, server exceptions and `[object Object]` error messages.
 - [x] Add authenticated server-side pagination to products, inventory, orders, returns, customers, reviews, audit logs, promotions and notification deliveries.
 - [ ] Add consistent server-side pagination to the remaining long tables.
