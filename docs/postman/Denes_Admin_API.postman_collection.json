@@ -1208,6 +1208,84 @@
       "name": "04 - Categories, brands and attributes",
       "item": [
         {
+          "name": "List categories with server-side pagination and filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/catalog/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "catalog",
+                "categories"
+              ]
+            },
+            "description": "GET /api/v1/admin/catalog/categories\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List brands with server-side pagination and filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/catalog/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "catalog",
+                "brands"
+              ]
+            },
+            "description": "GET /api/v1/admin/catalog/brands\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "List active category tree nodes",
           "request": {
             "method": "GET",
