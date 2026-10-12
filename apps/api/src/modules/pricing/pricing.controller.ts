@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { Public, RequirePermissions } from '../../common/auth/auth.decorators';
@@ -96,6 +107,18 @@ export class PricingController {
     @Body() body: unknown,
   ) {
     return this.pricing.createTaxRule(body);
+  }
+  @Patch('admin/tax-rules/:id') @RequirePermissions('catalog.write') @ApiBearerAuth() updateTaxRule(
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.pricing.updateTaxRule(id, body);
+  }
+  @Delete('admin/tax-rules/:id')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  deleteTaxRule(@Param('id') id: string) {
+    return this.pricing.deleteTaxRule(id);
   }
 
   private identity(request: Request, response: Response): PricingIdentity {

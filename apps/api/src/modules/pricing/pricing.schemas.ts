@@ -94,10 +94,30 @@ export const influencerCreateSchema = z.object({
   active: z.boolean().default(true),
 });
 
-export const taxRuleCreateSchema = z.object({
+const taxRuleFields = {
   taxCategory: z.enum(['STANDARD_20', 'REDUCED_5', 'ZERO', 'EXEMPT']),
   rateBps: z.number().int().min(0).max(10_000),
   effectiveFrom: z.coerce.date(),
   effectiveTo: z.coerce.date().nullable().optional(),
-  active: z.boolean().default(true),
-});
+  active: z.boolean(),
+};
+
+export const taxRuleCreateSchema = z
+  .object({ ...taxRuleFields, active: z.boolean().default(true) })
+  .superRefine((value, context) => {
+    if (
+      value.effectiveTo !== null &&
+      value.effectiveTo !== undefined &&
+      value.effectiveTo <= value.effectiveFrom
+    )
+      context.addIssue({
+        code: 'custom',
+        message: 'effectiveTo must be after effectiveFrom',
+        path: ['effectiveTo'],
+      });
+  });
+
+export const taxRuleUpdateSchema = z
+  .object(taxRuleFields)
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, 'At least one tax rule field is required');

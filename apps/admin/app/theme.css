@@ -4275,3 +4275,113 @@ td code {
   background: #74c69d;
   box-shadow: 0 0 14px rgb(116 198 157 / 55%);
 }
+
+.pricing-secondary {
+  display: grid;
+  gap: 20px;
+}
+.tax-rules-panel .panel-header small {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.tax-rule-create {
+  border-bottom: 1px solid var(--line);
+}
+.tax-rule-form {
+  align-items: end;
+  background: #fafbfc;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  padding: 18px 20px;
+}
+.tax-rule-submit {
+  align-items: flex-end;
+  display: flex;
+}
+.tax-rule-list {
+  display: grid;
+}
+.tax-rule-editor {
+  border-top: 1px solid var(--line);
+}
+.tax-rule-editor:first-child {
+  border-top: 0;
+}
+.tax-rule-editor > summary {
+  align-items: center;
+  cursor: pointer;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(180px, 1.1fr) 100px minmax(220px, 1fr) 90px 48px;
+  list-style: none;
+  padding: 16px 20px;
+}
+.tax-rule-editor > summary::-webkit-details-marker {
+  display: none;
+}
+.tax-rule-editor > summary:hover {
+  background: #fafbfc;
+}
+.tax-rule-name {
+  display: grid;
+  gap: 3px;
+}
+.tax-rule-name strong,
+.tax-rule-rate {
+  color: var(--ink);
+  font-size: 12px;
+}
+.tax-rule-name small,
+.tax-rule-window {
+  color: var(--muted);
+  font-size: 10px;
+}
+.tax-rule-edit-body {
+  background: #f7faf8;
+  border-top: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+.tax-rule-edit-body .tax-rule-form {
+  background: transparent;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto auto;
+  padding-bottom: 8px;
+}
+.tax-rule-active {
+  align-items: center;
+  display: flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 7px;
+  min-height: 41px;
+}
+.tax-rule-active input {
+  accent-color: #2d6a4f;
+}
+.tax-rule-delete {
+  padding: 0 20px;
+  text-align: right;
+}
+@media (max-width: 1100px) {
+  .tax-rule-form,
+  .tax-rule-edit-body .tax-rule-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tax-rule-editor > summary {
+    grid-template-columns: minmax(160px, 1fr) 80px minmax(180px, 1fr) 80px 42px;
+  }
+}
+@media (max-width: 720px) {
+  .tax-rule-form,
+  .tax-rule-edit-body .tax-rule-form {
+    grid-template-columns: 1fr;
+  }
+  .tax-rule-editor > summary {
+    grid-template-columns: 1fr auto;
+  }
+  .tax-rule-window {
+    grid-column: 1 / -1;
+  }
+}

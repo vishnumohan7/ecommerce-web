@@ -464,11 +464,35 @@ export async function createInfluencer(data: FormData) {
 export async function createTaxRule(data: FormData) {
   const result = await adminMutation('/api/v1/admin/tax-rules', 'POST', {
     taxCategory: textValue(data, 'taxCategory'),
-    rateBps: Number(textValue(data, 'rateBps')),
+    rateBps: Math.round(Number(textValue(data, 'ratePercent')) * 100),
     effectiveFrom: textValue(data, 'effectiveFrom'),
+    effectiveTo: textValue(data, 'effectiveTo') || null,
     active: true,
   });
   finish('/pricing', result, 'Tax rule created.');
+}
+
+export async function updateTaxRule(data: FormData) {
+  const result = await adminMutation(
+    `/api/v1/admin/tax-rules/${encodeURIComponent(textValue(data, 'id'))}`,
+    'PATCH',
+    {
+      taxCategory: textValue(data, 'taxCategory'),
+      rateBps: Math.round(Number(textValue(data, 'ratePercent')) * 100),
+      effectiveFrom: textValue(data, 'effectiveFrom'),
+      effectiveTo: textValue(data, 'effectiveTo') || null,
+      active: data.get('active') === 'on',
+    },
+  );
+  finish('/pricing', result, 'Tax rule updated.');
+}
+
+export async function deleteTaxRule(data: FormData) {
+  const result = await adminMutation(
+    `/api/v1/admin/tax-rules/${encodeURIComponent(textValue(data, 'id'))}`,
+    'DELETE',
+  );
+  finish('/pricing', result, 'Tax rule deleted.');
 }
 
 export async function transitionFulfilment(data: FormData) {

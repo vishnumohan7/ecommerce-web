@@ -327,6 +327,7 @@ function variablePath(path) {
     [/\/search\/synonyms\/\{id\}/, '/search/synonyms/{{synonymId}}'],
     [/\/coupons\/\{id\}/, '/coupons/{{couponId}}'],
     [/\/influencers\/\{id\}/, '/influencers/{{influencerId}}'],
+    [/\/tax-rules\/\{id\}/, '/tax-rules/{{taxRuleId}}'],
     [/\/delivery\/zones\/\{id\}/, '/delivery/zones/{{zoneId}}'],
     [/\/delivery\/slots\/\{id\}/, '/delivery/slots/{{slotId}}'],
     [/\/payments\/\{orderId\}/, '/payments/{{orderId}}'],
@@ -458,6 +459,8 @@ function bodyFor(method, path) {
   if (path.includes('/admin/coupons/{id}')) return { active: false, maximumDiscountMinor: '1000' };
   if (path === '/api/v1/admin/influencers') return samples.influencer;
   if (path === '/api/v1/admin/tax-rules') return samples.taxRule;
+  if (path.includes('/admin/tax-rules/{id}'))
+    return { rateBps: 2000, effectiveTo: null, active: true };
   if (path === '/api/v1/admin/delivery/zones') return samples.zone;
   if (path.includes('/admin/delivery/zones/{id}')) return { groceryFeeMinor: 349, active: true };
   if (path === '/api/v1/admin/delivery/slots') return samples.slot;

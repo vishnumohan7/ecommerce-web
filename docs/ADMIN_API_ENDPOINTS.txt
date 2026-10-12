@@ -381,6 +381,15 @@ fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REF
     Body:
     {"taxCategory":"STANDARD_20","rateBps":2000,"effectiveFrom":"2026-10-01T00:00:00.000Z","effectiveTo":null,"active":true}
 
+[ ] PATCH  /api/v1/admin/tax-rules/{taxRuleId}
+    Auth: Bearer; catalog.write
+    Body example:
+    {"rateBps":2000,"effectiveTo":null,"active":true}
+
+[ ] DELETE /api/v1/admin/tax-rules/{taxRuleId}
+    Auth: Bearer; catalog.write
+    Safety: The only currently effective rule for a category cannot be deleted until a replacement exists.
+
 
 11. DELIVERY ADMINISTRATION
 ---------------------------

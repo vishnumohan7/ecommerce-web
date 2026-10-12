@@ -347,6 +347,14 @@ export class PricingService {
     return this.taxes.create(raw);
   }
 
+  updateTaxRule(id: string, raw: unknown) {
+    return this.taxes.update(id, raw);
+  }
+
+  deleteTaxRule(id: string) {
+    return this.taxes.remove(id);
+  }
+
   private async cart(identity: PricingIdentity) {
     const cart = await this.db.client.cart.findFirst({
       where: {
