@@ -85,8 +85,7 @@ button {
   justify-content: center;
   width: 36px;
 }
-.brand > span:last-child,
-.sidebar-foot > span:last-child {
+.brand > span:last-child {
   display: flex;
   flex-direction: column;
 }
@@ -95,8 +94,7 @@ button {
   font-size: 17px;
   letter-spacing: 0.15em;
 }
-.brand small,
-.sidebar-foot small {
+.brand small {
   color: var(--sidebar-muted);
   font-size: 10px;
   letter-spacing: 0.04em;
@@ -179,24 +177,6 @@ button {
 }
 .nav-icon-users {
   border-radius: 50%;
-}
-.sidebar-foot {
-  align-items: center;
-  border-top: 1px solid rgb(255 255 255 / 8%);
-  display: flex;
-  gap: 10px;
-  margin: 0 15px;
-  padding: 19px 9px 23px;
-}
-.sidebar-foot strong {
-  font-size: 12px;
-}
-.status-dot {
-  background: #52d391;
-  border: 3px solid rgb(82 211 145 / 15%);
-  border-radius: 50%;
-  height: 12px;
-  width: 12px;
 }
 .workspace {
   margin-left: 244px;
@@ -2422,19 +2402,6 @@ td code {
   height: 22px;
   justify-content: center;
   width: 22px;
-}
-.larkon-sidebar .sidebar-foot {
-  background: #181b25;
-  margin: 0;
-  padding: 17px 24px;
-}
-.larkon-sidebar .sidebar-foot strong {
-  font-size: 11px;
-}
-.larkon-sidebar .status-dot {
-  height: 9px;
-  width: 9px;
-  border: 0;
 }
 .larkon-shell .workspace {
   margin-left: 268px;

@@ -290,13 +290,6 @@ export function AdminChrome({
             </section>
           ))}
         </nav>
-        <div className="sidebar-foot">
-          <span className="status-dot" />
-          <span>
-            <strong>Connected</strong>
-            <small>Production database</small>
-          </span>
-        </div>
       </aside>
       <div className="workspace">
         <header className="topbar larkon-topbar">
