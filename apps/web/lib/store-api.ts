@@ -73,14 +73,21 @@ export async function serverApi<T>(path: string, headers?: HeadersInit): Promise
 }
 
 export async function browserApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json');
   const response = await fetch(`/api/store${path}`, {
     ...init,
-    headers: { 'content-type': 'application/json', ...init?.headers },
+    headers,
   });
   const data = (await response.json().catch(() => ({}))) as T & {
     message?: string;
     error?: { message?: string };
   };
-  if (!response.ok) throw new Error(data.message ?? data.error?.message ?? 'Request failed');
+  if (!response.ok)
+    throw new Error(
+      response.status === 401
+        ? 'Your session has expired. Please sign in again.'
+        : (data.message ?? data.error?.message ?? 'Request failed'),
+    );
   return data;
 }

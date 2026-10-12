@@ -59,6 +59,11 @@ export class AuthService {
           active: false,
         },
       });
+      const customerRole = await tx.role.findFirst({ where: { tenantId, key: 'CUSTOMER' } });
+      if (!customerRole) throw new Error('The customer role is not configured');
+      await tx.userRoleAssignment.create({
+        data: { tenantId, userId: created.id, roleId: customerRole.id },
+      });
       await tx.authToken.create({
         data: {
           tenantId,
@@ -261,8 +266,26 @@ export class AuthService {
   }
   private async permissionsFor(userId: string): Promise<string[]> {
     const assignments = await this.db.client.userRoleAssignment.findMany({ where: { userId } });
+    let roleIds = assignments.map((item) => item.roleId);
+    if (roleIds.length === 0) {
+      const user = await this.db.client.user.findFirst({ where: { id: userId } });
+      const role = user ? await this.db.client.role.findFirst({ where: { key: user.role } }) : null;
+      if (role) {
+        await this.db.client.userRoleAssignment.createMany({
+          data: [
+            {
+              tenantId: TenantContext.requireTenantId(),
+              userId,
+              roleId: role.id,
+            },
+          ],
+          skipDuplicates: true,
+        });
+        roleIds = [role.id];
+      }
+    }
     const mappings = await this.db.client.rolePermission.findMany({
-      where: { roleId: { in: assignments.map((item) => item.roleId) } },
+      where: { roleId: { in: roleIds } },
     });
     const permissions = await this.root.permission.findMany({
       where: { id: { in: mappings.map((item) => item.permissionId) } },
