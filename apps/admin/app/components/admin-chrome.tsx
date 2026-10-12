@@ -41,7 +41,7 @@ const groups: Array<{ label: string; items: Item[] }> = [
       { href: '/orders', label: 'Orders', icon: 'orders', permission: 'orders.read' },
       { href: '/returns', label: 'Returns & refunds', icon: 'returns', permission: 'orders.read' },
       { href: '/delivery', label: 'Delivery', icon: 'delivery', permission: 'delivery.read' },
-      { href: '/pricing', label: 'Pricing & tax', icon: 'pricing', permission: 'catalog.read' },
+      { href: '/pricing', label: 'Coupons & taxes', icon: 'pricing', permission: 'catalog.read' },
     ],
   },
   {
