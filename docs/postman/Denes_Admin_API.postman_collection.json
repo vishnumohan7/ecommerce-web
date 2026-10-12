@@ -2709,6 +2709,77 @@
               }
             }
           ]
+        },
+        {
+          "name": "PATCH admin / tax-rules / {id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/tax-rules/{{taxRuleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "tax-rules", "{{taxRuleId}}"]
+            },
+            "description": "PATCH /api/v1/admin/tax-rules/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rateBps\": 2000,\n  \"effectiveTo\": null,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE admin / tax-rules / {id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/tax-rules/{{taxRuleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "tax-rules", "{{taxRuleId}}"]
+            },
+            "description": "DELETE /api/v1/admin/tax-rules/{id}\n\nSee docs/ADMIN_API_ENDPOINTS.txt for permissions, validation rules and expected results."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test('Request ID is returned', function () { pm.expect(pm.response.headers.has('x-request-id')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
