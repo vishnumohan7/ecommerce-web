@@ -76,7 +76,11 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
     if (this.cancellationTimer) clearInterval(this.cancellationTimer);
   }
 
-  async createIntent(identity: PricingIdentity, checkoutSessionId: string) {
+  async createIntent(
+    identity: PricingIdentity,
+    checkoutSessionId: string,
+    paymentMethod: 'CARD' | 'CASH_ON_DELIVERY' = 'CARD',
+  ) {
     await this.checkout.get(identity, checkoutSessionId);
     const tenantId = TenantContext.requireTenantId();
     return this.db.transaction(async (tx) => {
@@ -107,23 +111,35 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       const amountMinor = manualCapture
         ? session.totalMinor + (session.totalMinor * bufferBps + 9_999n) / 10_000n
         : session.totalMinor;
-      const result = await this.provider.createIntent({
-        idempotencyKey: checkoutSessionId,
-        amountMinor,
-        currency: session.currency,
-        manualCapture,
-        metadata: {
-          tenantId,
-          checkoutSessionId,
-          basketType,
-          orderNumberReserved: orderNumber.toString(),
-        },
-      });
+      const result =
+        paymentMethod === 'CASH_ON_DELIVERY'
+          ? {
+              id: `cod_${checkoutSessionId}`,
+              clientSecret: 'cash_on_delivery',
+              status: 'cash_on_delivery',
+            }
+          : await this.provider.createIntent({
+              idempotencyKey: checkoutSessionId,
+              amountMinor,
+              currency: session.currency,
+              manualCapture,
+              metadata: {
+                tenantId,
+                checkoutSessionId,
+                basketType,
+                orderNumberReserved: orderNumber.toString(),
+              },
+            });
       const intent = await tx.checkoutPaymentIntent.create({
         data: {
           tenantId,
           checkoutSessionId,
-          provider: 'stripe',
+          provider:
+            paymentMethod === 'CASH_ON_DELIVERY'
+              ? 'cash_on_delivery'
+              : this.config.values.STRIPE_SECRET_KEY
+                ? 'stripe'
+                : 'stub',
           providerPaymentIntentId: result.id,
           clientSecret: result.clientSecret,
           status: result.status,
@@ -147,6 +163,55 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       });
       return this.publicIntent(intent);
     });
+  }
+
+  async placeCashOnDelivery(identity: PricingIdentity, checkoutSessionId: string) {
+    const publicIntent = await this.createIntent(identity, checkoutSessionId, 'CASH_ON_DELIVERY');
+    const tenantId = TenantContext.requireTenantId();
+    const intent = await this.db.client.checkoutPaymentIntent.findFirst({
+      where: { tenantId, checkoutSessionId },
+    });
+    if (!intent) throw new NotFoundException('Checkout payment record not found');
+
+    const existingOrder = await this.db.client.order.findFirst({
+      where: { tenantId, idempotencyKey: checkoutSessionId },
+    });
+    if (existingOrder)
+      return { ...publicIntent, orderId: existingOrder.id, status: 'cash_on_delivery' };
+
+    const providerEventId = `cod:${checkoutSessionId}`;
+    const object: Record<string, unknown> = {
+      id: intent.providerPaymentIntentId,
+      amount: intent.amountMinor.toString(),
+      currency: intent.currency.toLowerCase(),
+      metadata: {
+        tenantId,
+        checkoutSessionId,
+        orderNumberReserved: intent.reservedOrderNumber.toString(),
+      },
+    };
+    let event = await this.db.client.webhookEvent.findFirst({
+      where: { provider: 'cash_on_delivery', providerEventId },
+    });
+    event ??= await this.db.client.webhookEvent.create({
+      data: {
+        tenantId,
+        provider: 'cash_on_delivery',
+        providerEventId,
+        signatureValid: true,
+        payload: { type: 'cash_on_delivery.placed', data: { object } } as Prisma.InputJsonValue,
+        status: 'PROCESSING',
+      },
+    });
+    const order = await this.finalise(
+      event.id,
+      intent.providerPaymentIntentId,
+      object,
+      false,
+      'CASH_ON_DELIVERY',
+    );
+    await this.notifications?.process(100);
+    return { ...publicIntent, orderId: order.id, status: 'cash_on_delivery' };
   }
 
   async get(identity: PricingIdentity, id: string) {
@@ -287,6 +352,7 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
     providerId: string,
     object: Record<string, unknown>,
     authorisedOnly: boolean,
+    paymentMethod: 'CARD' | 'CASH_ON_DELIVERY' = 'CARD',
   ) {
     const tenantId = TenantContext.requireTenantId();
     return this.db.transaction(async (tx) => {
@@ -369,7 +435,12 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
           taxMinor: BigInt(snapshot.summary.vatMinor),
           deliveryFeeMinor: BigInt(snapshot.summary.delivery.deliveryFeeMinor),
           totalMinor: intent.checkoutTotalMinor,
-          paymentStatus: authorisedOnly ? 'AUTHORISED' : 'CAPTURED',
+          paymentStatus:
+            paymentMethod === 'CASH_ON_DELIVERY'
+              ? 'PENDING'
+              : authorisedOnly
+                ? 'AUTHORISED'
+                : 'CAPTURED',
           ageVerificationStatus: snapshot.summary.requiresAgeVerification
             ? 'PASSED'
             : 'NOT_REQUIRED',
@@ -445,13 +516,19 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
         data: {
           tenantId,
           orderId: order.id,
-          provider: 'stripe',
+          provider: paymentMethod === 'CASH_ON_DELIVERY' ? 'cash_on_delivery' : 'stripe',
           providerPaymentIntentId: intent.providerPaymentIntentId,
-          status: authorisedOnly ? 'AUTHORISED' : 'CAPTURED',
-          authorisedAmountMinor: intent.amountMinor,
-          capturedAmountMinor: authorisedOnly ? 0n : intent.checkoutTotalMinor,
+          status:
+            paymentMethod === 'CASH_ON_DELIVERY'
+              ? 'PENDING'
+              : authorisedOnly
+                ? 'AUTHORISED'
+                : 'CAPTURED',
+          authorisedAmountMinor: paymentMethod === 'CASH_ON_DELIVERY' ? 0n : intent.amountMinor,
+          capturedAmountMinor:
+            paymentMethod === 'CASH_ON_DELIVERY' || authorisedOnly ? 0n : intent.checkoutTotalMinor,
           currency: intent.currency,
-          manualCapture: intent.manualCapture,
+          manualCapture: paymentMethod === 'CASH_ON_DELIVERY' ? false : intent.manualCapture,
         },
       });
       const invoiceNumber = await allocateCommerceNumber(tx, tenantId, numberYear, 'INVOICE');
@@ -471,7 +548,14 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       await tx.checkoutSession.update({ where: { id: session.id }, data: { status: 'COMPLETED' } });
       await tx.checkoutPaymentIntent.update({
         where: { id: intent.id },
-        data: { status: authorisedOnly ? 'requires_capture' : 'succeeded' },
+        data: {
+          status:
+            paymentMethod === 'CASH_ON_DELIVERY'
+              ? 'cash_on_delivery'
+              : authorisedOnly
+                ? 'requires_capture'
+                : 'succeeded',
+        },
       });
       await tx.webhookEvent.update({
         where: { id: webhookEventId },

@@ -42,6 +42,21 @@ export class PaymentController {
   }
 
   @Public()
+  @Post('payments/cash-on-delivery')
+  @ApiOperation({ summary: 'Place a cash-on-delivery order from an active checkout session' })
+  cashOnDelivery(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: unknown,
+  ) {
+    const input = paymentIntentSchema.parse(body);
+    return this.payments.placeCashOnDelivery(
+      this.identity(request, response),
+      input.checkoutSessionId,
+    );
+  }
+
+  @Public()
   @Get('payments/:id')
   get(
     @Req() request: Request,

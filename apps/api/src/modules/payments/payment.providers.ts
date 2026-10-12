@@ -12,13 +12,13 @@ export class StubPaymentProvider implements PaymentProvider {
   health() {
     return Promise.resolve({ ok: true });
   }
-  createIntent(): Promise<PaymentIntentResult> {
+  createIntent(request: PaymentIntentRequest): Promise<PaymentIntentResult> {
     this.calls += 1;
     const id = `pi_stub_${randomUUID().replaceAll('-', '')}`;
     return Promise.resolve({
       id,
       clientSecret: `${id}_secret_test`,
-      status: 'requires_payment_method',
+      status: request.manualCapture ? 'requires_capture' : 'succeeded',
     });
   }
   captureIntent(
