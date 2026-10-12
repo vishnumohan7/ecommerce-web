@@ -83,11 +83,17 @@ export async function browserApi<T>(path: string, init?: RequestInit): Promise<T
     message?: string;
     error?: { message?: string };
   };
-  if (!response.ok)
+  if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined' && !path.includes('/auth/')) {
+      window.location.assign(
+        `/auth/login?error=${encodeURIComponent('Your session has expired. Please sign in again.')}`,
+      );
+    }
     throw new Error(
       response.status === 401
         ? 'Your session has expired. Please sign in again.'
         : (data.message ?? data.error?.message ?? 'Request failed'),
     );
+  }
   return data;
 }

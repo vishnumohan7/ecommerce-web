@@ -42,6 +42,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       headers: { 'content-type': upstream.headers.get('content-type') ?? 'application/json' },
     });
     if (refreshed) setSessionCookies(response, refreshed);
+    if (upstream.status === 401 && !refreshed && !isLogin) clearSessionCookies(response);
     if (isLogout) clearSessionCookies(response);
     const cookie = upstream.headers.get('set-cookie');
     if (cookie) response.headers.set('set-cookie', cookie);

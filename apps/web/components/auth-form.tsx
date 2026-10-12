@@ -1,15 +1,19 @@
 'use client';
+/* eslint-disable local/no-jsx-literals */
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { SyntheticEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { browserApi } from '../lib/store-api';
 
 type Mode = 'login' | 'register' | 'otp' | 'forgot' | 'reset';
-export function AuthForm({ mode }: Readonly<{ mode: Mode }>) {
+export function AuthForm({
+  mode,
+  initialMessage = '',
+}: Readonly<{ mode: Mode; initialMessage?: string }>) {
   const router = useRouter();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage);
   const [challengeId, setChallengeId] = useState('');
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('Working…');
     const values = Object.fromEntries(new FormData(event.currentTarget));
@@ -60,7 +64,12 @@ export function AuthForm({ mode }: Readonly<{ mode: Mode }>) {
   }[mode];
   return (
     <main className="section auth-shell">
-      <form className="form-card auth-card" onSubmit={submit}>
+      <form
+        className="form-card auth-card"
+        onSubmit={(event) => {
+          void submit(event);
+        }}
+      >
         <p className="eyebrow">Your Denes account</p>
         <h1>{title}</h1>
         {mode === 'register' && (

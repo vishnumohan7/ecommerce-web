@@ -127,7 +127,7 @@ export class CartService {
       where: { id: cart.id },
       data: { couponCode: coupon.code, version: { increment: 1 } },
     });
-    return this.view({ ...cart, couponCode: coupon.code }, identity);
+    return this.view({ ...cart, couponCode: coupon.code }, identity, false);
   }
 
   async removeCoupon(identity: CartIdentity) {
@@ -220,7 +220,7 @@ export class CartService {
     });
   }
 
-  private async view(cart: Cart, identity: CartIdentity) {
+  private async view(cart: Cart, identity: CartIdentity, recoverInvalidCoupon = true) {
     const items = await this.db.client.cartItem.findMany({
       where: { cartId: cart.id },
       orderBy: { createdAt: 'asc' },
@@ -305,7 +305,19 @@ export class CartService {
     }
     if (removeIds.length > 0)
       await this.db.client.cartItem.deleteMany({ where: { id: { in: removeIds } } });
-    const breakdown = await this.pricing.quote(identity, {});
+    let breakdown: Awaited<ReturnType<PricingService['quote']>>;
+    try {
+      breakdown = await this.pricing.quote(identity, {});
+    } catch (error) {
+      if (!recoverInvalidCoupon || !cart.couponCode || !this.isCouponEligibilityError(error))
+        throw error;
+      await this.db.client.cart.update({
+        where: { id: cart.id },
+        data: { couponCode: null, version: { increment: 1 } },
+      });
+      changes.push({ type: 'COUPON_REMOVED' });
+      breakdown = await this.pricing.quote(identity, {});
+    }
     const pricedLineById = new Map(breakdown.lines.map((line) => [line.id, line]));
     for (const item of [...grouped.GROCERY, ...grouped.ALCOHOL]) {
       const priced = pricedLineById.get(String(item['id']));
@@ -326,7 +338,7 @@ export class CartService {
       status: cart.status,
       currency: cart.currency,
       version: cart.version,
-      couponCode: cart.couponCode,
+      couponCode: breakdown.couponCode,
       groups,
       totals: {
         subtotalMinor: breakdown.subtotalMinor.toString(),
@@ -337,6 +349,17 @@ export class CartService {
       requiresAgeVerification: grouped.ALCOHOL.some((item) => Number(item['ageRestriction']) > 0),
       changes,
     };
+  }
+
+  private isCouponEligibilityError(error: unknown): boolean {
+    if (!(error instanceof UnprocessableEntityException)) return false;
+    const response = error.getResponse();
+    return (
+      typeof response === 'object' &&
+      response !== null &&
+      typeof (response as { code?: unknown }).code === 'string' &&
+      (response as { code: string }).code.startsWith('COUPON_')
+    );
   }
 
   private async getOrCreate(identity: CartIdentity): Promise<Cart> {
