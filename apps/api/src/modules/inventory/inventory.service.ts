@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, type InventoryReason } from '@prisma/client';
+import { Prisma, type Inventory, type InventoryReason } from '@prisma/client';
 import { TenantScopedPrismaService } from '../../common/database/tenant-scoped.service';
 import { TenantContext } from '../../common/tenancy/tenant-context';
 interface LockedInventory {
@@ -24,27 +24,38 @@ export class InventoryService {
       orderBy: [{ stockAvailable: 'asc' }, { updatedAt: 'desc' }],
       take: 250,
     });
-    const products = await this.db.client.product.findMany({
-      where: { id: { in: records.map((record) => record.productId) } },
-      select: { id: true, name: true, sku: true },
-    });
-    const names = new Map(products.map((product) => [product.id, product]));
-    return records.map((record) => ({ ...record, product: names.get(record.productId) ?? null }));
+    return this.withCatalogueDetails(records);
   }
   async page(input: { page: number; pageSize: number; query?: string }) {
-    const productWhere: Prisma.ProductWhereInput | undefined = input.query
+    const matches = input.query
+      ? await Promise.all([
+          this.db.client.product.findMany({
+            where: {
+              OR: [
+                { name: { contains: input.query, mode: 'insensitive' } },
+                { sku: { contains: input.query, mode: 'insensitive' } },
+              ],
+            },
+            select: { id: true },
+          }),
+          this.db.client.productVariant.findMany({
+            where: {
+              OR: [
+                { name: { contains: input.query, mode: 'insensitive' } },
+                { sku: { contains: input.query, mode: 'insensitive' } },
+              ],
+            },
+            select: { id: true },
+          }),
+        ])
+      : null;
+    const where: Prisma.InventoryWhereInput = matches
       ? {
           OR: [
-            { name: { contains: input.query, mode: 'insensitive' } },
-            { sku: { contains: input.query, mode: 'insensitive' } },
+            { productId: { in: matches[0].map((product) => product.id) } },
+            { variantId: { in: matches[1].map((variant) => variant.id) } },
           ],
         }
-      : undefined;
-    const matchingProducts = productWhere
-      ? await this.db.client.product.findMany({ where: productWhere, select: { id: true } })
-      : null;
-    const where: Prisma.InventoryWhereInput = matchingProducts
-      ? { productId: { in: matchingProducts.map((product) => product.id) } }
       : {};
     const total = await this.db.client.inventory.count({ where });
     const pageCount = Math.max(1, Math.ceil(total / input.pageSize));
@@ -55,18 +66,37 @@ export class InventoryService {
       skip: (page - 1) * input.pageSize,
       take: input.pageSize,
     });
-    const products = await this.db.client.product.findMany({
-      where: { id: { in: records.map((record) => record.productId) } },
-      select: { id: true, name: true, sku: true },
-    });
-    const names = new Map(products.map((product) => [product.id, product]));
     return {
-      items: records.map((record) => ({ ...record, product: names.get(record.productId) ?? null })),
+      items: await this.withCatalogueDetails(records),
       page,
       pageSize: input.pageSize,
       total,
       pageCount,
     };
+  }
+
+  private async withCatalogueDetails(records: Inventory[]) {
+    const [products, variants] = await Promise.all([
+      this.db.client.product.findMany({
+        where: { id: { in: records.map((record) => record.productId) } },
+        select: { id: true, name: true, sku: true },
+      }),
+      this.db.client.productVariant.findMany({
+        where: {
+          id: {
+            in: records.flatMap((record) => (record.variantId ? [record.variantId] : [])),
+          },
+        },
+        select: { id: true, productId: true, name: true, sku: true },
+      }),
+    ]);
+    const productsById = new Map(products.map((product) => [product.id, product]));
+    const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
+    return records.map((record) => ({
+      ...record,
+      product: productsById.get(record.productId) ?? null,
+      variant: record.variantId ? (variantsById.get(record.variantId) ?? null) : null,
+    }));
   }
   async create(input: {
     productId: string;

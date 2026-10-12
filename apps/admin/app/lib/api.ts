@@ -367,6 +367,7 @@ export interface InventoryRow {
   lowStockThreshold: number;
   updatedAt: string;
   product?: { id: string; name: string; sku: string } | null;
+  variant?: { id: string; productId: string; name: string; sku: string } | null;
 }
 export interface AuditRow {
   id: string;

@@ -30,33 +30,83 @@ export default async function InventoryPage({
       <article className="panel">
         <div className="catalog-toolbar inventory-toolbar">
           <form action="/inventory" role="search">
-            <label className="sr-only" htmlFor="inventory-search">Search inventory</label>
-            <input id="inventory-search" name="q" defaultValue={q} placeholder="Search product name or SKU" />
+            <label className="sr-only" htmlFor="inventory-search">
+              Search inventory
+            </label>
+            <input
+              id="inventory-search"
+              name="q"
+              defaultValue={q}
+              placeholder="Search product or variant name / SKU"
+            />
             <button className="button button-primary">Search</button>
-            {q && <Link className="clear-link" href="/inventory">Clear</Link>}
+            {q && (
+              <Link className="clear-link" href="/inventory">
+                Clear
+              </Link>
+            )}
           </form>
-          {result.ok && <p><strong>{result.data.total.toLocaleString('en-GB')}</strong> stock records</p>}
+          {result.ok && (
+            <p>
+              <strong>{result.data.total.toLocaleString('en-GB')}</strong> stock records
+            </p>
+          )}
         </div>
         {!result.ok ? (
           <ApiNotice message={result.error} />
         ) : result.data.items.length === 0 ? (
-          <div className="empty-state"><h3>No stock records found</h3><p>Try a different product name or SKU.</p></div>
+          <div className="empty-state">
+            <h3>No stock records found</h3>
+            <p>Try a different product name or SKU.</p>
+          </div>
         ) : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Product</th><th>On hand</th><th>Reserved</th><th>Available</th><th>Adjustment</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>On hand</th>
+                  <th>Reserved</th>
+                  <th>Available</th>
+                  <th>Adjustment</th>
+                </tr>
+              </thead>
               <tbody>
                 {result.data.items.map((row) => (
                   <tr key={row.id}>
-                    <td><strong>{row.product?.name ?? row.productId}</strong><small className="cell-subtext">{row.product?.sku ?? row.id}</small></td>
+                    <td>
+                      <strong>
+                        {row.product?.name ?? row.productId}
+                        {row.variant ? ` — ${row.variant.name}` : ''}
+                      </strong>
+                      <small className="cell-subtext">
+                        {row.variant?.sku ?? row.product?.sku ?? row.id}
+                        {row.variant ? ' · Variant' : ' · Base product'}
+                      </small>
+                    </td>
                     <td>{row.onHand}</td>
                     <td>{row.reserved}</td>
-                    <td><span className={row.stockAvailable <= row.lowStockThreshold ? 'compliance-badge' : 'soft-badge'}>{row.stockAvailable}</span></td>
+                    <td>
+                      <span
+                        className={
+                          row.stockAvailable <= row.lowStockThreshold
+                            ? 'compliance-badge'
+                            : 'soft-badge'
+                        }
+                      >
+                        {row.stockAvailable}
+                      </span>
+                    </td>
                     <td>
                       <form action={adjustInventory} className="row-form">
                         <input type="hidden" name="id" value={row.id} />
                         <input name="quantity" type="number" placeholder="± qty" required />
-                        <select name="reason"><option value="ADJUSTMENT">Adjustment</option><option value="PURCHASE">Stock receipt</option><option value="WASTAGE">Wastage</option><option value="RETURN">Return</option></select>
+                        <select name="reason">
+                          <option value="ADJUSTMENT">Adjustment</option>
+                          <option value="PURCHASE">Stock receipt</option>
+                          <option value="WASTAGE">Wastage</option>
+                          <option value="RETURN">Return</option>
+                        </select>
                         <input name="reference" placeholder="Reference" />
                         <button className="button button-muted">Apply</button>
                       </form>
@@ -67,7 +117,15 @@ export default async function InventoryPage({
             </table>
           </div>
         )}
-        {result.ok && <TablePagination basePath="/inventory" page={result.data.page} pageCount={result.data.pageCount} total={result.data.total} params={q ? { q } : {}} />}
+        {result.ok && (
+          <TablePagination
+            basePath="/inventory"
+            page={result.data.page}
+            pageCount={result.data.pageCount}
+            total={result.data.total}
+            params={q ? { q } : {}}
+          />
+        )}
       </article>
     </>
   );
