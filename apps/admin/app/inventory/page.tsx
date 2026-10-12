@@ -61,7 +61,7 @@ export default async function InventoryPage({
           </div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="inventory-table">
               <thead>
                 <tr>
                   <th>Product</th>
@@ -95,7 +95,7 @@ export default async function InventoryPage({
                       </span>
                     </td>
                     <td>
-                      <form action={adjustInventory} className="row-form">
+                      <form action={adjustInventory} className="row-form inventory-adjustment-form">
                         <input type="hidden" name="id" value={row.id} />
                         <input name="quantity" type="number" placeholder="± qty" required />
                         <select name="reason">

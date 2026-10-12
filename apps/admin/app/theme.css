@@ -3683,6 +3683,28 @@ td code {
   min-width: 90px;
   padding: 0 9px;
 }
+.inventory-table {
+  min-width: 1180px;
+}
+.inventory-table th:last-child,
+.inventory-table td:last-child {
+  width: 54%;
+}
+.inventory-adjustment-form {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(130px, 0.7fr) minmax(150px, 1fr) auto;
+  min-width: 560px;
+  width: 100%;
+}
+.inventory-adjustment-form input,
+.inventory-adjustment-form select {
+  min-width: 0;
+  width: 100%;
+}
+.inventory-adjustment-form .button {
+  height: 35px;
+  white-space: nowrap;
+}
 .record-list > .panel {
   margin-bottom: 12px;
 }
