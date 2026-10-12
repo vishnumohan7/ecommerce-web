@@ -152,7 +152,20 @@ export interface Coupon {
   endsAt: string;
   uses: number;
   maxUses: number | null;
+  minimumSpendMinor: string | null;
+  maximumDiscountMinor: string | null;
+  perCustomerLimit: number | null;
+  firstOrderOnly: boolean;
+  productIds: string[];
+  categoryIds: string[];
+  brandIds: string[];
+  influencerId: string | null;
+  lockedUserId: string | null;
+  returnRequestId: string | null;
+  attributionWindowDays: number;
   active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Influencer {
@@ -716,6 +729,9 @@ export function fetchDeliverySlots() {
 }
 export function fetchCoupons() {
   return get<Coupon[]>('/api/v1/admin/coupons', true);
+}
+export function fetchCoupon(id: string) {
+  return get<Coupon>(`/api/v1/admin/coupons/${encodeURIComponent(id)}`, true);
 }
 export function fetchInfluencers() {
   return get<Influencer[]>('/api/v1/admin/influencers', true);

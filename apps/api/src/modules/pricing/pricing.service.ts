@@ -255,6 +255,12 @@ export class PricingService {
     return this.db.client.coupon.findMany({ orderBy: { createdAt: 'desc' } });
   }
 
+  async coupon(id: string) {
+    const coupon = await this.db.client.coupon.findFirst({ where: { id } });
+    if (!coupon) throw new NotFoundException('Coupon not found');
+    return coupon;
+  }
+
   async createCoupon(raw: unknown) {
     const input = couponCreateSchema.parse(raw);
     const data: Prisma.CouponUncheckedCreateInput = {
@@ -315,6 +321,43 @@ export class PricingService {
         },
       });
       return coupon;
+    });
+  }
+
+  async deleteCoupon(id: string) {
+    return this.db.transaction(async (tx, tenantId) => {
+      const coupon = await tx.coupon.findFirst({ where: { tenantId, id } });
+      if (!coupon) throw new NotFoundException('Coupon not found');
+
+      const redemptionCount = await tx.couponRedemption.count({
+        where: { tenantId, couponId: id },
+      });
+      if (coupon.uses > 0 || redemptionCount > 0)
+        throw new ConflictException({
+          code: 'COUPON_HAS_REDEMPTIONS',
+          message:
+            'This coupon has redemption history and cannot be deleted. Pause it to preserve order records.',
+        });
+
+      await tx.coupon.delete({ where: { id } });
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          actorId: TenantContext.get()?.userId ?? null,
+          actorType: 'USER',
+          action: 'COUPON_DELETE',
+          entity: 'Coupon',
+          entityId: coupon.id,
+          before: {
+            code: coupon.code,
+            couponClass: coupon.couponClass,
+            appliesTo: coupon.appliesTo,
+            active: coupon.active,
+          },
+          requestId: TenantContext.get()?.requestId ?? coupon.id,
+        },
+      });
+      return { id: coupon.id, deleted: true };
     });
   }
 

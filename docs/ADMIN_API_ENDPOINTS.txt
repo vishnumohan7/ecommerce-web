@@ -354,6 +354,10 @@ fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REF
 [ ] GET    /api/v1/admin/coupons
     Auth: Bearer; catalog.read
 
+[ ] GET    /api/v1/admin/coupons/{couponId}
+    Auth: Bearer; catalog.read
+    Purpose: View the complete coupon configuration and current usage.
+
 [ ] POST   /api/v1/admin/coupons
     Auth: Bearer; catalog.write
     Body: J8
@@ -361,6 +365,10 @@ fulfilmentStatus=PENDING|CONFIRMED|PICKING|PICKED|OUT_FOR_DELIVERY|DELIVERED|REF
 [ ] PATCH  /api/v1/admin/coupons/{couponId}
     Auth: Bearer; catalog.write
     Body example: {"active":false,"maximumDiscountMinor":"1000"}
+
+[ ] DELETE /api/v1/admin/coupons/{couponId}
+    Auth: Bearer; catalog.write
+    Note: Only coupons without redemption history can be deleted. Pause a used coupon instead.
 
 [ ] GET    /api/v1/admin/influencers
     Auth: Bearer; catalog.read

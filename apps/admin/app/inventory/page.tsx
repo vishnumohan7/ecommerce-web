@@ -75,10 +75,7 @@ export default async function InventoryPage({
                 {result.data.items.map((row) => (
                   <tr key={row.id}>
                     <td>
-                      <strong>
-                        {row.product?.name ?? row.productId}
-                        {row.variant ? ` — ${row.variant.name}` : ''}
-                      </strong>
+                      <strong>{row.variant?.name ?? row.product?.name ?? row.productId}</strong>
                       <small className="cell-subtext">
                         {row.variant?.sku ?? row.product?.sku ?? row.id}
                         {row.variant ? ' · Variant' : ' · Base product'}

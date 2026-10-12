@@ -1,9 +1,11 @@
 /* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import {
   createCoupon,
   createInfluencer,
   createTaxRule,
+  deleteCoupon,
   deleteTaxRule,
   toggleCoupon,
   updateTaxRule,
@@ -14,6 +16,7 @@ import { ConfirmSubmitButton } from '../components/confirm-submit-button';
 import { Currency } from '../components/currency';
 import {
   fetchCategories,
+  fetchBrands,
   fetchCoupons,
   fetchCustomers,
   fetchInfluencerReport,
@@ -48,6 +51,7 @@ export default async function PricingPage({ searchParams }: PageProps) {
     productResult,
     categoryResult,
     customerResult,
+    brandResult,
   ] = await Promise.all([
     searchParams,
     fetchCoupons(),
@@ -56,6 +60,7 @@ export default async function PricingPage({ searchParams }: PageProps) {
     fetchProducts(),
     fetchCategories(),
     fetchCustomers(),
+    fetchBrands(),
   ]);
   const coupons = couponResult.ok ? couponResult.data : [];
   const influencers = influencerResult.ok ? influencerResult.data : [];
@@ -63,6 +68,7 @@ export default async function PricingPage({ searchParams }: PageProps) {
   const products = productResult.ok ? productResult.data : [];
   const categories = categoryResult.ok ? categoryResult.data.items : [];
   const customers = customerResult.ok ? customerResult.data : [];
+  const brands = brandResult.ok ? brandResult.data.items : [];
   const influencerReports = await Promise.all(
     influencers.map(async (item) => ({
       id: item.id,
@@ -120,14 +126,21 @@ export default async function PricingPage({ searchParams }: PageProps) {
             <label className="form-field">
               <span>Discount type</span>
               <select name="type">
-                <option value="PERCENTAGE">Percentage (basis points)</option>
-                <option value="FIXED">Fixed amount (pence)</option>
+                <option value="PERCENTAGE">Percentage</option>
+                <option value="FIXED">Fixed amount</option>
               </select>
             </label>
             <label className="form-field">
               <span>Discount value</span>
-              <input name="amount" type="number" min="1" placeholder="e.g. 1000" required />
-              <small>1000 = 10%, or £10 for fixed.</small>
+              <input
+                name="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="e.g. 10"
+                required
+              />
+              <small>Enter 10 for 10% or £10, depending on the selected type.</small>
             </label>
             <label className="form-field">
               <span>Basket scope</span>
@@ -215,6 +228,17 @@ export default async function PricingPage({ searchParams }: PageProps) {
               </select>
               <small>Leave empty for all products.</small>
             </label>
+            <label className="form-field coupon-scope-field">
+              <span>Eligible brands</span>
+              <select name="brandIds" multiple>
+                {brands.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+              <small>Leave empty for all brands.</small>
+            </label>
             <label className="form-field">
               <span>Attribution window</span>
               <input
@@ -282,13 +306,24 @@ export default async function PricingPage({ searchParams }: PageProps) {
                       {coupon.active ? 'Active' : 'Paused'}
                     </span>
                   </td>
-                  <td>
+                  <td className="coupon-row-actions">
+                    <Link className="text-action" href={`/pricing/coupons/${coupon.id}`}>
+                      View / edit
+                    </Link>
                     <form action={toggleCoupon}>
                       <input type="hidden" name="id" value={coupon.id} />
                       <input type="hidden" name="active" value={String(coupon.active)} />
                       <button className="text-action" type="submit">
                         {coupon.active ? 'Pause' : 'Enable'}
                       </button>
+                    </form>
+                    <form action={deleteCoupon}>
+                      <input type="hidden" name="id" value={coupon.id} />
+                      <ConfirmSubmitButton
+                        message={`Delete coupon ${coupon.code}? Used coupons must be paused instead.`}
+                      >
+                        Delete
+                      </ConfirmSubmitButton>
                     </form>
                   </td>
                 </tr>

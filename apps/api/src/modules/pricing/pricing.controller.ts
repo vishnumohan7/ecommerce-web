@@ -73,6 +73,11 @@ export class PricingController {
   @Get('admin/coupons') @RequirePermissions('catalog.read') @ApiBearerAuth() coupons() {
     return this.pricing.coupons();
   }
+  @Get('admin/coupons/:id') @RequirePermissions('catalog.read') @ApiBearerAuth() coupon(
+    @Param('id') id: string,
+  ) {
+    return this.pricing.coupon(id);
+  }
   @Post('admin/coupons') @RequirePermissions('catalog.write') @ApiBearerAuth() createCoupon(
     @Body() body: unknown,
   ) {
@@ -83,6 +88,12 @@ export class PricingController {
     @Body() body: unknown,
   ) {
     return this.pricing.updateCoupon(id, body);
+  }
+  @Delete('admin/coupons/:id')
+  @RequirePermissions('catalog.write')
+  @ApiBearerAuth()
+  deleteCoupon(@Param('id') id: string) {
+    return this.pricing.deleteCoupon(id);
   }
 
   @Get('admin/influencers') @RequirePermissions('catalog.read') @ApiBearerAuth() influencers() {

@@ -421,7 +421,9 @@ export async function createCoupon(data: FormData) {
   const result = await adminMutation('/api/v1/admin/coupons', 'POST', {
     code: textValue(data, 'code'),
     type,
-    ...(type === 'PERCENTAGE' ? { valueBps: amount } : { valueMinor: String(amount) }),
+    ...(type === 'PERCENTAGE'
+      ? { valueBps: Math.round(amount * 100) }
+      : { valueMinor: String(Math.round(amount * 100)) }),
     startsAt: textValue(data, 'startsAt'),
     endsAt: textValue(data, 'endsAt'),
     appliesTo: textValue(data, 'appliesTo'),
@@ -437,6 +439,7 @@ export async function createCoupon(data: FormData) {
     categoryIds: data
       .getAll('categoryIds')
       .filter((value): value is string => typeof value === 'string'),
+    brandIds: data.getAll('brandIds').filter((value): value is string => typeof value === 'string'),
     influencerId: textValue(data, 'influencerId') || null,
     lockedUserId: textValue(data, 'lockedUserId') || null,
     attributionWindowDays: Number(textValue(data, 'attributionWindowDays') || '30'),
@@ -449,6 +452,49 @@ export async function toggleCoupon(data: FormData) {
     active: textValue(data, 'active') !== 'true',
   });
   finish('/pricing', result, 'Coupon updated.');
+}
+
+export async function updateCoupon(data: FormData) {
+  const id = textValue(data, 'id');
+  const type = textValue(data, 'type');
+  const amount = Number(textValue(data, 'amount'));
+  const result = await adminMutation(`/api/v1/admin/coupons/${encodeURIComponent(id)}`, 'PATCH', {
+    type,
+    valueBps: type === 'PERCENTAGE' ? Math.round(amount * 100) : null,
+    valueMinor: type === 'FIXED' ? String(Math.round(amount * 100)) : null,
+    currency: 'GBP',
+    startsAt: textValue(data, 'startsAt'),
+    endsAt: textValue(data, 'endsAt'),
+    appliesTo: textValue(data, 'appliesTo'),
+    couponClass: textValue(data, 'couponClass'),
+    minimumSpendMinor: textValue(data, 'minimumSpendMinor') || null,
+    maximumDiscountMinor: textValue(data, 'maximumDiscountMinor') || null,
+    maxUses: optionalNumber(data, 'maxUses'),
+    perCustomerLimit: optionalNumber(data, 'perCustomerLimit'),
+    firstOrderOnly: data.get('firstOrderOnly') === 'on',
+    productIds: data
+      .getAll('productIds')
+      .filter((value): value is string => typeof value === 'string'),
+    categoryIds: data
+      .getAll('categoryIds')
+      .filter((value): value is string => typeof value === 'string'),
+    brandIds: data.getAll('brandIds').filter((value): value is string => typeof value === 'string'),
+    influencerId: textValue(data, 'influencerId') || null,
+    lockedUserId: textValue(data, 'lockedUserId') || null,
+    attributionWindowDays: Number(textValue(data, 'attributionWindowDays') || '30'),
+    active: data.get('active') === 'on',
+  });
+  finish(`/pricing/coupons/${encodeURIComponent(id)}`, result, 'Coupon updated.');
+}
+
+export async function deleteCoupon(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(`/api/v1/admin/coupons/${encodeURIComponent(id)}`, 'DELETE');
+  finish(
+    result.ok ? '/pricing' : `/pricing/coupons/${encodeURIComponent(id)}`,
+    result,
+    'Coupon deleted.',
+  );
 }
 
 export async function createInfluencer(data: FormData) {

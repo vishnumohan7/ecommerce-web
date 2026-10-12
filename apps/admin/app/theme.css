@@ -1883,7 +1883,9 @@ td code {
   align-items: end;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(210px, 1.1fr) repeat(2, minmax(130px, .65fr)) minmax(280px, 1.4fr) auto auto;
+  grid-template-columns:
+    minmax(210px, 1.1fr) repeat(2, minmax(130px, 0.65fr)) minmax(280px, 1.4fr)
+    auto auto;
   padding: 18px 20px 45px;
 }
 .staff-identity {
@@ -1931,7 +1933,7 @@ td code {
   border-radius: 12px;
   height: 20px;
   position: relative;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
   width: 36px;
 }
 .staff-active-toggle > span::after {
@@ -1943,7 +1945,7 @@ td code {
   left: 2px;
   position: absolute;
   top: 2px;
-  transition: transform .15s ease;
+  transition: transform 0.15s ease;
   width: 16px;
 }
 .staff-active-toggle input:checked + span {
@@ -4056,6 +4058,46 @@ td code {
   min-height: 41px;
   width: 100%;
 }
+.coupon-row-actions {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+.coupon-row-actions form {
+  display: inline-flex;
+}
+.coupon-summary-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.coupon-summary-card {
+  display: grid;
+  gap: 7px;
+  padding: 20px;
+}
+.coupon-summary-card span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.coupon-summary-card strong {
+  font-size: 20px;
+}
+.coupon-detail-form {
+  border-radius: 0 0 10px 10px;
+}
+.coupon-detail-form input[readonly] {
+  background: #f0f2f4;
+  color: var(--muted);
+}
+.coupon-history-note {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 12px 2px 0;
+}
 
 .row-editor {
   display: inline-block;
@@ -4190,6 +4232,9 @@ td code {
   .report-filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .coupon-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 600px) {
   .coupon-form,
@@ -4198,6 +4243,9 @@ td code {
   }
   .coupon-scope-field {
     grid-column: auto;
+  }
+  .coupon-summary-grid {
+    grid-template-columns: 1fr;
   }
   .report-filter-actions {
     align-items: stretch;
