@@ -1282,8 +1282,22 @@ td code {
   top: -20px;
 }
 .product-stock-panel {
-  margin-top: 20px;
   overflow: hidden;
+}
+.product-edit-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+.product-edit-sections .product-media-panel {
+  order: 1;
+}
+.product-edit-sections .product-variants-panel {
+  order: 2;
+}
+.product-edit-sections .product-stock-panel {
+  order: 3;
 }
 .stock-location-list {
   display: grid;
@@ -1453,7 +1467,7 @@ td code {
   min-width: 145px;
 }
 .product-operations {
-  margin-top: 20px;
+  display: contents;
 }
 .compact-operation-form {
   border-top: 1px solid var(--line);
