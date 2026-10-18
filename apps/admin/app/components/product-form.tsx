@@ -1,5 +1,6 @@
 /* eslint-disable local/no-jsx-literals -- Admin form labels are English-only. */
 import type { Brand, Category, Product, Warehouse } from '../lib/api';
+import { AlcoholProductFields } from './alcohol-product-fields';
 import { ProductIdentityFields } from './product-identity-fields';
 import { ProductVariantFields } from './product-variant-fields';
 
@@ -186,23 +187,11 @@ export function ProductForm({
         Description
         <textarea name="description" rows={4} defaultValue={product?.description} required />
       </label>
-      <label className="checkbox-field">
-        <input name="isAlcohol" type="checkbox" defaultChecked={product?.isAlcohol} /> Alcohol
-        product (forces age 18 and standard VAT)
-      </label>
-      <label>
-        ABV %<input name="abv" defaultValue={product?.abv ?? ''} placeholder="12.5" />
-      </label>
-      <label>
-        Alcohol type
-        <select name="alcoholType" defaultValue={product?.alcoholType ?? 'WINE'}>
-          <option>BEER</option>
-          <option>WINE</option>
-          <option>SPIRITS</option>
-          <option>CIDER</option>
-          <option>OTHER</option>
-        </select>
-      </label>
+      <AlcoholProductFields
+        initialAlcohol={product?.isAlcohol ?? false}
+        initialAbv={product?.abv ?? null}
+        initialAlcoholType={product?.alcoholType ?? null}
+      />
       {!product && (
         <>
           <div className="form-section-heading wide-field">

@@ -63,6 +63,18 @@ export const productInputSchema = z
         code: 'custom',
         message: 'Alcohol products require an age restriction of at least 18',
       });
+    if (value.restrictionReason === 'ALCOHOL' && !value.abv)
+      context.addIssue({
+        code: 'custom',
+        path: ['abv'],
+        message: 'Alcohol products require an ABV percentage',
+      });
+    if (value.restrictionReason === 'ALCOHOL' && !value.alcoholType)
+      context.addIssue({
+        code: 'custom',
+        path: ['alcoholType'],
+        message: 'Alcohol products require an alcohol type',
+      });
   });
 export type ProductInput = z.infer<typeof productInputSchema>;
 export const variantInputSchema = z.object({

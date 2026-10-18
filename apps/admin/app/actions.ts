@@ -85,7 +85,7 @@ function productInput(data: FormData) {
       pricingMode === 'WEIGHT_ESTIMATED' ? optionalNumber(data, 'estimatedWeightGrams') : null,
     weightToleranceBps:
       pricingMode === 'WEIGHT_ESTIMATED' ? optionalNumber(data, 'weightToleranceBps') : null,
-    abv: alcohol ? textValue(data, 'abv') : null,
+    abv: alcohol ? textValue(data, 'abv') || null : null,
     alcoholType: alcohol ? textValue(data, 'alcoholType') : null,
     ageRestriction: alcohol ? 18 : 0,
     restrictionReason: alcohol ? 'ALCOHOL' : 'NONE',
