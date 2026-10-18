@@ -657,6 +657,56 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
     return cancelled;
   }
 
+  async markCashOnDeliveryCollected(orderId: string) {
+    const tenantId = TenantContext.requireTenantId();
+    const actorId = TenantContext.get()?.userId ?? null;
+    return this.db.transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "Payment" WHERE "tenantId" = ${tenantId}::uuid AND "orderId" = ${orderId}::uuid FOR UPDATE`;
+      const payment = await tx.payment.findFirst({ where: { tenantId, orderId } });
+      if (!payment) throw new NotFoundException('Payment not found');
+      if (payment.provider !== 'cash_on_delivery')
+        throw new ConflictException('Only cash-on-delivery payments can be updated manually');
+      if (payment.status === 'CAPTURED') return payment;
+      if (payment.status !== 'PENDING')
+        throw new ConflictException('This cash-on-delivery payment cannot be marked as paid');
+      const order = await tx.order.findFirst({ where: { tenantId, id: orderId } });
+      if (!order) throw new NotFoundException('Order not found');
+      const updated = await tx.payment.update({
+        where: { id: payment.id },
+        data: { status: 'CAPTURED', capturedAmountMinor: order.totalMinor },
+      });
+      await tx.order.update({ where: { id: orderId }, data: { paymentStatus: 'CAPTURED' } });
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          actorId,
+          actorType: 'USER',
+          action: 'COD_PAYMENT_COLLECTED',
+          entity: 'Payment',
+          entityId: payment.id,
+          before: {
+            status: payment.status,
+            capturedAmountMinor: payment.capturedAmountMinor.toString(),
+          },
+          after: { status: 'CAPTURED', capturedAmountMinor: order.totalMinor.toString() },
+          requestId: TenantContext.get()?.requestId ?? 'cod-payment-collected',
+        },
+      });
+      await tx.outboxMessage.create({
+        data: {
+          tenantId,
+          topic: 'payment.captured',
+          payload: {
+            orderId,
+            capturedAmountMinor: order.totalMinor.toString(),
+            method: 'CASH_ON_DELIVERY',
+          },
+        },
+      });
+      return updated;
+    });
+  }
+
   private async paymentFailed(webhookEventId: string, providerId: string): Promise<void> {
     const tenantId = TenantContext.requireTenantId();
     await this.db.transaction(async (tx) => {

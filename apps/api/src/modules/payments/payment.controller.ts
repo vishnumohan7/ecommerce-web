@@ -86,6 +86,14 @@ export class PaymentController {
     return this.payments.captureAtPickCompletion(orderId, input.recomputedAmountMinor);
   }
 
+  @Post('admin/payments/:orderId/cash-collected')
+  @RequirePermissions('orders.write')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Record collection of a cash-on-delivery payment' })
+  cashCollected(@Param('orderId') orderId: string) {
+    return this.payments.markCashOnDeliveryCollected(orderId);
+  }
+
   private identity(request: Request, response: Response): PricingIdentity {
     const userId = TenantContext.get()?.userId;
     if (userId) return { userId };

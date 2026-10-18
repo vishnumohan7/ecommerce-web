@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { adminFormMutation, adminMutation } from './lib/api';
+import { productSlug } from './lib/product-slug';
 
 function textValue(data: FormData, key: string) {
   const value = data.get(key);
@@ -59,6 +60,10 @@ function optionalNumber(data: FormData, key: string) {
   return value ? Number(value) : null;
 }
 
+function slugValue(data: FormData) {
+  return productSlug(textValue(data, 'slug') || textValue(data, 'name'));
+}
+
 function productInput(data: FormData) {
   const alcohol = data.get('isAlcohol') === 'on';
   const pricingMode = textValue(data, 'pricingMode') || 'UNIT';
@@ -66,7 +71,7 @@ function productInput(data: FormData) {
     categoryId: textValue(data, 'categoryId'),
     brandId: textValue(data, 'brandId') || null,
     sku: textValue(data, 'sku'),
-    slug: textValue(data, 'slug'),
+    slug: slugValue(data),
     name: textValue(data, 'name'),
     description: textValue(data, 'description'),
     priceMinor: textValue(data, 'priceMinor'),
@@ -550,6 +555,15 @@ export async function transitionFulfilment(data: FormData) {
     { status: textValue(data, 'status') },
   );
   finish(`/orders/${orderId}`, result, 'Fulfilment status updated.');
+}
+
+export async function markCashOnDeliveryPaid(data: FormData) {
+  const orderId = textValue(data, 'orderId');
+  const result = await adminMutation(
+    `/api/v1/admin/payments/${encodeURIComponent(orderId)}/cash-collected`,
+    'POST',
+  );
+  finish(`/orders/${orderId}`, result, 'Cash payment marked as received.');
 }
 
 export async function createPickList(data: FormData) {

@@ -1407,6 +1407,20 @@ td code {
 .danger-action {
   color: var(--red);
 }
+.cod-payment-form {
+  align-items: center;
+  background: #f3faf6;
+  border-top: 1px solid #d8ebe0;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+.cod-payment-form p {
+  color: var(--muted);
+  font-size: 10px;
+  margin: 0;
+}
 .catalogue-ops-grid {
   display: grid;
   gap: 20px;

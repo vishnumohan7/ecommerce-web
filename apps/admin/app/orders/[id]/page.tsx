@@ -7,12 +7,14 @@ import {
   completePickList,
   createPickList,
   initiateRefund,
+  markCashOnDeliveryPaid,
   recordPick,
   transitionFulfilment,
 } from '../../actions';
 import { ActionMessage } from '../../components/action-message';
 import { ApiNotice } from '../../components/api-notice';
 import { Currency } from '../../components/currency';
+import { ConfirmSubmitButton } from '../../components/confirm-submit-button';
 import type { FulfilmentGroup, OrderLine } from '../../lib/api';
 import { fetchOrder, fetchPickList } from '../../lib/api';
 
@@ -308,6 +310,19 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
                 </dd>
               </div>
             </dl>
+            {order.payment?.provider === 'cash_on_delivery' &&
+              order.payment.status === 'PENDING' && (
+                <form action={markCashOnDeliveryPaid} className="cod-payment-form">
+                  <input type="hidden" name="orderId" value={order.id} />
+                  <p>Cash on delivery · payment awaiting collection</p>
+                  <ConfirmSubmitButton
+                    className="button button-primary"
+                    message="Confirm that the full cash-on-delivery amount has been received?"
+                  >
+                    Mark cash as received
+                  </ConfirmSubmitButton>
+                </form>
+              )}
           </article>
         </aside>
       </section>

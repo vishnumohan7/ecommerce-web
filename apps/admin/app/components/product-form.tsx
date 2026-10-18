@@ -1,5 +1,6 @@
 /* eslint-disable local/no-jsx-literals -- Admin form labels are English-only. */
 import type { Brand, Category, Product, Warehouse } from '../lib/api';
+import { ProductIdentityFields } from './product-identity-fields';
 import { ProductVariantFields } from './product-variant-fields';
 
 interface Props {
@@ -22,22 +23,14 @@ export function ProductForm({
   return (
     <form action={action} className="panel product-form">
       {product && <input type="hidden" name="id" value={product.id} />}
-      <label>
-        Name
-        <input name="name" defaultValue={product?.name} required />
-      </label>
+      <ProductIdentityFields
+        initialName={product?.name ?? ''}
+        initialSlug={product?.slug ?? ''}
+        autoGenerateSlug={!product}
+      />
       <label>
         SKU
         <input name="sku" defaultValue={product?.sku} required />
-      </label>
-      <label>
-        Slug
-        <input
-          name="slug"
-          defaultValue={product?.slug}
-          pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-          required
-        />
       </label>
       <label>
         Category
