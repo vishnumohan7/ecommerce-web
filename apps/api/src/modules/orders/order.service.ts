@@ -60,6 +60,13 @@ export function validateSubstitution(
     throw new UnprocessableEntityException('Substitute age restriction must be equal or stricter');
 }
 
+export function canCorrectCompletedPick(
+  fulfilmentStatus: FulfilmentStatus,
+  capturedAmountMinor: bigint,
+): boolean {
+  return fulfilmentStatus === 'PICKED' && capturedAmountMinor === 0n;
+}
+
 @Injectable()
 export class OrderService {
   constructor(
@@ -457,8 +464,38 @@ export class OrderService {
     const actorId = this.userId();
     return this.db.transaction(async (tx) => {
       const list = await tx.pickList.findFirst({ where: { tenantId, orderId } });
-      if (!list || list.status !== 'IN_PROGRESS')
+      if (!list) throw new ConflictException('Pick list is not open');
+      if (list.status === 'COMPLETE') {
+        const [order, payment] = await Promise.all([
+          tx.order.findFirstOrThrow({ where: { tenantId, id: orderId } }),
+          tx.payment.findFirst({ where: { tenantId, orderId } }),
+        ]);
+        if (!canCorrectCompletedPick(order.fulfilmentStatus, payment?.capturedAmountMinor ?? 0n))
+          throw new ConflictException(
+            'Picking can no longer be changed after dispatch or payment capture',
+          );
+        await tx.pickList.update({ where: { id: list.id }, data: { status: 'IN_PROGRESS' } });
+        await tx.order.update({ where: { id: orderId }, data: { fulfilmentStatus: 'PICKING' } });
+        await tx.orderFulfilmentGroup.updateMany({
+          where: { tenantId, orderId, status: 'PICKED' },
+          data: { status: 'PICKING' },
+        });
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            actorId,
+            actorType: 'USER',
+            action: 'ORDER_PICK_REOPENED',
+            entity: 'PickList',
+            entityId: list.id,
+            before: { status: list.status },
+            after: { status: 'IN_PROGRESS', reason: 'line-correction' },
+            requestId: TenantContext.get()?.requestId ?? 'pick-correction',
+          },
+        });
+      } else if (list.status !== 'IN_PROGRESS') {
         throw new ConflictException('Pick list is not open');
+      }
       const item = await tx.pickListItem.findFirst({
         where: { tenantId, id: pickItemId, pickListId: list.id },
       });

@@ -180,6 +180,13 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
     !calculationMismatch &&
     order.payment !== null &&
     ['CAPTURED', 'PARTIALLY_REFUNDED'].includes(order.payment.status);
+  const completedPickCanBeCorrected =
+    pickResult.ok &&
+    pickResult.data.status === 'COMPLETE' &&
+    order.fulfilmentStatus === 'PICKED' &&
+    BigInt(order.payment?.capturedAmountMinor ?? '0') === 0n;
+  const pickLinesAreEditable =
+    pickResult.ok && (pickResult.data.status === 'IN_PROGRESS' || completedPickCanBeCorrected);
   return (
     <>
       <section className="page-heading compact-heading">
@@ -353,6 +360,12 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
             </div>
           ) : (
             <>
+              {completedPickCanBeCorrected && (
+                <div className="pick-correction-notice">
+                  Correcting a completed line returns this order to Picking. Complete picking again
+                  after saving all corrections.
+                </div>
+              )}
               <div className="pick-lines">
                 {pickResult.data.items.map((item) => (
                   <form action={recordPick} className="pick-line" key={item.id}>
@@ -368,6 +381,7 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
                       name="outcome"
                       defaultValue={item.outcome ?? 'PICKED'}
                       aria-label="Pick outcome"
+                      disabled={!pickLinesAreEditable}
                     >
                       <option value="PICKED">Picked</option>
                       <option value="SHORT">Short</option>
@@ -380,6 +394,7 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
                       max={item.requested}
                       defaultValue={item.picked || item.requested}
                       aria-label="Picked quantity"
+                      disabled={!pickLinesAreEditable}
                     />
                     <input
                       name="actualWeightGrams"
@@ -387,14 +402,24 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
                       min="1"
                       placeholder="Actual g"
                       aria-label="Actual weight in grams"
+                      disabled={!pickLinesAreEditable}
                     />
                     <input
                       name="substituteProductId"
                       placeholder="Substitute product ID"
                       aria-label="Substitute product ID"
+                      disabled={!pickLinesAreEditable}
                     />
-                    <button className="button button-muted" type="submit">
-                      {item.completedAt ? 'Update' : 'Record'}
+                    <button
+                      className="button button-muted"
+                      type="submit"
+                      disabled={!pickLinesAreEditable}
+                    >
+                      {pickResult.data.status === 'COMPLETE'
+                        ? 'Correct quantity'
+                        : item.completedAt
+                          ? 'Update'
+                          : 'Record'}
                     </button>
                   </form>
                 ))}

@@ -1701,6 +1701,13 @@ td code {
 .pick-lines {
   display: grid;
 }
+.pick-correction-notice {
+  background: #f2f8f5;
+  border-top: 1px solid var(--line);
+  color: #315c48;
+  font-size: 11px;
+  padding: 12px 20px;
+}
 .pick-line {
   align-items: center;
   border-top: 1px solid var(--line);
