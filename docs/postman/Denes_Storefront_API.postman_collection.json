@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "34534276-185f-444a-a87d-0532e11251ec",
+    "_postman_id": "daec3508-d43f-4f48-a0d1-826d3a2ce9d0",
     "name": "Denes Commerce - Storefront API",
     "description": "Storefront/customer API only. Requests are ordered as a manual test workflow. The Postman cookie jar preserves guest-cart and age-gate cookies automatically. Admin, staff, webhook ingestion and scheduled-processing routes are excluded.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -11,7 +11,9 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "if (!pm.environment.get('baseUrl')) pm.environment.set('baseUrl', 'https://api-theta-jade-1ftquke8hz.vercel.app');"
+          "if (!pm.environment.get('baseUrl')) pm.environment.set('baseUrl', 'https://api-theta-jade-1ftquke8hz.vercel.app');",
+          "const bypass = pm.environment.get('vercelProtectionBypass');",
+          "if (bypass) pm.request.headers.upsert({ key: 'x-vercel-protection-bypass', value: bypass });"
         ]
       }
     }

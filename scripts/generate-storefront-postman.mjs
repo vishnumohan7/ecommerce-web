@@ -431,6 +431,8 @@ const collection = {
         type: 'text/javascript',
         exec: [
           "if (!pm.environment.get('baseUrl')) pm.environment.set('baseUrl', 'https://api-theta-jade-1ftquke8hz.vercel.app');",
+          "const bypass = pm.environment.get('vercelProtectionBypass');",
+          "if (bypass) pm.request.headers.upsert({ key: 'x-vercel-protection-bypass', value: bypass });",
         ],
       },
     },
@@ -453,6 +455,7 @@ const environment = {
     ['postcode', 'SW1A 1AA'],
     ['couponCode', ''],
     ['ageProvider', 'STUB'],
+    ['vercelProtectionBypass', ''],
     ...[
       'accessToken',
       'refreshToken',
@@ -480,7 +483,9 @@ const environment = {
     key,
     value,
     enabled: true,
-    ...(key.toLowerCase().includes('token') || key.toLowerCase().includes('password')
+    ...(key.toLowerCase().includes('token') ||
+    key.toLowerCase().includes('password') ||
+    key === 'vercelProtectionBypass'
       ? { type: 'secret' }
       : {}),
   })),

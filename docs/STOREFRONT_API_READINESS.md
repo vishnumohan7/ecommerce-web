@@ -39,6 +39,10 @@ Import both files, select the storefront environment, replace the tester credent
 in numeric order. Postman retains the guest basket and age-gate cookies in its cookie jar. Requests
 that require a customer session use the access token captured by **Customer login**.
 
+The API currently has Vercel Deployment Protection enabled. Set `vercelProtectionBypass` in the
+Postman environment to a valid project bypass token, or disable protection for the production API.
+Without this, Postman receives a Vercel HTML authentication page instead of API JSON.
+
 The collection deliberately excludes admin/staff endpoints, Stripe and age-provider webhooks, and
 notification scheduler endpoints. Destructive requests such as account erasure are clearly labelled
 and should only be run with a disposable tester account.
