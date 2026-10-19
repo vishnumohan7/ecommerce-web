@@ -29,6 +29,7 @@ export class CatalogController {
     @Query('categoryId') categoryId?: string,
     @Query('alcohol') alcohol?: string,
     @Query('cursor') cursor?: string,
+    @Query('take') take?: string,
   ) {
     const allowAlcohol = this.ageGate.verify(
       (request.cookies?.age_gate as string | undefined) ?? request.header('x-age-gate-token'),
@@ -38,6 +39,7 @@ export class CatalogController {
       ...(categoryId ? { categoryId } : {}),
       alcohol: allowAlcohol && alcohol === 'true',
       ...(cursor ? { cursor } : {}),
+      ...(take && Number.isInteger(Number(take)) && Number(take) > 0 ? { take: Number(take) } : {}),
     });
   }
   @Public() @Get(':id') @ApiOperation({ summary: 'Get product details' }) byId(

@@ -1,0 +1,2970 @@
+{
+  "info": {
+    "_postman_id": "34534276-185f-444a-a87d-0532e11251ec",
+    "name": "Denes Commerce - Storefront API",
+    "description": "Storefront/customer API only. Requests are ordered as a manual test workflow. The Postman cookie jar preserves guest-cart and age-gate cookies automatically. Admin, staff, webhook ingestion and scheduled-processing routes are excluded.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('baseUrl')) pm.environment.set('baseUrl', 'https://api-theta-jade-1ftquke8hz.vercel.app');"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication",
+      "item": [
+        {
+          "name": "Register customer",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "description": "POST /api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\",\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify email",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/verify-email",
+            "description": "POST /api/v1/auth/verify-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{emailVerificationToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resend verification email",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/verify-email/resend",
+            "description": "POST /api/v1/auth/verify-email/resend",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer login",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "description": "POST /api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "  if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current customer session",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/me",
+            "description": "GET /api/v1/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rotate refresh token",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/refresh",
+            "description": "POST /api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "  if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request password reset",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/password/forgot",
+            "description": "POST /api/v1/auth/password/forgot",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/password/reset",
+            "description": "POST /api/v1/auth/password/reset",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{passwordResetToken}}\",\n  \"password\": \"{{newCustomerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request mobile OTP",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/otp/request",
+            "description": "POST /api/v1/auth/otp/request\n\nRequires a configured SMS provider for production delivery.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{customerPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.challengeId;",
+                  "  if (value) pm.environment.set('otpChallengeId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify mobile OTP",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/otp/verify",
+            "description": "POST /api/v1/auth/otp/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{otpChallengeId}}\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken) pm.environment.set('accessToken', data.accessToken);",
+                  "  if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/logout",
+            "description": "POST /api/v1/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Catalogue and search",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/products",
+            "description": "GET /api/v1/products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = (data.items ?? data)[0]?.id;",
+                  "  if (value) pm.environment.set('productId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get product",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/products/{{productId}}",
+            "description": "GET /api/v1/products/{{productId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/categories?limit=100",
+            "description": "GET /api/v1/categories?limit=100"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = (data.items ?? data)[0]?.id;",
+                  "  if (value) pm.environment.set('categoryId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get category",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/categories/{{categoryId}}",
+            "description": "GET /api/v1/categories/{{categoryId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List brands",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/brands?limit=100",
+            "description": "GET /api/v1/brands?limit=100"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = (data.items ?? data)[0]?.id;",
+                  "  if (value) pm.environment.set('brandId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get brand",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/brands/{{brandId}}",
+            "description": "GET /api/v1/brands/{{brandId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search products",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/search?q=rice&inStock=true&sort=price-asc",
+            "description": "GET /api/v1/search?q=rice&inStock=true&sort=price-asc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Autocomplete",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/search/autocomplete?q=ric&limit=8",
+            "description": "GET /api/v1/search/autocomplete?q=ric&limit=8"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Product reviews",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reviews?productId={{productId}}",
+            "description": "GET /api/v1/reviews?productId={{productId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Home content",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/content/home",
+            "description": "GET /api/v1/content/home"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Legal content",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/content/legal/PRIVACY?locale=en-GB",
+            "description": "GET /api/v1/content/legal/PRIVACY?locale=en-GB"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Age gate and purchase verification",
+      "item": [
+        {
+          "name": "Confirm alcohol browsing age gate",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/age-gate/confirm",
+            "description": "POST /api/v1/age-gate/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List alcohol products after age gate",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/products?alcohol=true",
+            "description": "GET /api/v1/products?alcohol=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current purchase age verification",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/age-verification",
+            "description": "GET /api/v1/age-verification"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Declare date of birth",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/age-verification/dob",
+            "description": "POST /api/v1/age-verification/dob",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateOfBirth\": \"1990-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start verification provider session",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/age-verification/provider-session",
+            "description": "POST /api/v1/age-verification/provider-session\n\nSTUB is suitable only outside production; configure Yoti or manual review for launch.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"{{ageProvider}}\",\n  \"returnUrl\": \"{{storefrontUrl}}/checkout\",\n  \"postcode\": \"{{postcode}}\",\n  \"testDateOfBirth\": \"1990-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.sessionId;",
+                  "  if (value) pm.environment.set('ageSessionId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read provider result",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/age-verification/provider-session/{{ageProvider}}/{{ageSessionId}}",
+            "description": "GET /api/v1/age-verification/provider-session/{{ageProvider}}/{{ageSessionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Decline alcohol browsing gate",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/age-gate/decline",
+            "description": "POST /api/v1/age-gate/decline",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Basket, pricing and delivery",
+      "item": [
+        {
+          "name": "Get basket",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/cart",
+            "description": "GET /api/v1/cart"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add product to basket",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items",
+            "description": "POST /api/v1/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.groups?.flatMap(group => group.items)[0]?.id ?? data.items?.[0]?.id;",
+                  "  if (value) pm.environment.set('cartItemId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update basket quantity",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items/{{cartItemId}}",
+            "description": "PATCH /api/v1/cart/items/{{cartItemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set substitution preference",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items/{{cartItemId}}/substitution-preference",
+            "description": "POST /api/v1/cart/items/{{cartItemId}}/substitution-preference",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preference\": \"SIMILAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply coupon",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/coupon",
+            "description": "POST /api/v1/cart/coupon",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove coupon",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/cart/coupon",
+            "description": "DELETE /api/v1/cart/coupon"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Authoritative pricing quote",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pricing/quote",
+            "description": "POST /api/v1/pricing/quote",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"postcode\": \"{{postcode}}\",\n  \"couponCode\": \"{{couponCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate coupon",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/coupons/validate",
+            "description": "POST /api/v1/coupons/validate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolve delivery zone",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/delivery/zones/resolve?postcode={{postcode}}",
+            "description": "GET /api/v1/delivery/zones/resolve?postcode={{postcode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List available delivery slots",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/delivery/slots?postcode={{postcode}}",
+            "description": "GET /api/v1/delivery/slots?postcode={{postcode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = (data.items ?? data.options ?? data)[0]?.id;",
+                  "  if (value) pm.environment.set('deliverySlotId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve delivery slot",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/delivery/slots/{{deliverySlotId}}/reserve",
+            "description": "POST /api/v1/delivery/slots/{{deliverySlotId}}/reserve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"postcode\": \"{{postcode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Merge guest basket after login",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/merge",
+            "description": "POST /api/v1/cart/merge",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove basket item",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/cart/items/{{cartItemId}}",
+            "description": "DELETE /api/v1/cart/items/{{cartItemId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Checkout and payment",
+      "item": [
+        {
+          "name": "Validate checkout",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/checkout/validate",
+            "description": "POST /api/v1/checkout/validate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryAddress\": {\n    \"line1\": \"10 High Street\",\n    \"city\": \"London\",\n    \"postcode\": \"{{postcode}}\",\n    \"country\": \"GB\"\n  },\n  \"deliverySlotId\": \"{{deliverySlotId}}\",\n  \"couponCode\": \"{{couponCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create checkout session",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/checkout/session",
+            "description": "POST /api/v1/checkout/session",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryAddress\": {\n    \"line1\": \"10 High Street\",\n    \"line2\": \"\",\n    \"city\": \"London\",\n    \"postcode\": \"{{postcode}}\",\n    \"country\": \"GB\"\n  },\n  \"deliverySlotId\": \"{{deliverySlotId}}\",\n  \"couponCode\": \"{{couponCode}}\",\n  \"guest\": {\n    \"firstName\": \"{{firstName}}\",\n    \"lastName\": \"{{lastName}}\",\n    \"email\": \"{{customerEmail}}\",\n    \"phone\": \"{{customerPhone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('checkoutSessionId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read checkout session",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/checkout/session/{{checkoutSessionId}}",
+            "description": "GET /api/v1/checkout/session/{{checkoutSessionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Place COD order",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/payments/cash-on-delivery",
+            "description": "POST /api/v1/payments/cash-on-delivery\n\nCurrent production-supported payment path while Stripe is intentionally deferred.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkoutSessionId\": \"{{checkoutSessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.orderId;",
+                  "  if (value) pm.environment.set('orderId', value);",
+                  "}",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('paymentId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Stripe payment intent",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/checkout/payment-intent",
+            "description": "POST /api/v1/checkout/payment-intent\n\nRequires configured Stripe keys and webhook processing before production use.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkoutSessionId\": \"{{checkoutSessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('paymentId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read payment state",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/payments/{{paymentId}}",
+            "description": "GET /api/v1/payments/{{paymentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel checkout session",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/checkout/session/{{checkoutSessionId}}",
+            "description": "DELETE /api/v1/checkout/session/{{checkoutSessionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Customer account",
+      "item": [
+        {
+          "name": "Get profile",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/profile",
+            "description": "GET /api/v1/profile"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update profile",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/profile",
+            "description": "PATCH /api/v1/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"{{firstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"phone\": \"{{customerPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List addresses",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/addresses",
+            "description": "GET /api/v1/addresses"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create address",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses",
+            "description": "POST /api/v1/addresses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"line1\": \"10 High Street\",\n  \"line2\": null,\n  \"city\": \"London\",\n  \"postcode\": \"{{postcode}}\",\n  \"country\": \"GB\",\n  \"isDefault\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('addressId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update address",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses/{{addressId}}",
+            "description": "PATCH /api/v1/addresses/{{addressId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Primary home\",\n  \"isDefault\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete address",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/addresses/{{addressId}}",
+            "description": "DELETE /api/v1/addresses/{{addressId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get wishlist",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/wishlist",
+            "description": "GET /api/v1/wishlist"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add wishlist item",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/wishlist/items",
+            "description": "POST /api/v1/wishlist/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Move wishlist item to basket",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/wishlist/items/{{productId}}/move-to-cart",
+            "description": "POST /api/v1/wishlist/items/{{productId}}/move-to-cart",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove wishlist item",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/wishlist/items/{{productId}}",
+            "description": "DELETE /api/v1/wishlist/items/{{productId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My reviews",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reviews/mine",
+            "description": "GET /api/v1/reviews/mine"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create verified-purchase review",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/reviews",
+            "description": "POST /api/v1/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"rating\": 5,\n  \"title\": \"Excellent\",\n  \"body\": \"Fresh product and careful delivery.\",\n  \"imageUrls\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('reviewId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update review",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/reviews/{{reviewId}}",
+            "description": "PATCH /api/v1/reviews/{{reviewId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"body\": \"Updated after another purchase.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete review",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reviews/{{reviewId}}",
+            "description": "DELETE /api/v1/reviews/{{reviewId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Orders, returns and invoices",
+      "item": [
+        {
+          "name": "List my orders",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/orders",
+            "description": "GET /api/v1/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data[0]?.id;",
+                  "  if (value) pm.environment.set('orderId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get my order",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+            "description": "GET /api/v1/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = [...(data.sections?.grocery ?? []), ...(data.sections?.alcohol ?? [])][0]?.id;",
+                  "  if (value) pm.environment.set('orderItemId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Track my order",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/tracking",
+            "description": "GET /api/v1/orders/{{orderId}}/tracking"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download invoice PDF",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/invoice",
+            "description": "GET /api/v1/orders/{{orderId}}/invoice"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reorder",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/reorder",
+            "description": "POST /api/v1/orders/{{orderId}}/reorder",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create return request",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/returns",
+            "description": "POST /api/v1/orders/{{orderId}}/returns",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"DAMAGED\",\n  \"customerNote\": \"Packaging was damaged on arrival.\",\n  \"items\": [\n    {\n      \"orderItemId\": \"{{orderItemId}}\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('returnId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my returns",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/returns",
+            "description": "GET /api/v1/returns"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get return request",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/returns/{{returnId}}",
+            "description": "GET /api/v1/returns/{{returnId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Notifications and privacy",
+      "item": [
+        {
+          "name": "Get notification preferences",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notification-preferences",
+            "description": "GET /api/v1/notification-preferences"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update notification preferences",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notification-preferences",
+            "description": "PATCH /api/v1/notification-preferences",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionalEmail\": true,\n  \"marketingEmail\": false,\n  \"marketingSms\": false,\n  \"marketingPush\": false,\n  \"consentVersion\": \"2026-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List notifications",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notifications",
+            "description": "GET /api/v1/notifications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List notification devices",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notification-devices",
+            "description": "GET /api/v1/notification-devices"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register push device",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notification-devices",
+            "description": "POST /api/v1/notification-devices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endpoint\": \"https://push.example.test/subscription/customer\",\n  \"keys\": {\n    \"p256dh\": \"replace-with-browser-key\",\n    \"auth\": \"replace-with-browser-secret\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('deviceId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove notification device",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notification-devices/{{deviceId}}",
+            "description": "DELETE /api/v1/notification-devices/{{deviceId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get privacy consents",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/privacy/consents",
+            "description": "GET /api/v1/privacy/consents"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update privacy consents",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/privacy/consents",
+            "description": "PATCH /api/v1/privacy/consents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"2026-10\",\n  \"source\": \"WEB\",\n  \"consents\": [\n    {\n      \"category\": \"ESSENTIAL\",\n      \"granted\": true\n    },\n    {\n      \"category\": \"ANALYTICS\",\n      \"granted\": false\n    },\n    {\n      \"category\": \"MARKETING\",\n      \"granted\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List privacy requests",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/privacy/requests",
+            "description": "GET /api/v1/privacy/requests"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create data export",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/privacy/export-requests",
+            "description": "POST /api/v1/privacy/export-requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const value = data.id;",
+                  "  if (value) pm.environment.set('privacyRequestId', value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download JSON data export",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/privacy/export-requests/{{privacyRequestId}}?format=json",
+            "description": "GET /api/v1/privacy/export-requests/{{privacyRequestId}}?format=json"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request account erasure",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/privacy/deletion-requests",
+            "description": "POST /api/v1/privacy/deletion-requests\n\nRun only with a disposable tester account.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));",
+                  "pm.test('Request ID is returned', () => pm.expect(pm.response.headers.has('x-request-id')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
