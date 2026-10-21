@@ -74,5 +74,5 @@ function cookieOptions() {
 }
 
 export const config = {
-  matcher: ['/alcohol/:path*', '/category/alcohol/:path*', '/product/:path*', '/search'],
+  matcher: ['/alcohol/:path*', '/category/:path*', '/product/:path*', '/search'],
 };

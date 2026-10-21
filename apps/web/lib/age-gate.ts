@@ -1,6 +1,7 @@
 export const ageGateCookie = 'age_gate';
 export const ageGateSessionCookie = 'age_gate_session';
 export const ageGateTtlSeconds = 30 * 24 * 60 * 60;
+const alcoholCategorySlugs = new Set(['alcohol', 'beer', 'wine', 'spirits', 'cider']);
 
 interface GatePayload {
   sessionId: string;
@@ -43,13 +44,23 @@ export async function verifyAgeGateToken(
 
 export function requiresAgeGate(pathname: string, search: URLSearchParams): boolean {
   if (pathname === '/alcohol' || pathname.startsWith('/alcohol/')) return true;
-  if (pathname === '/category/alcohol' || pathname.startsWith('/category/alcohol/')) return true;
+  if (pathname.startsWith('/category/')) {
+    const slug = pathname.slice('/category/'.length).split('/')[0]?.toLowerCase();
+    if (slug && alcoholCategorySlugs.has(slug)) return true;
+  }
   if (pathname === '/search') {
     const alcohol = search.get('alcohol')?.toLowerCase();
     const category = search.get('category')?.toLowerCase();
     return alcohol === 'true' || alcohol === '1' || category === 'alcohol';
   }
   return false;
+}
+
+export function isAlcoholCategory(slug: string, name?: string): boolean {
+  return (
+    alcoholCategorySlugs.has(slug.toLowerCase()) ||
+    (name ? alcoholCategorySlugs.has(name.toLowerCase()) : false)
+  );
 }
 
 export function safeReturnTo(value: string | null): string {

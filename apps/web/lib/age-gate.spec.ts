@@ -20,6 +20,9 @@ describe('server-enforced age gate', () => {
     expect(requiresAgeGate('/alcohol', new URLSearchParams())).toBe(true);
     expect(requiresAgeGate('/alcohol/wine', new URLSearchParams())).toBe(true);
     expect(requiresAgeGate('/category/alcohol/red', new URLSearchParams())).toBe(true);
+    expect(requiresAgeGate('/category/spirits', new URLSearchParams())).toBe(true);
+    expect(requiresAgeGate('/category/beer', new URLSearchParams())).toBe(true);
+    expect(requiresAgeGate('/category/grocery', new URLSearchParams())).toBe(false);
     expect(requiresAgeGate('/search', new URLSearchParams('alcohol=true'))).toBe(true);
     expect(requiresAgeGate('/search', new URLSearchParams('category=alcohol'))).toBe(true);
     expect(requiresAgeGate('/search', new URLSearchParams('q=apple'))).toBe(false);
