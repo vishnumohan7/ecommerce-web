@@ -448,6 +448,35 @@ button {
   gap: 20px;
   grid-template-columns: minmax(0, 2fr) minmax(285px, 0.72fr);
 }
+.dashboard-table-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 20px;
+}
+.dashboard-table-grid .panel {
+  min-width: 0;
+}
+.dashboard-operations-table {
+  min-width: 720px;
+}
+.stock-alert-table {
+  min-width: 650px;
+}
+.table-secondary {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.table-action {
+  color: var(--orange-deep);
+  font-size: 11px;
+  font-weight: 800;
+}
+.dashboard-empty-state {
+  min-height: 220px;
+}
 .panel {
   background: var(--card);
   border: 1px solid var(--line);
@@ -931,7 +960,8 @@ td code {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .dashboard-grid {
+  .dashboard-grid,
+  .dashboard-table-grid {
     grid-template-columns: 1fr;
   }
   .progress-panel {
