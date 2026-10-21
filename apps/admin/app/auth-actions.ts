@@ -96,3 +96,22 @@ export async function adminLogout() {
   store.delete('denes_admin_remember');
   redirect('/login');
 }
+
+export async function adminResetPassword(data: FormData) {
+  const tokenValue = data.get('token');
+  const passwordValue = data.get('password');
+  const token = typeof tokenValue === 'string' ? tokenValue : '';
+  const password = typeof passwordValue === 'string' ? passwordValue : '';
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/password/reset`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    redirect(
+      `/reset-password?token=${encodeURIComponent(token)}&error=${encodeURIComponent('The reset link is invalid or has expired.')}`,
+    );
+  }
+  redirect('/login?success=Password+updated.+Sign+in+with+your+new+password.');
+}

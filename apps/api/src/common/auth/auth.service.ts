@@ -123,7 +123,10 @@ export class AuthService {
     });
     if (record) await this.revokeFamily(record.familyId, record.userId, 'AUTH_LOGOUT');
   }
-  async createPasswordReset(emailInput: string): Promise<void> {
+  async createPasswordReset(
+    emailInput: string,
+    destination: 'storefront' | 'admin' = 'storefront',
+  ): Promise<void> {
     const tenantId = TenantContext.requireTenantId();
     const email = emailInput.trim().toLowerCase();
     const user = await this.db.client.user.findFirst({ where: { email } });
@@ -151,7 +154,7 @@ export class AuthService {
             userId: user.id,
             email,
             firstName: user.firstName,
-            resetUrl: `${this.storefrontBaseUrl()}/auth/reset-password?token=${encodeURIComponent(raw)}`,
+            resetUrl: `${this.passwordResetBaseUrl(destination)}/reset-password?token=${encodeURIComponent(raw)}`,
           },
         },
       });
@@ -325,6 +328,10 @@ export class AuthService {
   }
   private storefrontBaseUrl(): string {
     return this.config.values.STOREFRONT_BASE_URL.replace(/\/$/, '');
+  }
+  private passwordResetBaseUrl(destination: 'storefront' | 'admin'): string {
+    if (destination === 'admin') return this.config.values.ADMIN_BASE_URL.replace(/\/$/, '');
+    return `${this.storefrontBaseUrl()}/auth`;
   }
   private verificationUrl(token: string): string {
     return `${this.storefrontBaseUrl()}/auth/verify-email?token=${encodeURIComponent(token)}`;

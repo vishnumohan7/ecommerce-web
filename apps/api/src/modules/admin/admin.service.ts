@@ -605,7 +605,7 @@ export class AdminService {
       email,
       roleKeys: input.roleKeys,
     });
-    await this.auth.createPasswordReset(email);
+    await this.auth.createPasswordReset(email, 'admin');
     return { ...created, roleKeys: input.roleKeys, invitationSent: true };
   }
 
@@ -665,7 +665,7 @@ export class AdminService {
   async resetStaffPassword(id: string) {
     const user = await this.db.client.user.findFirst({ where: { id, role: { not: 'CUSTOMER' } } });
     if (!user) throw new NotFoundException('Staff user not found');
-    await this.auth.createPasswordReset(user.email);
+    await this.auth.createPasswordReset(user.email, 'admin');
     await this.audit('STAFF_PASSWORD_RESET_SENT', 'User', id, undefined, { email: user.email });
     return { accepted: true };
   }

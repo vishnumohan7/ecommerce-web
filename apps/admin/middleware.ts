@@ -109,12 +109,15 @@ function sessionCookieOptions(maxAge?: number) {
 
 export async function middleware(request: NextRequest) {
   const isLogin = request.nextUrl.pathname === '/login';
+  const isPasswordReset = request.nextUrl.pathname === '/reset-password';
+  const isPublicAuthPage = isLogin || isPasswordReset;
   const configuredToken = process.env.ADMIN_API_TOKEN;
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   if (configuredToken || accessTokenIsCurrent(accessToken)) {
     const permissions = configuredToken ? [] : tokenPermissions(accessToken);
     const landing = configuredToken ? '/' : landingFor(permissions);
     if (isLogin) return NextResponse.redirect(new URL(landing, request.url));
+    if (isPasswordReset) return NextResponse.next();
     const required = configuredToken ? null : permissionFor(request.nextUrl.pathname);
     if (required && !permissions.includes(required))
       return NextResponse.redirect(new URL(landing, request.url));
@@ -124,7 +127,7 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   const pair = refreshToken ? await rotate(refreshToken) : null;
   if (!pair) {
-    if (isLogin) return NextResponse.next();
+    if (isPublicAuthPage) return NextResponse.next();
     const target = '/login?error=Your+session+expired.+Please+sign+in+again.';
     const response = NextResponse.redirect(new URL(target, request.url));
     response.cookies.delete(ACCESS_COOKIE);
