@@ -72,8 +72,8 @@ const groups: Array<{ label: string; items: Item[] }> = [
   {
     label: 'Administration',
     items: [
-      { href: '/users', label: 'User management', icon: 'customers', permission: 'users.read' },
-      { href: '/access', label: 'Roles & permissions', icon: 'access', permission: 'users.read' },
+      { href: '/users', label: 'User management', icon: 'customers', permission: 'users.write' },
+      { href: '/access', label: 'Roles & permissions', icon: 'access', permission: 'users.write' },
       {
         href: '/settings',
         label: 'Settings & branding',

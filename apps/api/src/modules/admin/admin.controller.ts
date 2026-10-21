@@ -87,7 +87,7 @@ export class AdminController {
     return this.admin.upsertCmsPage(body);
   }
 
-  @Get('rbac') @RequirePermissions('users.read') rbac() {
+  @Get('rbac') @RequirePermissions('users.write') rbac() {
     return this.admin.rbac();
   }
   @Patch('rbac/roles/:id') @RequirePermissions('users.write') updateRole(
@@ -102,7 +102,7 @@ export class AdminController {
   ) {
     return this.admin.updateUserRoles(id, body);
   }
-  @Get('staff') @RequirePermissions('users.read') staff(
+  @Get('staff') @RequirePermissions('users.write') staff(
     @Query() query: Record<string, string | undefined>,
   ) {
     return this.admin.staff(query);

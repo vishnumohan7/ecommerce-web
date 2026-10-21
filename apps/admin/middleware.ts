@@ -63,14 +63,14 @@ function permissionFor(pathname: string): string | null {
     ['/returns', 'orders.read'],
     ['/delivery', 'delivery.read'],
     ['/customers', 'users.read'],
-    ['/users', 'users.read'],
+    ['/users', 'users.write'],
     ['/privacy', 'users.read'],
     ['/content', 'settings.read'],
     ['/notifications', 'settings.read'],
     ['/settings', 'settings.read'],
     ['/system', 'settings.read'],
     ['/reports', 'reports.read'],
-    ['/access', 'users.read'],
+    ['/access', 'users.write'],
     ['/audit', 'audit.read'],
   ];
   return routes.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? null;
