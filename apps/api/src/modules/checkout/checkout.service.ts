@@ -46,7 +46,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
     if (this.expiryTimer) clearInterval(this.expiryTimer);
   }
 
-  async validate(identity: Identity, raw: unknown) {
+  async validate(identity: Identity, raw: unknown, requirePassedAgeVerification = false) {
     const input = checkoutValidateSchema.parse(raw);
     const owner = this.owner(identity);
     const cart = await this.db.client.cart.findFirst({ where: { ...owner, status: 'ACTIVE' } });
@@ -111,7 +111,12 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
         message: 'The selected delivery slot is unavailable or past cutoff',
       });
 
-    const age = await this.age.validate(identity, postcode);
+    const age = await this.age.validate(
+      identity,
+      postcode,
+      new Date(),
+      requirePassedAgeVerification,
+    );
     const requiresManualCapture = products.some(
       (product) => product.pricingMode === 'WEIGHT_ESTIMATED',
     );
@@ -165,7 +170,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
         code: 'GUEST_DETAILS_REQUIRED',
         message: 'Guest name, email, phone, and address are required',
       });
-    const summary = await this.validate(identity, input);
+    const summary = await this.validate(identity, input, true);
     const snapshot = normalise({ summary, request: input });
     const snapshotHash = hash(snapshot);
     const stale = await this.db.client.checkoutSession.findMany({

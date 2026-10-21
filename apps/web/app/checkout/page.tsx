@@ -35,7 +35,7 @@ export default function CheckoutPage() {
     email: '',
     phone: '',
     slotId: '',
-    ageConfirmed: false,
+    dateOfBirth: '',
   });
   async function validateAddress(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,9 +83,36 @@ export default function CheckoutPage() {
         }),
       });
       setSessionId(session.id);
-      setStep(summary?.requiresAgeVerification ? 3 : 4);
+      setStep(4);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to reserve checkout');
+    }
+  }
+  function continueFromDelivery() {
+    if (summary?.requiresAgeVerification) {
+      setError('');
+      setStep(3);
+      return;
+    }
+    void createSession();
+  }
+  async function verifyAge() {
+    setError('');
+    try {
+      const verification = await browserApi<{ status: string; isOver18: boolean }>(
+        '/api/v1/age-verification/dob',
+        {
+          method: 'POST',
+          body: JSON.stringify({ dateOfBirth: details.dateOfBirth }),
+        },
+      );
+      if (!verification.isOver18 || verification.status !== 'PASSED') {
+        setError('You must be aged 18 or over to purchase age-restricted products.');
+        return;
+      }
+      await createSession();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to verify age');
     }
   }
   async function pay() {
@@ -238,12 +265,8 @@ export default function CheckoutPage() {
               No delivery slots are currently available for this postcode.
             </div>
           )}
-          <button
-            className="button"
-            disabled={!details.slotId}
-            onClick={() => void createSession()}
-          >
-            Reserve this slot
+          <button className="button" disabled={!details.slotId} onClick={continueFromDelivery}>
+            Continue
           </button>
         </section>
       )}
@@ -252,27 +275,27 @@ export default function CheckoutPage() {
           <div className="age-badge">18+</div>
           <h2>Age verification</h2>
           <p>
-            This basket contains age-restricted items. Challenge 25 applies at delivery and the
-            order cannot be left unattended.
+            Enter your date of birth to confirm purchase eligibility. Challenge 25 still applies at
+            delivery and the order cannot be left unattended.
           </p>
-          <label className="check-row">
+          <label>
+            Date of birth
             <input
-              type="checkbox"
-              checked={details.ageConfirmed}
+              type="date"
+              required
+              autoComplete="bday"
+              value={details.dateOfBirth}
               onChange={(e) => {
-                setDetails({ ...details, ageConfirmed: e.target.checked });
+                setDetails({ ...details, dateOfBirth: e.target.value });
               }}
-            />{' '}
-            I confirm I am aged 18 or over.
+            />
           </label>
           <button
             className="button"
-            disabled={!details.ageConfirmed}
-            onClick={() => {
-              setStep(4);
-            }}
+            disabled={!details.dateOfBirth}
+            onClick={() => void verifyAge()}
           >
-            Continue
+            Verify age and reserve slot
           </button>
         </section>
       )}

@@ -10,7 +10,12 @@ export class CheckoutAgeGuardService {
     private readonly jurisdictions: JurisdictionRuleService,
   ) {}
 
-  async validate(identity: AgeIdentity, deliveryPostcode: string, now = new Date()) {
+  async validate(
+    identity: AgeIdentity,
+    deliveryPostcode: string,
+    now = new Date(),
+    requirePassedVerification = true,
+  ) {
     const owner =
       'userId' in identity ? { userId: identity.userId } : { guestToken: identity.guestSessionId };
     const cart = await this.db.client.cart.findFirst({ where: { ...owner, status: 'ACTIVE' } });
@@ -39,7 +44,7 @@ export class CheckoutAgeGuardService {
         },
         orderBy: { verifiedAt: 'desc' },
       });
-      if (!verification)
+      if (!verification && requirePassedVerification)
         throw new ForbiddenException({
           code: 'AGE_VERIFICATION_REQUIRED',
           message: `Age verification for age ${String(requiredAge)} or over is required`,
