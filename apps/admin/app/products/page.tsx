@@ -12,8 +12,21 @@ import { fetchAdminProducts } from '../lib/api';
 export const metadata: Metadata = { title: 'Products' };
 export const dynamic = 'force-dynamic';
 
+function formatAbv(value: unknown) {
+  if (typeof value !== 'string' && typeof value !== 'number') return '';
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? `${parsed.toFixed(2).replace(/\.?0+$/, '')}%` : '';
+}
+
 interface PageProps {
-  searchParams: Promise<{ q?: string | string[]; page?: string; status?: string; sort?: string; success?: string; error?: string }>;
+  searchParams: Promise<{
+    q?: string | string[];
+    page?: string;
+    status?: string;
+    sort?: string;
+    success?: string;
+    error?: string;
+  }>;
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
@@ -35,8 +48,12 @@ export default async function ProductsPage({ searchParams }: PageProps) {
           <p>Inspect live product, compliance and pricing data from the commerce API.</p>
         </div>
         <div className="heading-actions">
-          <Link className="button button-muted" href="/products/import">Import CSV / Excel</Link>
-          <Link className="button button-primary" href="/products/new">+ Add product</Link>
+          <Link className="button button-muted" href="/products/import">
+            Import CSV / Excel
+          </Link>
+          <Link className="button button-primary" href="/products/new">
+            + Add product
+          </Link>
         </div>
       </section>
       <ActionMessage success={params.success} error={params.error} />
@@ -141,9 +158,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                       </td>
                       <td>
                         {product.isAlcohol ? (
-                          <span className="compliance-badge">
-                            18+ {product.abv ? `${product.abv}%` : ''}
-                          </span>
+                          <span className="compliance-badge">18+ {formatAbv(product.abv)}</span>
                         ) : (
                           <span className="muted-text">Standard</span>
                         )}
@@ -194,7 +209,11 @@ export default async function ProductsPage({ searchParams }: PageProps) {
             page={result.data.page}
             pageCount={result.data.pageCount}
             total={result.data.total}
-            params={{ ...(q ? { q } : {}), ...(status ? { status } : {}), ...(sort !== 'updated-desc' ? { sort } : {}) }}
+            params={{
+              ...(q ? { q } : {}),
+              ...(status ? { status } : {}),
+              ...(sort !== 'updated-desc' ? { sort } : {}),
+            }}
           />
         )}
       </article>
