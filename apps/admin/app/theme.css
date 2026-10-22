@@ -3716,12 +3716,12 @@ td code {
   padding: 0 9px;
 }
 .inventory-table {
-  min-width: 1000px;
+  min-width: 860px;
   table-layout: fixed;
 }
 .inventory-table th:first-child,
 .inventory-table td:first-child {
-  width: 29%;
+  width: 31%;
 }
 .inventory-table th:nth-child(2),
 .inventory-table td:nth-child(2),
@@ -3729,25 +3729,51 @@ td code {
 .inventory-table td:nth-child(3),
 .inventory-table th:nth-child(4),
 .inventory-table td:nth-child(4) {
-  width: 8%;
+  width: 7%;
 }
 .inventory-table th:last-child,
 .inventory-table td:last-child {
-  width: 47%;
+  width: 48%;
 }
 .inventory-adjustment-form {
+  align-items: center;
   display: grid;
-  grid-template-columns: 70px 120px 140px auto;
+  gap: 8px;
+  grid-template-columns: minmax(72px, 0.65fr) minmax(132px, 1fr) minmax(145px, 1.25fr) auto;
   min-width: 0;
   width: 100%;
 }
 .inventory-adjustment-form input,
 .inventory-adjustment-form select {
+  background-color: #fff;
+  border-color: #d9e1dd;
+  border-radius: 8px;
+  color: #30363d;
+  height: 40px;
   min-width: 0;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
   width: 100%;
 }
+.inventory-adjustment-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23545d58' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-position: right 11px center;
+  background-repeat: no-repeat;
+  padding-left: 12px;
+  padding-right: 34px;
+}
+.inventory-adjustment-form input:focus,
+.inventory-adjustment-form select:focus {
+  border-color: #74c69d;
+  box-shadow: 0 0 0 3px rgb(116 198 157 / 18%);
+  outline: none;
+}
 .inventory-adjustment-form .button {
-  height: 35px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 17px;
   white-space: nowrap;
 }
 .record-list > .panel {

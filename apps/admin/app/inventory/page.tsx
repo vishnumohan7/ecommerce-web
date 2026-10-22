@@ -97,15 +97,25 @@ export default async function InventoryPage({
                     <td>
                       <form action={adjustInventory} className="row-form inventory-adjustment-form">
                         <input type="hidden" name="id" value={row.id} />
-                        <input name="quantity" type="number" placeholder="± qty" required />
-                        <select name="reason">
+                        <input
+                          aria-label="Quantity adjustment"
+                          name="quantity"
+                          type="number"
+                          placeholder="± Qty"
+                          required
+                        />
+                        <select aria-label="Adjustment reason" name="reason">
                           <option value="ADJUSTMENT">Adjustment</option>
                           <option value="PURCHASE">Stock receipt</option>
                           <option value="WASTAGE">Wastage</option>
                           <option value="RETURN">Return</option>
                         </select>
-                        <input name="reference" placeholder="Reference" />
-                        <button className="button button-muted">Apply</button>
+                        <input
+                          aria-label="Adjustment reference"
+                          name="reference"
+                          placeholder="Reference (optional)"
+                        />
+                        <button className="button button-primary">Apply</button>
                       </form>
                     </td>
                   </tr>
