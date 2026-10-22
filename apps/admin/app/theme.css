@@ -3756,14 +3756,6 @@ td code {
     box-shadow 160ms ease;
   width: 100%;
 }
-.inventory-adjustment-form select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23545d58' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
-  background-position: right 11px center;
-  background-repeat: no-repeat;
-  padding-left: 12px;
-  padding-right: 34px;
-}
 .inventory-adjustment-form input:focus,
 .inventory-adjustment-form select:focus {
   border-color: #74c69d;
@@ -4386,6 +4378,42 @@ td code {
 .login-submit:hover {
   background: #2d6a4f;
   color: #fff;
+}
+
+/* Shared single-select treatment across the admin interface. */
+.larkon-shell select:not([multiple]) {
+  appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23545d58' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-position: right 11px center;
+  background-repeat: no-repeat;
+  border: 1px solid #d9e1dd;
+  border-radius: 8px;
+  color: #30363d;
+  cursor: pointer;
+  font: inherit;
+  height: 40px;
+  min-width: 0;
+  outline: none;
+  padding: 0 34px 0 12px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.larkon-shell select:not([multiple]):hover {
+  background-color: #fbfdfc;
+  border-color: #9fcdb6;
+}
+.larkon-shell select:not([multiple]):focus-visible {
+  border-color: #40916c;
+  box-shadow: 0 0 0 3px rgb(116 198 157 / 20%);
+}
+.larkon-shell select:not([multiple]):disabled {
+  background-color: #f3f5f4;
+  color: #8b938f;
+  cursor: not-allowed;
+  opacity: 1;
 }
 .preview-pill,
 .role-chip-list input:checked + span,
