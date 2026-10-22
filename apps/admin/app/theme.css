@@ -1510,6 +1510,26 @@ td code {
 .catalog-filter-form select {
   min-width: 145px;
 }
+.catalog-toolbar .catalog-filter-form {
+  flex: 1;
+  flex-wrap: wrap;
+  max-width: 920px;
+  width: auto;
+}
+.catalog-filter-form input {
+  flex: 1 1 300px;
+}
+.catalog-filter-form select[name='status'] {
+  flex: 0 0 160px;
+  width: 160px;
+}
+.catalog-filter-form select[name='sort'] {
+  flex: 0 0 200px;
+  width: 200px;
+}
+.catalog-filter-form .button {
+  flex: 0 0 auto;
+}
 .product-operations {
   display: contents;
 }
