@@ -70,13 +70,23 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               defaultValue={q}
               placeholder="Search name, SKU or description"
             />
-            <select name="status" defaultValue={status} aria-label="Product status">
+            <select
+              className="admin-select"
+              name="status"
+              defaultValue={status}
+              aria-label="Product status"
+            >
               <option value="">All statuses</option>
               <option value="ACTIVE">Active</option>
               <option value="DRAFT">Draft</option>
               <option value="INACTIVE">Inactive</option>
             </select>
-            <select name="sort" defaultValue={sort} aria-label="Sort products">
+            <select
+              className="admin-select"
+              name="sort"
+              defaultValue={sort}
+              aria-label="Sort products"
+            >
               <option value="updated-desc">Recently updated</option>
               <option value="name-asc">Name A–Z</option>
               <option value="name-desc">Name Z–A</option>

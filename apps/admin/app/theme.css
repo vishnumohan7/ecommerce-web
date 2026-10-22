@@ -4382,6 +4382,7 @@ td code {
 
 /* Shared single-select treatment across the admin interface. */
 .larkon-shell select:not([multiple]) {
+  -webkit-appearance: none;
   appearance: none;
   background-color: #fff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23545d58' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
@@ -4400,6 +4401,11 @@ td code {
     background-color 160ms ease,
     border-color 160ms ease,
     box-shadow 160ms ease;
+}
+.larkon-shell .catalog-filter-form .admin-select {
+  background-color: #fff;
+  border-color: #d9e1dd;
+  border-radius: 8px;
 }
 .larkon-shell select:not([multiple]):hover {
   background-color: #fbfdfc;
