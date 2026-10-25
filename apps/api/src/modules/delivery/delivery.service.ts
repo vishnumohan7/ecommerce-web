@@ -126,7 +126,7 @@ export class DeliveryService {
     const policy = await this.deliveryPolicy();
     const dates = deliveryDatesForOrder(now);
     const options = await Promise.all(
-      dates.map(async ({ date, service, surchargeMinor }) => {
+      dates.map(async ({ date, fulfilmentDate, service, surchargeMinor }) => {
         const startsAt = atLondonMidday(date);
         const endsAt = new Date(startsAt.getTime() + 60 * 60_000);
         const slot = await this.systemDeliverySlot(
@@ -139,6 +139,7 @@ export class DeliveryService {
           ...slot,
           service,
           deliveryDate: date,
+          fulfilmentDate,
           deliveryFeeMinor: quote.deliveryFeeMinor + slot.surchargeMinor,
         };
       }),
@@ -594,21 +595,51 @@ function jsonMoney(value: unknown): bigint | null {
   return null;
 }
 
-type DeliveryDate = { date: string; service: 'STANDARD' | 'SATURDAY'; surchargeMinor: bigint };
+type DeliveryDate = {
+  date: string;
+  fulfilmentDate: string;
+  service: 'STANDARD' | 'SATURDAY';
+  surchargeMinor: bigint;
+};
 
 export function deliveryDatesForOrder(now: Date): DeliveryDate[] {
   const today = londonCalendarDate(now);
   const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
   if (weekday === 5)
     return [
-      { date: addCalendarDays(today, 1), service: 'SATURDAY', surchargeMinor: 150n },
-      { date: addCalendarDays(today, 4), service: 'STANDARD', surchargeMinor: 0n },
+      {
+        date: addCalendarDays(today, 1),
+        fulfilmentDate: addCalendarDays(today, 1),
+        service: 'SATURDAY',
+        surchargeMinor: 150n,
+      },
+      {
+        date: addCalendarDays(today, 4),
+        fulfilmentDate: addCalendarDays(today, 3),
+        service: 'STANDARD',
+        surchargeMinor: 0n,
+      },
     ];
   if (weekday === 6)
-    return [{ date: addCalendarDays(today, 3), service: 'STANDARD', surchargeMinor: 0n }];
+    return [
+      {
+        date: addCalendarDays(today, 3),
+        fulfilmentDate: addCalendarDays(today, 2),
+        service: 'STANDARD',
+        surchargeMinor: 0n,
+      },
+    ];
   if (weekday === 0)
-    return [{ date: addCalendarDays(today, 2), service: 'STANDARD', surchargeMinor: 0n }];
-  return [{ date: addCalendarDays(today, 1), service: 'STANDARD', surchargeMinor: 0n }];
+    return [
+      {
+        date: addCalendarDays(today, 2),
+        fulfilmentDate: addCalendarDays(today, 1),
+        service: 'STANDARD',
+        surchargeMinor: 0n,
+      },
+    ];
+  const tomorrow = addCalendarDays(today, 1);
+  return [{ date: tomorrow, fulfilmentDate: tomorrow, service: 'STANDARD', surchargeMinor: 0n }];
 }
 
 function londonCalendarDate(value: Date) {

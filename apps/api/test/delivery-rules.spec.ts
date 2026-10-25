@@ -17,14 +17,29 @@ describe('delivery fee combination strategies', () => {
 describe('London delivery calendar', () => {
   it('offers next-day delivery from Monday to Thursday', () => {
     expect(deliveryDatesForOrder(new Date('2026-10-22T10:00:00Z'))).toEqual([
-      { date: '2026-10-23', service: 'STANDARD', surchargeMinor: 0n },
+      {
+        date: '2026-10-23',
+        fulfilmentDate: '2026-10-23',
+        service: 'STANDARD',
+        surchargeMinor: 0n,
+      },
     ]);
   });
 
   it('offers paid Saturday or standard Tuesday delivery for a Friday order', () => {
     expect(deliveryDatesForOrder(new Date('2026-10-23T10:00:00Z'))).toEqual([
-      { date: '2026-10-24', service: 'SATURDAY', surchargeMinor: 150n },
-      { date: '2026-10-27', service: 'STANDARD', surchargeMinor: 0n },
+      {
+        date: '2026-10-24',
+        fulfilmentDate: '2026-10-24',
+        service: 'SATURDAY',
+        surchargeMinor: 150n,
+      },
+      {
+        date: '2026-10-27',
+        fulfilmentDate: '2026-10-26',
+        service: 'STANDARD',
+        surchargeMinor: 0n,
+      },
     ]);
   });
 

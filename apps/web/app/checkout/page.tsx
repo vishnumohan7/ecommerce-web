@@ -8,6 +8,7 @@ interface Slot {
   id: string;
   startsAt: string;
   deliveryDate: string;
+  fulfilmentDate: string;
   service: 'STANDARD' | 'SATURDAY';
   deliveryFeeMinor: string;
 }
@@ -255,6 +256,12 @@ export default function CheckoutPage() {
                     {' · '}
                     {money(slot.deliveryFeeMinor, summary?.currency ?? 'GBP')}
                   </span>
+                  {slot.fulfilmentDate !== slot.deliveryDate && (
+                    <small>
+                      Prepared {formatDeliveryDate(slot.fulfilmentDate)} · delivered{' '}
+                      {formatDeliveryDate(slot.deliveryDate)}
+                    </small>
+                  )}
                 </label>
               ))}
             </div>
@@ -330,4 +337,13 @@ export default function CheckoutPage() {
       )}
     </main>
   );
+}
+
+function formatDeliveryDate(value: string) {
+  return new Date(`${value}T12:00:00Z`).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Europe/London',
+  });
 }
