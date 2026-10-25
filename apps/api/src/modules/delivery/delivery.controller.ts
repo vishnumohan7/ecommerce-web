@@ -40,6 +40,17 @@ export class DeliveryController {
   }
 
   @Public()
+  @Get('delivery/options')
+  @ApiOperation({ summary: 'List delivery dates and charges valid for the current basket' })
+  options(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Query('postcode') postcode = '',
+  ) {
+    return this.delivery.availableDeliveryDates(this.identity(request, response), postcode);
+  }
+
+  @Public()
   @Post('delivery/slots/:id/reserve')
   @ApiOperation({ summary: 'Transactionally reserve delivery-slot capacity' })
   reserve(
@@ -78,6 +89,20 @@ export class DeliveryController {
   @ApiBearerAuth()
   slotsAdmin() {
     return this.delivery.slots();
+  }
+
+  @Get('admin/delivery/policy')
+  @RequirePermissions('delivery.read')
+  @ApiBearerAuth()
+  policyAdmin() {
+    return this.delivery.deliveryPolicy();
+  }
+
+  @Patch('admin/delivery/policy')
+  @RequirePermissions('delivery.write')
+  @ApiBearerAuth()
+  updatePolicy(@Body() body: unknown) {
+    return this.delivery.updateDeliveryPolicy(body);
   }
 
   @Post('admin/delivery/slots')

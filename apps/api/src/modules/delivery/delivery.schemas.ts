@@ -66,3 +66,7 @@ export const deliverySlotUpdateSchema = z
   .refine((value) => Object.keys(value).length > 0, 'At least one field is required');
 
 export const reserveSlotSchema = z.object({ postcode: z.string().trim().min(2).max(12) });
+
+export const deliveryPolicyUpdateSchema = z.object({
+  saturdaySurchargeMinor: money,
+});

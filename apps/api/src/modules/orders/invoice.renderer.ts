@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions -- PDF commands interpolate numeric coordinates and monetary values. */
 type InvoiceLine = {
   productName: string;
   sku?: string;
@@ -122,7 +123,8 @@ class Page {
   rect(x: number, top: number, width: number, height: number, fill: string, stroke?: string) {
     const y = H - top - height;
     this.commands.push('q', `${rgb(fill)} rg`, `${x} ${y} ${width} ${height} re f`);
-    if (stroke) this.commands.push(`${rgb(stroke)} RG`, '0.7 w', `${x} ${y} ${width} ${height} re S`);
+    if (stroke)
+      this.commands.push(`${rgb(stroke)} RG`, '0.7 w', `${x} ${y} ${width} ${height} re S`);
     this.commands.push('Q');
   }
 
@@ -240,9 +242,25 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
   });
   page.text(brand, 98, 65, { size: 20, bold: true, colour: NAVY });
   page.text('Online grocery & drinks', 98, 91, { size: 9, colour: MUTED });
-  page.text('VAT INVOICE', 389, 64, { size: 18, bold: true, colour: NAVY, align: 'right', width: 170 });
-  page.text(`Invoice ${document.invoiceNumber}`, 389, 89, { size: 9, colour: MUTED, align: 'right', width: 170 });
-  page.text(`Order ${document.orderNumber}`, 389, 104, { size: 9, colour: MUTED, align: 'right', width: 170 });
+  page.text('VAT INVOICE', 389, 64, {
+    size: 18,
+    bold: true,
+    colour: NAVY,
+    align: 'right',
+    width: 170,
+  });
+  page.text(`Invoice ${document.invoiceNumber}`, 389, 89, {
+    size: 9,
+    colour: MUTED,
+    align: 'right',
+    width: 170,
+  });
+  page.text(`Order ${document.orderNumber}`, 389, 104, {
+    size: 9,
+    colour: MUTED,
+    align: 'right',
+    width: 170,
+  });
   page.rule(36, 127, 559, 127);
 
   const address = addressOf(document.deliveryAddress);
@@ -253,9 +271,10 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
   if (email) address.push(email);
   page.rect(36, 139, 523, 116, '#ffffff', LINE);
   page.text('DELIVERY ADDRESS', 48, 151, { size: 8, bold: true, colour: GREEN });
-  address.slice(0, 7).forEach((line, index) =>
-    page.text(line, 48, 170 + index * 13, { size: 8.5, bold: index === 0 }),
-  );
+  address
+    .slice(0, 7)
+    .forEach((line, index) => { page.text(line, 48, 170 + index * 13, { size: 8.5, bold: index === 0 }); },
+    );
   page.text('ORDER DETAILS', 318, 151, { size: 8, bold: true, colour: NAVY });
   const date = new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
@@ -275,19 +294,8 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
       dateStyle: 'medium',
       timeZone: 'Europe/London',
     }).format(document.deliverySlot.startsAt);
-    const time = (input: Date) =>
-      new Intl.DateTimeFormat('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/London',
-      }).format(input);
     page.text('Delivery date', 318, 209, { size: 8.5, colour: MUTED });
     page.text(day, 408, 209, { size: 8.5, bold: true });
-    page.text('Delivery slot', 318, 228, { size: 8.5, colour: MUTED });
-    page.text(`${time(document.deliverySlot.startsAt)}-${time(document.deliverySlot.endsAt)}`, 408, 228, {
-      size: 8.5,
-      bold: true,
-    });
   }
 
   let cursor = 276;
@@ -315,24 +323,51 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
     cursor += 31;
     page.rect(36, cursor, 523, 25, '#f8fafc', LINE);
     page.text('ITEM', 48, cursor + 8, { size: 7, bold: true, colour: MUTED });
-    page.text('QTY', 364, cursor + 8, { size: 7, bold: true, colour: MUTED, align: 'right', width: 34 });
-    page.text('UNIT PRICE', 405, cursor + 8, { size: 7, bold: true, colour: MUTED, align: 'right', width: 62 });
-    page.text('TOTAL', 484, cursor + 8, { size: 7, bold: true, colour: MUTED, align: 'right', width: 63 });
+    page.text('QTY', 364, cursor + 8, {
+      size: 7,
+      bold: true,
+      colour: MUTED,
+      align: 'right',
+      width: 34,
+    });
+    page.text('UNIT PRICE', 405, cursor + 8, {
+      size: 7,
+      bold: true,
+      colour: MUTED,
+      align: 'right',
+      width: 62,
+    });
+    page.text('TOTAL', 484, cursor + 8, {
+      size: 7,
+      bold: true,
+      colour: MUTED,
+      align: 'right',
+      width: 63,
+    });
     cursor += 25;
     for (const line of lines) {
       ensure(48);
       const names = wrap(line.productName, 49).slice(0, 2);
       const rowHeight = names.length > 1 ? 36 : 28;
       page.rect(36, cursor, 523, rowHeight, '#ffffff', LINE);
-      names.forEach((name, index) =>
-        page.text(name, 48, cursor + 8 + index * 12, { size: 8.5, bold: index === 0 }),
+      names.forEach((name, index) => { page.text(name, 48, cursor + 8 + index * 12, { size: 8.5, bold: index === 0 }); },
       );
       if (line.sku && names.length === 1)
         page.text(line.sku, 48, cursor + 20, { size: 6.5, colour: MUTED });
       page.text(String(line.quantity), 364, cursor + 10, { size: 8.5, align: 'right', width: 34 });
-      const unitPrice = line.unitPriceMinor ?? line.lineTotalMinor / BigInt(Math.max(1, line.quantity));
-      page.text(money(unitPrice, document.currency), 405, cursor + 10, { size: 8.5, align: 'right', width: 62 });
-      page.text(money(line.lineTotalMinor, document.currency), 484, cursor + 10, { size: 8.5, bold: true, align: 'right', width: 63 });
+      const unitPrice =
+        line.unitPriceMinor ?? line.lineTotalMinor / BigInt(Math.max(1, line.quantity));
+      page.text(money(unitPrice, document.currency), 405, cursor + 10, {
+        size: 8.5,
+        align: 'right',
+        width: 62,
+      });
+      page.text(money(line.lineTotalMinor, document.currency), 484, cursor + 10, {
+        size: 8.5,
+        bold: true,
+        align: 'right',
+        width: 63,
+      });
       cursor += rowHeight;
     }
     const subtotal = lines.reduce((sum, line) => sum + line.lineTotalMinor, 0n);
@@ -363,20 +398,32 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
   const rows: Array<[string, string]> = [
     ['Items subtotal', money(document.subtotalMinor, document.currency)],
     ...(document.discountMinor > 0n
-      ? ([['Discount', `-${money(document.discountMinor, document.currency)}`]] as Array<[string, string]>)
+      ? ([['Discount', `-${money(document.discountMinor, document.currency)}`]] as Array<
+          [string, string]
+        >)
       : []),
     ['Delivery charge', money(document.deliveryFeeMinor, document.currency)],
-    ...[...vat.entries()].filter(([, amount]) => amount !== 0n).map(
-      ([rate, amount]) =>
-        [`VAT included at ${(rate / 100).toFixed(rate % 100 ? 2 : 0)}%`, money(amount, document.currency)] as [string, string],
-    ),
+    ...[...vat.entries()]
+      .filter(([, amount]) => amount !== 0n)
+      .map(
+        ([rate, amount]) =>
+          [
+            `VAT included at ${(rate / 100).toFixed(rate % 100 ? 2 : 0)}%`,
+            money(amount, document.currency),
+          ] as [string, string],
+      ),
   ];
   const summaryHeight = rows.length * 19 + 52;
   ensure(summaryHeight + 14);
   page.rect(281, cursor, 278, summaryHeight, '#ffffff', LINE);
   rows.forEach(([label, amount], index) => {
     page.text(label, 297, cursor + 13 + index * 19, { size: 8.5, colour: MUTED });
-    page.text(amount, 468, cursor + 13 + index * 19, { size: 8.5, bold: true, align: 'right', width: 75 });
+    page.text(amount, 468, cursor + 13 + index * 19, {
+      size: 8.5,
+      bold: true,
+      align: 'right',
+      width: 75,
+    });
   });
   const totalTop = cursor + rows.length * 19 + 4;
   page.rule(297, totalTop, 543, totalTop);
@@ -394,7 +441,8 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
     page.text('AGE-RESTRICTED DELIVERY', 49, cursor + 10, { size: 8, bold: true, colour: RED });
     wrap('Challenge 25: valid photo ID may be required at delivery.', 42)
       .slice(0, 2)
-      .forEach((line, index) => page.text(line, 49, cursor + 26 + index * 11, { size: 7.5, colour: RED }));
+      .forEach((line, index) => { page.text(line, 49, cursor + 26 + index * 11, { size: 7.5, colour: RED }); },
+      );
   }
   const thanksTop = cursor + (hasAlcohol ? 63 : 0);
   page.rect(36, thanksTop, 229, hasAlcohol ? 58 : summaryHeight, GREEN_PALE, '#b7dfcc');
@@ -405,12 +453,17 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
     align: 'center',
     width: 229,
   });
-  page.text('Please keep this VAT invoice for your records.', 36, thanksTop + (hasAlcohol ? 32 : 51), {
-    size: 7,
-    colour: MUTED,
-    align: 'center',
-    width: 229,
-  });
+  page.text(
+    'Please keep this VAT invoice for your records.',
+    36,
+    thanksTop + (hasAlcohol ? 32 : 51),
+    {
+      size: 7,
+      colour: MUTED,
+      align: 'center',
+      width: 229,
+    },
+  );
 
   pages.forEach((current, index) => {
     current.rule(36, 807, 559, 807);
@@ -422,7 +475,12 @@ export function renderInvoicePdf(document: InvoiceDocument): Buffer {
       .filter(Boolean)
       .join(' | ');
     current.text(registration, 205, 815, { size: 6.5, colour: MUTED, align: 'center', width: 220 });
-    current.text(`Page ${index + 1} of ${pages.length}`, 489, 815, { size: 6.5, colour: MUTED, align: 'right', width: 70 });
+    current.text(`Page ${index + 1} of ${pages.length}`, 489, 815, {
+      size: 6.5,
+      colour: MUTED,
+      align: 'right',
+      width: 70,
+    });
   });
   return compile(pages);
 }
@@ -431,6 +489,6 @@ export function renderTextPdf(lines: string[]): Buffer {
   const page = new Page();
   page.rect(0, 0, W, 34, NAVY);
   page.text('DOCUMENT', 36, 11, { size: 11, bold: true, colour: '#ffffff' });
-  lines.forEach((line, index) => page.text(line, 40, 58 + index * 14, { size: 9 }));
+  lines.forEach((line, index) => { page.text(line, 40, 58 + index * 14, { size: 9 }); });
   return compile([page]);
 }

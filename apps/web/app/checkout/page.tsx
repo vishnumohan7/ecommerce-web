@@ -7,8 +7,9 @@ import { browserApi, money } from '../../lib/store-api';
 interface Slot {
   id: string;
   startsAt: string;
-  endsAt: string;
-  feeMinor?: string;
+  deliveryDate: string;
+  service: 'STANDARD' | 'SATURDAY';
+  deliveryFeeMinor: string;
 }
 interface Summary {
   totalMinor: string;
@@ -226,7 +227,7 @@ export default function CheckoutPage() {
       )}
       {step === 2 && (
         <section className="form-card">
-          <h2>Choose a delivery slot</h2>
+          <h2>Choose a delivery date</h2>
           {slots.length ? (
             <div className="slot-grid">
               {slots.map((slot) => (
@@ -240,29 +241,26 @@ export default function CheckoutPage() {
                     }}
                   />
                   <strong>
-                    {new Date(slot.startsAt).toLocaleDateString('en-GB', {
+                    {new Date(`${slot.deliveryDate}T12:00:00Z`).toLocaleDateString('en-GB', {
                       weekday: 'short',
                       day: 'numeric',
                       month: 'short',
+                      timeZone: 'Europe/London',
                     })}
                   </strong>
                   <span>
-                    {new Date(slot.startsAt).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                    –
-                    {new Date(slot.endsAt).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {slot.service === 'SATURDAY'
+                      ? 'Saturday priority delivery'
+                      : 'Standard delivery'}
+                    {' · '}
+                    {money(slot.deliveryFeeMinor, summary?.currency ?? 'GBP')}
                   </span>
                 </label>
               ))}
             </div>
           ) : (
             <div className="empty-state">
-              No delivery slots are currently available for this postcode.
+              Delivery is not currently available for this London postcode.
             </div>
           )}
           <button className="button" disabled={!details.slotId} onClick={continueFromDelivery}>
@@ -295,7 +293,7 @@ export default function CheckoutPage() {
             disabled={!details.dateOfBirth}
             onClick={() => void verifyAge()}
           >
-            Verify age and reserve slot
+            Verify age and continue
           </button>
         </section>
       )}

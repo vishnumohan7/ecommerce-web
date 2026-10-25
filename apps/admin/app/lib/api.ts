@@ -139,6 +139,10 @@ export interface DeliverySlot {
   active: boolean;
 }
 
+export interface DeliveryPolicy {
+  saturdaySurchargeMinor: string;
+}
+
 export interface Coupon {
   id: string;
   code: string;
@@ -726,6 +730,10 @@ export function fetchDeliveryZones() {
 }
 export function fetchDeliverySlots() {
   return get<DeliverySlot[]>('/api/v1/admin/delivery/slots', true);
+}
+
+export function fetchDeliveryPolicy() {
+  return get<DeliveryPolicy>('/api/v1/admin/delivery/policy', true);
 }
 export function fetchCoupons() {
   return get<Coupon[]>('/api/v1/admin/coupons', true);

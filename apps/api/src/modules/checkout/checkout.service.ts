@@ -96,16 +96,23 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
     const postcode = input.deliveryAddress.postcode;
     const [deliveryQuote, deliveryOptions, price] = await Promise.all([
       this.delivery.quote(identity, postcode),
-      this.delivery.availableSlots(identity, postcode),
+      this.delivery.availableDeliveryDates(identity, postcode),
       this.pricing.quote(identity, {
         postcode,
         ...(input.couponCode ? { couponCode: input.couponCode } : {}),
       }),
     ]);
-    if (
-      input.deliverySlotId &&
-      !deliveryOptions.slots.some((option) => option.id === input.deliverySlotId)
-    )
+    const selectedGeneratedOption = deliveryOptions.options.find(
+      (option) => option.id === input.deliverySlotId,
+    );
+    const selectedLegacyOption =
+      input.deliverySlotId && !selectedGeneratedOption
+        ? (await this.delivery.availableSlots(identity, postcode)).slots.find(
+            (option) => option.id === input.deliverySlotId,
+          )
+        : undefined;
+    const selectedOption = selectedGeneratedOption ?? selectedLegacyOption;
+    if (input.deliverySlotId && !selectedOption)
       throw new ConflictException({
         code: 'DELIVERY_SLOT_UNAVAILABLE',
         message: 'The selected delivery slot is unavailable or past cutoff',
@@ -149,11 +156,18 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
       appliedCoupon: price.couponCode,
       promotionDiscountMinor: price.promotionDiscountMinor,
       couponDiscountMinor: price.couponDiscountMinor,
-      delivery: { ...deliveryQuote, options: deliveryOptions.slots },
+      delivery: {
+        ...deliveryQuote,
+        deliveryFeeMinor: price.deliveryFeeMinor + (selectedOption?.surchargeMinor ?? 0n),
+        options: deliveryOptions.options.map((option) => ({
+          ...option,
+          deliveryFeeMinor: price.deliveryFeeMinor + option.surchargeMinor,
+        })),
+      },
       vatMinor: price.taxMinor,
       subtotalMinor: price.subtotalMinor,
       discountMinor: price.discountMinor,
-      totalMinor: price.totalMinor,
+      totalMinor: price.totalMinor + (selectedOption?.surchargeMinor ?? 0n),
       requiresAgeVerification: age.requiresAgeVerification,
       requiredAge: age.requiredAge,
       requiresManualCapture,
@@ -317,14 +331,25 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
             postcode,
             ...(snapshot.request?.couponCode ? { couponCode: snapshot.request.couponCode } : {}),
           });
-          const slots = await this.delivery.availableSlots(identity, postcode);
+          const deliveryOptions = await this.delivery.availableDeliveryDates(identity, postcode);
+          const selectedDeliveryOption = deliveryOptions.options.find(
+            (option) => option.id === snapshot.request?.deliverySlotId,
+          );
+          const legacyDeliveryOption =
+            snapshot.request?.deliverySlotId && !selectedDeliveryOption
+              ? await this.db.client.deliverySlot.findFirst({
+                  where: { id: snapshot.request.deliverySlotId, active: true },
+                })
+              : null;
           await this.age.validate(identity, postcode);
           current =
-            price.totalMinor.toString() === snapshot.summary?.totalMinor &&
+            (price.totalMinor + (selectedDeliveryOption?.surchargeMinor ?? 0n)).toString() ===
+              snapshot.summary?.totalMinor &&
             price.discountMinor.toString() === snapshot.summary?.discountMinor &&
             price.taxMinor.toString() === snapshot.summary?.vatMinor &&
             (!snapshot.request?.deliverySlotId ||
-              slots.slots.some((slot) => slot.id === snapshot.request?.deliverySlotId));
+              Boolean(selectedDeliveryOption) ||
+              Boolean(legacyDeliveryOption));
         }
       }
     } catch {

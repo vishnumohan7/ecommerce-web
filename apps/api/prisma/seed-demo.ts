@@ -227,14 +227,38 @@ async function seedDemo(): Promise<void> {
     orderBy: { email: 'asc' },
   });
   const zoneSeeds = [
-    { code: 'LONDON', name: 'London', patterns: ['SW*', 'SE*'], alcohol: true },
-    { code: 'EDINBURGH', name: 'Edinburgh', patterns: ['EH*'], alcohol: true },
-    { code: 'BELFAST', name: 'Belfast', patterns: ['BT*'], alcohol: false },
+    {
+      code: 'LONDON',
+      name: 'London',
+      patterns: [
+        'E*',
+        'EC*',
+        'N*',
+        'NW*',
+        'SE*',
+        'SW*',
+        'W*',
+        'WC*',
+        'BR*',
+        'CR*',
+        'DA*',
+        'EN*',
+        'HA*',
+        'IG*',
+        'KT*',
+        'RM*',
+        'SM*',
+        'TW*',
+        'UB*',
+        'WD*',
+      ],
+      alcohol: true,
+    },
   ];
   for (const seed of zoneSeeds)
     await prisma.deliveryZone.upsert({
       where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: seed.code } },
-      update: {},
+      update: { postcodePatterns: seed.patterns, active: true },
       create: {
         tenantId: DEFAULT_TENANT_ID,
         code: seed.code,
@@ -247,25 +271,6 @@ async function seedDemo(): Promise<void> {
         alcoholDeliveryAllowed: seed.alcohol,
       },
     });
-  const zones = await prisma.deliveryZone.findMany({ where: { tenantId: DEFAULT_TENANT_ID } });
-  const now = new Date();
-  await prisma.deliverySlot.createMany({
-    data: zones.flatMap((zone) =>
-      Array.from({ length: 14 }, (_, day) => {
-        const startsAt = new Date(now);
-        startsAt.setUTCDate(startsAt.getUTCDate() + day + 1);
-        startsAt.setUTCHours(10, 0, 0, 0);
-        return {
-          tenantId: DEFAULT_TENANT_ID,
-          zoneId: zone.id,
-          startsAt,
-          endsAt: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000),
-          capacity: 30,
-        };
-      }),
-    ),
-    skipDuplicates: true,
-  });
   const couponNow = new Date();
   const couponEnd = new Date(couponNow.getTime() + 90 * 24 * 60 * 60 * 1000);
   await prisma.coupon.createMany({
@@ -380,8 +385,7 @@ async function seedDemo(): Promise<void> {
         status: order.paymentStatus,
         authorisedAmountMinor: order.totalMinor,
         capturedAmountMinor: order.totalMinor,
-        refundedAmountMinor:
-          order.paymentStatus === PaymentStatus.REFUNDED ? order.totalMinor : 0n,
+        refundedAmountMinor: order.paymentStatus === PaymentStatus.REFUNDED ? order.totalMinor : 0n,
         currency: order.currency,
         manualCapture: false,
       },

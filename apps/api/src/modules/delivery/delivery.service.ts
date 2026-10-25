@@ -11,6 +11,7 @@ import { JurisdictionRuleService } from '../age-verification/jurisdiction-rule.s
 import {
   deliverySlotSchema,
   deliverySlotUpdateSchema,
+  deliveryPolicyUpdateSchema,
   deliveryZoneSchema,
   deliveryZoneUpdateSchema,
 } from './delivery.schemas';
@@ -120,6 +121,31 @@ export class DeliveryService {
     return { zone: quote.zone, breakdown: quote.breakdown, slots };
   }
 
+  async availableDeliveryDates(identity: DeliveryIdentity, postcode: string, now = new Date()) {
+    const quote = await this.quote(identity, postcode);
+    const policy = await this.deliveryPolicy();
+    const dates = deliveryDatesForOrder(now);
+    const options = await Promise.all(
+      dates.map(async ({ date, service, surchargeMinor }) => {
+        const startsAt = atLondonMidday(date);
+        const endsAt = new Date(startsAt.getTime() + 60 * 60_000);
+        const slot = await this.systemDeliverySlot(
+          quote.zone.id,
+          startsAt,
+          endsAt,
+          service === 'SATURDAY' ? policy.saturdaySurchargeMinor : surchargeMinor,
+        );
+        return {
+          ...slot,
+          service,
+          deliveryDate: date,
+          deliveryFeeMinor: quote.deliveryFeeMinor + slot.surchargeMinor,
+        };
+      }),
+    );
+    return { zone: quote.zone, breakdown: quote.breakdown, options };
+  }
+
   async reserve(identity: DeliveryIdentity, slotId: string, postcode: string, now = new Date()) {
     const basket = await this.basket(identity);
     const available = await this.availableSlots(identity, postcode, now);
@@ -171,6 +197,30 @@ export class DeliveryService {
 
   slots() {
     return this.db.client.deliverySlot.findMany({ orderBy: { startsAt: 'asc' } });
+  }
+
+  async deliveryPolicy() {
+    const settings = await this.deliverySettings();
+    return { saturdaySurchargeMinor: settings.saturdaySurchargeMinor };
+  }
+
+  async updateDeliveryPolicy(raw: unknown) {
+    const input = deliveryPolicyUpdateSchema.parse(raw);
+    return this.db.transaction(async (tx, tenantId) => {
+      const current = await tx.tenantSettings.findFirst({ where: { tenantId } });
+      const settings = jsonObject(current?.settings);
+      const delivery = jsonObject(settings.delivery);
+      const next = {
+        ...settings,
+        delivery: { ...delivery, saturdaySurchargeMinor: input.saturdaySurchargeMinor },
+      };
+      await tx.tenantSettings.upsert({
+        where: { tenantId },
+        create: { tenantId, settings: next },
+        update: { settings: next, version: { increment: 1 } },
+      });
+      return { saturdaySurchargeMinor: BigInt(input.saturdaySurchargeMinor) };
+    });
   }
 
   async createZone(raw: unknown) {
@@ -432,13 +482,47 @@ export class DeliveryService {
         ? rawStrategy
         : 'MAX';
     const rawSurcharge = delivery?.combinationSurchargeMinor;
+    const rawSaturdaySurcharge = delivery?.saturdaySurchargeMinor;
     return {
       strategy,
       surchargeMinor:
         typeof rawSurcharge === 'number' && Number.isSafeInteger(rawSurcharge) && rawSurcharge >= 0
           ? BigInt(rawSurcharge)
           : 0n,
+      saturdaySurchargeMinor:
+        typeof rawSaturdaySurcharge === 'number' &&
+        Number.isSafeInteger(rawSaturdaySurcharge) &&
+        rawSaturdaySurcharge >= 0
+          ? BigInt(rawSaturdaySurcharge)
+          : 150n,
     };
+  }
+
+  private async systemDeliverySlot(
+    zoneId: string,
+    startsAt: Date,
+    endsAt: Date,
+    surchargeMinor: bigint,
+  ) {
+    const tenantId = TenantContext.requireTenantId();
+    const values = {
+      surchargeMinor,
+      active: true,
+      capacity: 1_000_000,
+      cutoffMinutes: 0,
+      allowsAgeRestricted: true,
+    };
+    return this.db.client.deliverySlot.upsert({
+      where: { tenantId_zoneId_startsAt_endsAt: { tenantId, zoneId, startsAt, endsAt } },
+      create: {
+        tenantId,
+        zoneId,
+        startsAt,
+        endsAt,
+        ...values,
+      },
+      update: values,
+    });
   }
 
   private audit(
@@ -508,6 +592,51 @@ function jsonMoney(value: unknown): bigint | null {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return BigInt(value);
   if (typeof value === 'string' && /^\d+$/.test(value)) return BigInt(value);
   return null;
+}
+
+type DeliveryDate = { date: string; service: 'STANDARD' | 'SATURDAY'; surchargeMinor: bigint };
+
+export function deliveryDatesForOrder(now: Date): DeliveryDate[] {
+  const today = londonCalendarDate(now);
+  const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
+  if (weekday === 5)
+    return [
+      { date: addCalendarDays(today, 1), service: 'SATURDAY', surchargeMinor: 150n },
+      { date: addCalendarDays(today, 4), service: 'STANDARD', surchargeMinor: 0n },
+    ];
+  if (weekday === 6)
+    return [{ date: addCalendarDays(today, 3), service: 'STANDARD', surchargeMinor: 0n }];
+  if (weekday === 0)
+    return [{ date: addCalendarDays(today, 2), service: 'STANDARD', surchargeMinor: 0n }];
+  return [{ date: addCalendarDays(today, 1), service: 'STANDARD', surchargeMinor: 0n }];
+}
+
+function londonCalendarDate(value: Date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((candidate) => candidate.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+function addCalendarDays(date: string, days: number) {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+function atLondonMidday(date: string) {
+  return new Date(`${date}T12:00:00Z`);
+}
+
+function jsonObject(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function normalizePostcode(value: string): string {

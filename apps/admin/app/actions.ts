@@ -396,6 +396,22 @@ export async function createDeliveryZone(data: FormData) {
   finish('/delivery', result, 'Delivery zone created.');
 }
 
+export async function updateDeliveryPricing(data: FormData) {
+  const zoneId = textValue(data, 'zoneId');
+  const fixedFeeMinor = Number(textValue(data, 'fixedFeeMinor'));
+  const saturdaySurchargeMinor = Number(textValue(data, 'saturdaySurchargeMinor'));
+  const zone = await adminMutation(
+    `/api/v1/admin/delivery/zones/${encodeURIComponent(zoneId)}`,
+    'PATCH',
+    { groceryFeeMinor: fixedFeeMinor, alcoholFeeMinor: fixedFeeMinor },
+  );
+  if (!zone.ok) finish('/delivery', zone, '');
+  const policy = await adminMutation('/api/v1/admin/delivery/policy', 'PATCH', {
+    saturdaySurchargeMinor,
+  });
+  finish('/delivery', policy, 'Delivery pricing updated.');
+}
+
 export async function toggleDelivery(data: FormData) {
   const kind = textValue(data, 'kind');
   const result = await adminMutation(

@@ -1,10 +1,10 @@
 /* eslint-disable local/no-jsx-literals -- Operations copy is English-only. */
 import type { Metadata } from 'next';
-import { createDeliverySlot, createDeliveryZone, toggleDelivery } from '../actions';
+import { createDeliveryZone, toggleDelivery, updateDeliveryPricing } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { Currency } from '../components/currency';
-import { fetchDeliverySlots, fetchDeliveryZones } from '../lib/api';
+import { fetchDeliveryPolicy, fetchDeliveryZones } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Delivery operations' };
 export const dynamic = 'force-dynamic';
@@ -14,26 +14,25 @@ interface PageProps {
 }
 
 export default async function DeliveryPage({ searchParams }: PageProps) {
-  const [params, zonesResult, slotsResult] = await Promise.all([
+  const [params, zonesResult, policyResult] = await Promise.all([
     searchParams,
     fetchDeliveryZones(),
-    fetchDeliverySlots(),
+    fetchDeliveryPolicy(),
   ]);
   const zones = zonesResult.ok ? zonesResult.data : [];
-  const slots = slotsResult.ok ? slotsResult.data : [];
-  const zonesById = new Map(zones.map((zone) => [zone.id, zone.name]));
+  const saturdaySurchargeMinor = policyResult.ok ? policyResult.data.saturdaySurchargeMinor : '150';
   return (
     <>
       <section className="page-heading">
         <div>
           <p className="eyebrow">Fulfilment</p>
           <h1>Delivery operations</h1>
-          <p>Manage postcode zones, fees, slot capacity and age-restricted eligibility.</p>
+          <p>Manage London coverage and the fixed standard and Saturday delivery charges.</p>
         </div>
       </section>
       <ActionMessage success={params.success} error={params.error} />
       {!zonesResult.ok && <ApiNotice message={zonesResult.error} />}
-      {!slotsResult.ok && <ApiNotice message={slotsResult.error} />}
+      {!policyResult.ok && <ApiNotice message={policyResult.error} />}
       <article className="panel section-gap">
         <header className="panel-header">
           <div>
@@ -103,91 +102,49 @@ export default async function DeliveryPage({ searchParams }: PageProps) {
           </table>
         </div>
       </article>
-      <article className="panel section-gap">
-        <header className="panel-header">
-          <div>
-            <p className="eyebrow">Capacity</p>
-            <h2>Delivery slots</h2>
+      {zones.map((zone) => (
+        <article className="panel section-gap" key={`pricing-${zone.id}`}>
+          <header className="panel-header">
+            <div>
+              <p className="eyebrow">Delivery pricing</p>
+              <h2>{zone.name}</h2>
+            </div>
+          </header>
+          <form action={updateDeliveryPricing} className="inline-create compact-form">
+            <input type="hidden" name="zoneId" value={zone.id} />
+            <label>
+              Fixed London charge (pence)
+              <input
+                name="fixedFeeMinor"
+                type="number"
+                min="0"
+                defaultValue={zone.groceryFeeMinor}
+                required
+              />
+            </label>
+            <label>
+              Saturday surcharge (pence)
+              <input
+                name="saturdaySurchargeMinor"
+                type="number"
+                min="0"
+                defaultValue={saturdaySurchargeMinor}
+                required
+              />
+            </label>
+            <button className="button button-primary" type="submit">
+              Save pricing
+            </button>
+          </form>
+          <div className="panel-body">
+            <p>
+              Orders placed Monday–Thursday are delivered the next day. Friday orders can use paid
+              Saturday delivery or standard Tuesday delivery. Weekend orders use standard Tuesday
+              delivery.
+            </p>
           </div>
-          <span className="count-pill">{slots.length}</span>
-        </header>
-        <form action={createDeliverySlot} className="inline-create slot-form">
-          <select name="zoneId" aria-label="Delivery zone" required><option value="">Select zone</option>{zones.filter((zone) => zone.active).map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}</select>
-          <label>Starts<input name="startsAt" type="datetime-local" required /></label>
-          <label>Ends<input name="endsAt" type="datetime-local" required /></label>
-          <input name="capacity" type="number" min="1" placeholder="Capacity" required />
-          <input name="surchargeMinor" type="number" min="0" defaultValue="0" aria-label="Surcharge in pence" />
-          <input name="cutoffMinutes" type="number" min="0" defaultValue="120" aria-label="Cut-off in minutes" />
-          <label className="inline-checkbox"><input name="allowsAgeRestricted" type="checkbox" defaultChecked /> Allow 18+ orders</label>
-          <button className="button button-primary" type="submit">Add slot</button>
-        </form>
-        {slots.length === 0 ? (
-          <div className="empty-state">
-            <h3>No delivery slots</h3>
-            <p>Create the first delivery window above.</p>
-          </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Zone</th>
-                  <th>Window</th>
-                  <th>Capacity</th>
-                  <th>Surcharge</th>
-                  <th>18+</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {slots.map((slot) => (
-                  <tr key={slot.id}>
-                    <td>{zonesById.get(slot.zoneId) ?? slot.zoneId}</td>
-                    <td>
-                      {new Intl.DateTimeFormat('en-GB', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      }).format(new Date(slot.startsAt))}
-                      <small className="cell-subtext">
-                        to{' '}
-                        {new Intl.DateTimeFormat('en-GB', { timeStyle: 'short' }).format(
-                          new Date(slot.endsAt),
-                        )}
-                      </small>
-                    </td>
-                    <td>
-                      {slot.reserved}/{slot.capacity}
-                    </td>
-                    <td>
-                      <Currency minor={slot.surchargeMinor} />
-                    </td>
-                    <td>{slot.allowsAgeRestricted ? 'Yes' : 'No'}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${slot.active ? 'status-active' : 'status-down'}`}
-                      >
-                        <span />
-                        {slot.active ? 'Open' : 'Closed'}
-                      </span>
-                    </td>
-                    <td>
-                      <form action={toggleDelivery}>
-                        <input type="hidden" name="kind" value="slots" />
-                        <input type="hidden" name="id" value={slot.id} />
-                        <input type="hidden" name="active" value={String(slot.active)} />
-                        <button className="text-action" type="submit">
-                          {slot.active ? 'Close' : 'Open'}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </article>
+        </article>
+      ))}
     </>
   );
 }
