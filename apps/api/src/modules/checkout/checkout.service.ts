@@ -252,7 +252,9 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
       for (const item of cartItems) {
         const rows = await tx.$queryRaw<LockedInventory[]>`
           SELECT "id", "productId", "onHand", "reserved" FROM "Inventory"
-          WHERE "tenantId" = ${tenantId}::uuid AND "productId" = ${item.productId}::uuid
+          WHERE "tenantId" = ${tenantId}::uuid
+            AND "productId" = ${item.productId}::uuid
+            AND "variantId" IS NULL
           ORDER BY ("onHand" - "reserved") DESC FOR UPDATE`;
         const inventory = rows.find((row) => row.onHand - row.reserved >= item.quantity);
         if (!inventory)

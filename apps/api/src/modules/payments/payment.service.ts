@@ -490,6 +490,30 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       const reservations = await tx.stockReservation.findMany({
         where: { tenantId, checkoutSessionId: session.id, releasedAt: null },
       });
+      const orderedQuantityByProduct = new Map<string, number>();
+      for (const line of lines) {
+        const productId = String(line['productId']);
+        orderedQuantityByProduct.set(
+          productId,
+          (orderedQuantityByProduct.get(productId) ?? 0) + Number(line['quantity']),
+        );
+      }
+      const reservedQuantityByProduct = new Map<string, number>();
+      for (const reservation of reservations)
+        reservedQuantityByProduct.set(
+          reservation.productId,
+          (reservedQuantityByProduct.get(reservation.productId) ?? 0) + reservation.quantity,
+        );
+      const reservationsMatchOrder =
+        orderedQuantityByProduct.size === reservedQuantityByProduct.size &&
+        [...orderedQuantityByProduct].every(
+          ([productId, quantity]) => reservedQuantityByProduct.get(productId) === quantity,
+        );
+      if (!reservationsMatchOrder)
+        throw new ConflictException({
+          code: 'STOCK_RESERVATION_INVALID',
+          message: 'The order stock reservation is missing or does not match the basket',
+        });
       for (const reservation of reservations) {
         const changed =
           await tx.$executeRaw`UPDATE "Inventory" SET "onHand" = "onHand" - ${reservation.quantity}, "reserved" = "reserved" - ${reservation.quantity}, "version" = "version" + 1 WHERE "tenantId" = ${tenantId}::uuid AND "id" = ${reservation.inventoryId}::uuid AND "onHand" >= ${reservation.quantity} AND "reserved" >= ${reservation.quantity}`;
