@@ -3462,6 +3462,31 @@ td code {
   flex-direction: column;
   gap: 16px;
 }
+.payment-settings-panel {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.payment-webhook-note {
+  background: #f5f8f6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+}
+.payment-webhook-note code {
+  color: var(--brand-deep);
+  font-size: 11px;
+}
+.payment-webhook-note small {
+  color: var(--muted);
+}
+.payment-connection-test {
+  background: #fafbfc;
+  border-top: 1px solid var(--line);
+  padding: 0 20px 16px;
+  text-align: right;
+}
 .integration-grid {
   display: grid;
   gap: 20px;

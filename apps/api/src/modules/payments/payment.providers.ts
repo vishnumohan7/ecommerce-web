@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import type { PaymentIntentRequest, PaymentIntentResult, PaymentProvider } from '@app/ports';
-import { AppConfigService } from '../../common/config/app-config.service';
+import { PaymentConfigurationService } from './payment-configuration.service';
 
 @Injectable()
 export class StubPaymentProvider implements PaymentProvider {
@@ -48,12 +48,12 @@ export class StubPaymentProvider implements PaymentProvider {
 
 @Injectable()
 export class StripePaymentProvider implements PaymentProvider {
-  constructor(private readonly config: AppConfigService) {}
-  health() {
-    return Promise.resolve({ ok: Boolean(this.config.values.STRIPE_SECRET_KEY) });
+  constructor(private readonly configuration: PaymentConfigurationService) {}
+  async health() {
+    return { ok: Boolean(await this.configuration.stripeSecret()) };
   }
   async createIntent(request: PaymentIntentRequest): Promise<PaymentIntentResult> {
-    const secret = this.config.values.STRIPE_SECRET_KEY;
+    const secret = await this.configuration.stripeSecret();
     if (!secret) throw new Error('Stripe is not configured');
     const form = new URLSearchParams({
       amount: request.amountMinor.toString(),
@@ -129,7 +129,7 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   private async post(path: string, form: URLSearchParams, idempotencyKey: string) {
-    const secret = this.config.values.STRIPE_SECRET_KEY;
+    const secret = await this.configuration.stripeSecret();
     if (!secret) throw new Error('Stripe is not configured');
     const response = await fetch(`https://api.stripe.com${path}`, {
       method: 'POST',
@@ -149,6 +149,51 @@ export class StripePaymentProvider implements PaymentProvider {
     };
     if (!response.ok) throw new Error(payload.error?.message ?? 'Stripe request failed');
     return payload;
+  }
+}
+
+@Injectable()
+export class ConfiguredPaymentProvider implements PaymentProvider {
+  constructor(
+    private readonly configuration: PaymentConfigurationService,
+    private readonly stripe: StripePaymentProvider,
+    private readonly stub: StubPaymentProvider,
+  ) {}
+
+  async health() {
+    return (await this.configuration.stripeSecret()) ? this.stripe.health() : this.stub.health();
+  }
+
+  async createIntent(request: PaymentIntentRequest) {
+    return (await this.provider()).createIntent(request);
+  }
+
+  async captureIntent(
+    providerPaymentIntentId: string,
+    amountMinor: bigint,
+    idempotencyKey: string,
+  ) {
+    return (await this.provider()).captureIntent(
+      providerPaymentIntentId,
+      amountMinor,
+      idempotencyKey,
+    );
+  }
+
+  async cancelIntent(providerPaymentIntentId: string, idempotencyKey: string) {
+    return (await this.provider()).cancelIntent(providerPaymentIntentId, idempotencyKey);
+  }
+
+  async refundIntent(providerPaymentIntentId: string, amountMinor: bigint, idempotencyKey: string) {
+    return (await this.provider()).refundIntent(
+      providerPaymentIntentId,
+      amountMinor,
+      idempotencyKey,
+    );
+  }
+
+  private async provider() {
+    return (await this.configuration.stripeSecret()) ? this.stripe : this.stub;
   }
 }
 

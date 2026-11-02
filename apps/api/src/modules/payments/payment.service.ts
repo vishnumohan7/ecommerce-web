@@ -18,6 +18,7 @@ import type { PricingIdentity } from '../pricing/pricing.service';
 import { CheckoutService } from '../checkout/checkout.service';
 import { NotificationService } from '../notifications/notification.service';
 import { verifyStripeSignature } from './payment.providers';
+import { PaymentConfigurationService } from './payment-configuration.service';
 import { allocateCommerceNumber } from './commerce-number';
 
 type Snapshot = {
@@ -51,6 +52,7 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
     private readonly config: AppConfigService,
     @Inject(TOKENS.Payment) private readonly provider: PaymentProvider,
     @Optional() private readonly notifications?: NotificationService,
+    @Optional() private readonly paymentConfiguration?: PaymentConfigurationService,
   ) {}
 
   onModuleInit(): void {
@@ -231,7 +233,9 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
   }
 
   async webhook(payload: Buffer, signature: string) {
-    const secret = this.config.values.STRIPE_WEBHOOK_SECRET;
+    const secret = this.paymentConfiguration
+      ? await this.paymentConfiguration.webhookSecret()
+      : this.config.values.STRIPE_WEBHOOK_SECRET;
     if (!secret || !verifyStripeSignature(payload, signature, secret))
       throw new BadRequestException({
         code: 'WEBHOOK_SIGNATURE_INVALID',

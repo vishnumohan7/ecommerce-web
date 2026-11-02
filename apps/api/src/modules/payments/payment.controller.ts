@@ -7,6 +7,7 @@ import { TenantContext } from '../../common/tenancy/tenant-context';
 import { GuestCartTokenService } from '../cart/guest-cart-token.service';
 import type { PricingIdentity } from '../pricing/pricing.service';
 import { PaymentService } from './payment.service';
+import { PaymentConfigurationService } from './payment-configuration.service';
 import { paymentCaptureSchema, paymentIntentSchema } from './payment.schemas';
 
 @ApiTags('Payments')
@@ -16,7 +17,24 @@ export class PaymentController {
     @Inject(PaymentService) private readonly payments: PaymentService,
     @Inject(GuestCartTokenService) private readonly guestTokens: GuestCartTokenService,
     @Inject(AppConfigService) private readonly config: AppConfigService,
+    @Inject(PaymentConfigurationService)
+    private readonly paymentConfiguration: PaymentConfigurationService,
   ) {}
+
+  @Public()
+  @Get('payments/config')
+  @ApiOperation({ summary: 'Return the public checkout payment configuration' })
+  configuration() {
+    return this.paymentConfiguration.publicConfiguration();
+  }
+
+  @Post('admin/payments/test-connection')
+  @RequirePermissions('settings.write')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify the saved Stripe account credentials' })
+  testConnection() {
+    return this.paymentConfiguration.testConnection();
+  }
 
   @Public()
   @Post('checkout/payment-intent')

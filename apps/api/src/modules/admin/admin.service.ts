@@ -693,6 +693,7 @@ export class AdminService {
     const integrations = this.record(stored.integrations);
     const email = this.record(integrations.email);
     const social = this.record(integrations.socialLogin);
+    const payment = this.record(integrations.payment);
     const businessSettings = { ...stored };
     delete businessSettings.integrations;
     return {
@@ -725,6 +726,32 @@ export class AdminService {
           appleKeyId: typeof social.appleKeyId === 'string' ? social.appleKeyId : '',
           applePrivateKeyConfigured:
             typeof social.applePrivateKey === 'string' && social.applePrivateKey.length > 0,
+        },
+        payment: {
+          enabled:
+            payment.enabled === true ||
+            (typeof payment.enabled !== 'boolean' &&
+              Boolean(
+                process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY &&
+                this.config.values.STRIPE_SECRET_KEY &&
+                this.config.values.STRIPE_WEBHOOK_SECRET,
+              )),
+          publishableKey:
+            typeof payment.publishableKey === 'string'
+              ? payment.publishableKey
+              : (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''),
+          secretKeyConfigured:
+            (typeof payment.secretKey === 'string' && payment.secretKey.length > 0) ||
+            Boolean(this.config.values.STRIPE_SECRET_KEY),
+          webhookSecretConfigured:
+            (typeof payment.webhookSecret === 'string' && payment.webhookSecret.length > 0) ||
+            Boolean(this.config.values.STRIPE_WEBHOOK_SECRET),
+          mode:
+            (typeof payment.publishableKey === 'string' ? payment.publishableKey : '').startsWith(
+              'pk_live_',
+            ) || this.config.values.STRIPE_SECRET_KEY?.startsWith('sk_live_')
+              ? 'live'
+              : 'test',
         },
       },
     };
@@ -763,6 +790,7 @@ export class AdminService {
         const protect = (secret: string) =>
           encryptConfigSecret(secret, this.config.values.JWT_ACCESS_SECRET);
         const integrations = {
+          ...existing,
           email: {
             provider: email.provider,
             fromName: email.fromName,
@@ -801,6 +829,42 @@ export class AdminService {
           update: { settings, version: { increment: 1 } },
         });
       }
+      if (input.payment) {
+        const existing = this.record(currentSettings.integrations);
+        const existingPayment = this.record(existing.payment);
+        const protect = (secret: string) =>
+          encryptConfigSecret(secret, this.config.values.JWT_ACCESS_SECRET);
+        const secretKey = input.payment.secretKey
+          ? protect(input.payment.secretKey)
+          : (existingPayment.secretKey ?? '');
+        const webhookSecret = input.payment.webhookSecret
+          ? protect(input.payment.webhookSecret)
+          : (existingPayment.webhookSecret ?? '');
+        if (
+          input.payment.enabled &&
+          (!input.payment.publishableKey ||
+            (!secretKey && !this.config.values.STRIPE_SECRET_KEY) ||
+            (!webhookSecret && !this.config.values.STRIPE_WEBHOOK_SECRET))
+        )
+          throw new BadRequestException(
+            'Publishable key, secret key and webhook signing secret are required to enable Stripe',
+          );
+        const integrations = {
+          ...existing,
+          payment: {
+            enabled: input.payment.enabled,
+            publishableKey: input.payment.publishableKey,
+            secretKey,
+            webhookSecret,
+          },
+        };
+        const settings = { ...currentSettings, integrations } as Prisma.InputJsonValue;
+        await tx.tenantSettings.upsert({
+          where: { tenantId },
+          create: { tenantId, settings, version: 1 },
+          update: { settings, version: { increment: 1 } },
+        });
+      }
       if (input.branding) {
         const branding = {
           brandName: input.branding.brandName,
@@ -824,6 +888,7 @@ export class AdminService {
     await this.audit('SETTINGS_UPDATED', 'Store', tenantId, undefined, {
       settingsUpdated: Boolean(input.settings),
       integrationsUpdated: Boolean(input.integrations),
+      paymentUpdated: Boolean(input.payment),
     });
     return result;
   }

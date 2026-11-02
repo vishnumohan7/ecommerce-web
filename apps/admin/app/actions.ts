@@ -874,6 +874,29 @@ export async function saveIntegrations(data: FormData) {
   finish('/settings', result, 'Communication and sign-in settings updated.');
 }
 
+export async function savePaymentSettings(data: FormData) {
+  const result = await adminMutation('/api/v1/admin/settings', 'PATCH', {
+    payment: {
+      enabled: data.get('paymentEnabled') === 'on',
+      publishableKey: textValue(data, 'publishableKey'),
+      secretKey: textValue(data, 'secretKey'),
+      webhookSecret: textValue(data, 'webhookSecret'),
+    },
+  });
+  finish('/settings', result, 'Payment settings updated.');
+}
+
+export async function testPaymentConnection() {
+  const result = await adminMutation<{ accountId: string; mode: string }>(
+    '/api/v1/admin/payments/test-connection',
+    'POST',
+  );
+  const message = result.ok
+    ? `Stripe connected (${result.data.accountId}, ${result.data.mode} mode).`
+    : '';
+  finish('/settings', result, message);
+}
+
 export async function updateNotificationTemplate(data: FormData) {
   const id = textValue(data, 'id');
   const result = await adminMutation(

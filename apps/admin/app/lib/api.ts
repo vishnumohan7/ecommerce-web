@@ -435,6 +435,13 @@ export interface AdminSettings {
       appleKeyId: string;
       applePrivateKeyConfigured: boolean;
     };
+    payment: {
+      enabled: boolean;
+      publishableKey: string;
+      secretKeyConfigured: boolean;
+      webhookSecretConfigured: boolean;
+      mode: 'test' | 'live';
+    };
   };
 }
 export interface RbacData {

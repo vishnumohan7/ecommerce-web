@@ -96,6 +96,37 @@ export const settingsUpdateSchema = z.object({
       }),
     })
     .optional(),
+  payment: z
+    .object({
+      enabled: z.boolean(),
+      publishableKey: z
+        .string()
+        .trim()
+        .max(500)
+        .refine(
+          (value) => !value || /^pk_(test|live)_/.test(value),
+          'Enter a valid Stripe publishable key',
+        ),
+      secretKey: z
+        .string()
+        .trim()
+        .max(500)
+        .optional()
+        .refine(
+          (value) => !value || /^sk_(test|live)_/.test(value),
+          'Enter a valid Stripe secret key',
+        ),
+      webhookSecret: z
+        .string()
+        .trim()
+        .max(500)
+        .optional()
+        .refine(
+          (value) => !value || value.startsWith('whsec_'),
+          'Enter a valid Stripe webhook secret',
+        ),
+    })
+    .optional(),
   branding: z
     .object({
       brandName: z.string().trim().min(1).max(160),

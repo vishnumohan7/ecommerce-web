@@ -1,13 +1,10 @@
 'use client';
 /* eslint-disable local/no-jsx-literals */
-import { SyntheticEvent, useEffect, useState } from 'react';
+import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { browserApi, money } from '../../lib/store-api';
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface Slot {
   id: string;
@@ -36,6 +33,13 @@ interface PaymentIntent {
   manualCapture: boolean;
 }
 
+interface PaymentConfiguration {
+  enabled: boolean;
+  provider: 'stripe';
+  mode: 'test' | 'live';
+  publishableKey: string;
+}
+
 export default function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
@@ -43,6 +47,16 @@ export default function CheckoutPage() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [sessionId, setSessionId] = useState('');
   const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
+  const [paymentConfiguration, setPaymentConfiguration] = useState<PaymentConfiguration | null>(
+    null,
+  );
+  const stripePromise = useMemo(
+    () =>
+      paymentConfiguration?.enabled && paymentConfiguration.publishableKey
+        ? loadStripe(paymentConfiguration.publishableKey)
+        : null,
+    [paymentConfiguration],
+  );
   const [details, setDetails] = useState({
     line1: '',
     line2: '',
@@ -101,7 +115,7 @@ export default function CheckoutPage() {
         }),
       });
       setSessionId(session.id);
-      if (stripePublishableKey) {
+      if (paymentConfiguration?.enabled) {
         const intent = await browserApi<PaymentIntent>('/api/v1/checkout/payment-intent', {
           method: 'POST',
           body: JSON.stringify({ checkoutSessionId: session.id }),
@@ -154,6 +168,18 @@ export default function CheckoutPage() {
       setError(reason instanceof Error ? reason.message : 'Order could not be placed');
     }
   }
+  useEffect(() => {
+    void browserApi<PaymentConfiguration>('/api/v1/payments/config')
+      .then(setPaymentConfiguration)
+      .catch(() => {
+        setPaymentConfiguration({
+          enabled: false,
+          provider: 'stripe',
+          mode: 'test',
+          publishableKey: '',
+        });
+      });
+  }, []);
   useEffect(() => {
     const onlySlot = slots[0];
     if (step === 2 && slots.length === 1 && onlySlot && !details.slotId)
@@ -246,7 +272,9 @@ export default function CheckoutPage() {
               />
             </label>
           </div>
-          <button className="button">Find delivery options</button>
+          <button className="button" disabled={!paymentConfiguration}>
+            {paymentConfiguration ? 'Find delivery options' : 'Loading checkout…'}
+          </button>
         </form>
       )}
       {step === 2 && (
@@ -345,7 +373,7 @@ export default function CheckoutPage() {
               )}
             </>
           )}
-          {!stripePromise || !stripePublishableKey ? (
+          {!stripePromise || !paymentConfiguration?.enabled ? (
             <>
               <p className="notice">
                 Card payments are being configured. Cash on delivery is available for this order.
