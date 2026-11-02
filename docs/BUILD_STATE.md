@@ -15,11 +15,11 @@
 | 9   | Pricing, VAT, coupons, promotions      | COMPLETE    | PASS    | `main`    | Authoritative cart pricing, 60 golden baskets, live 20-way coupon race, and 145-test regression pass              |
 | 10  | Checkout orchestration                 | COMPLETE    | PASS    | `main`    | Hashed snapshots, ordered validation, guest tombstones, stock TTL/reservation release, and 25 focused tests       |
 | 11  | Stripe payments and webhooks           | COMPLETE    | PASS    | `main`    | One intent, signed durable webhooks, atomic order promotion, buffered/capped manual capture, and 5/5 live E2E     |
-| 12  | Orders, invoices, fulfilment, picking  | COMPLETE    | PASS    | `d5ebd40` | Gapless yearly numbers, grouped orders, PDF invoices, picking, age handover, and immutable day-book exports      |
+| 12  | Orders, invoices, fulfilment, picking  | COMPLETE    | PASS    | `d5ebd40` | Gapless yearly numbers, grouped orders, PDF invoices, picking, age handover, and immutable day-book exports       |
 | 13  | Returns and refunds                    | COMPLETE    | PASS    | `main`    | Audited returns, partial card/store-credit refunds, policy snapshots, restock/write-off, and 20-way guard         |
 | 14  | Notifications                          | COMPLETE    | PASS    | `main`    | Versioned templates, preferences, provider adapters, outbox fan-out, retries, dead letters, and delivery logs     |
 | 15  | Customer storefront                    | COMPLETE    | PASS    | `main`    | Live browse-to-order journey plus profile, addresses, wishlist, reviews, banners, CMS, and legal content          |
-| 17  | Admin dashboard (parallel preview)     | IN PROGRESS | PASS    | `main`    | Full product/category/brand CRUD plus delivery, pricing, orders, returns/refunds, invoices, and health views      |
+| 17  | Admin dashboard                        | IN PROGRESS | PASS    | `main`    | Authenticated RBAC operations cover catalogue, stock, promotions, orders, returns, users, reporting and settings  |
 
 ## Implemented modules
 
@@ -42,7 +42,7 @@
 - api/notifications — COMPLETE (versioned templates, channel preferences, device subscriptions, provider adapters, outbox fan-out, retries, and dead-letter logs)
 - api/customer — COMPLETE (profile, addresses, wishlist, verified-purchase reviews, banners, CMS blocks, and legal content)
 - web/storefront — COMPLETE (browse-to-order, account, addresses, wishlist, reviews, banners, CMS, legal, help, tracking, and order history are wired to live APIs)
-- admin/dashboard — IN PROGRESS (full product/category/brand CRUD, delivery, pricing, VAT, orders, fulfilment, returns/refunds, and invoices are wired; secure interactive login and later milestone workflows remain)
+- admin/dashboard — IN PROGRESS (secure login, RBAC and daily operational workflows are wired; final reporting, accessibility and visual regression verification remain)
 
 ## Known deviations from BUILD_CONTRACT.md
 

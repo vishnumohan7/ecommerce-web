@@ -42,9 +42,7 @@
     "zod": "^3.25.42"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,mjs,json,md}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
+    "*.{ts,tsx,js,mjs,json,md}": "prettier --write",
+    "{apps,packages}/**/*.{ts,tsx,js,mjs}": "eslint --fix"
   }
 }

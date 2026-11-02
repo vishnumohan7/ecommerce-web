@@ -1,26 +1,25 @@
 # Storefront API readiness
 
-Audited: 2026-10-19
+Audited: 2026-11-02
 
 ## Current release position
 
 The customer/storefront HTTP surface is implemented for catalogue browsing, search, age gating,
-guest and authenticated baskets, authoritative pricing, delivery selection, COD checkout, customer
+guest and authenticated baskets, authoritative pricing, delivery selection, Stripe checkout, customer
 accounts, orders, invoices, returns, notifications and privacy requests.
 
-COD is the supported payment route for the current test release. Stripe endpoints exist but are not
-a production-ready payment journey until client-owned Stripe keys, webhook signing, Payment Element
-UI and live Stripe test-mode acceptance scenarios are completed.
+Stripe is the confirmed production payment route. The Payment Element, signed webhook finalisation,
+order creation and processing state are implemented. Launch still requires client-owned keys and
+live Stripe test-mode acceptance scenarios. COD remains a safe configuration fallback until all
+three Stripe keys are installed together.
 
-The protected production deployment returned `{"status":"ok"}` from `/health` during this audit.
-`/ready` returned HTTP 503 because at least one declared dependency (Redis or the configured storage
-health endpoint) was unavailable. Production readiness remains blocked until this check is green or
-the dependency contract is deliberately revised to match the deployed database-backed media design.
+The readiness contract now checks PostgreSQL, the database-backed media table and Redis. It no longer
+requires an obsolete MinIO endpoint. The updated `/ready` response must be verified after deployment;
+a failure then identifies a real database/schema or queue dependency problem.
 
 ## Production blockers outside route implementation
 
-- Configure Stripe and verify success, decline, 3DS, cancellation and webhook replay scenarios, or
-  formally launch COD-only with card payment hidden.
+- Configure Stripe keys and verify success, decline, 3DS, cancellation and webhook replay scenarios.
 - Verify registration, password-reset, order-confirmation/invoice, fulfilment, return and refund email
   templates against a real mailbox, including provider retry and dead-letter handling.
 - Configure a production age-verification provider if alcohol checkout requires digital verification;

@@ -2,7 +2,12 @@
 /* eslint-disable local/no-jsx-literals */
 import { SyntheticEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { browserApi, money } from '../../lib/store-api';
+
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface Slot {
   id: string;
@@ -20,13 +25,24 @@ interface Summary {
   delivery: { options: Slot[] };
   groups: Array<{ category: string; lines: unknown[] }>;
 }
+
+interface PaymentIntent {
+  id: string;
+  clientSecret: string;
+  status: string;
+  amountMinor: string;
+  checkoutTotalMinor: string;
+  currency: string;
+  manualCapture: boolean;
+}
+
 export default function CheckoutPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [sessionId, setSessionId] = useState('');
+  const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
   const [details, setDetails] = useState({
     line1: '',
     line2: '',
@@ -85,6 +101,13 @@ export default function CheckoutPage() {
         }),
       });
       setSessionId(session.id);
+      if (stripePublishableKey) {
+        const intent = await browserApi<PaymentIntent>('/api/v1/checkout/payment-intent', {
+          method: 'POST',
+          body: JSON.stringify({ checkoutSessionId: session.id }),
+        });
+        setPaymentIntent(intent);
+      }
       setStep(4);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to reserve checkout');
@@ -117,15 +140,15 @@ export default function CheckoutPage() {
       setError(reason instanceof Error ? reason.message : 'Unable to verify age');
     }
   }
-  async function pay() {
+  async function placeCashOnDelivery() {
     setError('');
     try {
       const order = await browserApi<{ id?: string; orderId: string; status: string }>(
         '/api/v1/payments/cash-on-delivery',
         { method: 'POST', body: JSON.stringify({ checkoutSessionId: sessionId }) },
       );
-      router.push(
-        `/order-confirmation?order=${encodeURIComponent(order.orderId)}&payment=${encodeURIComponent(order.id ?? '')}&status=${encodeURIComponent(order.status)}`,
+      window.location.assign(
+        `/order-confirmation?order=${encodeURIComponent(order.orderId)}&payment=${encodeURIComponent(order.id ?? '')}`,
       );
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Order could not be placed');
@@ -306,28 +329,52 @@ export default function CheckoutPage() {
       )}
       {step === 4 && (
         <section className="form-card">
-          <h2>Review and place order</h2>
+          <h2>Review and pay securely</h2>
           {summary && (
             <>
               <dl className="checkout-total">
-                <dt>Cash due on delivery</dt>
+                <dt>Total payable</dt>
                 <dd>{money(summary.totalMinor, summary.currency)}</dd>
               </dl>
               {summary.requiresManualCapture && (
                 <div className="notice">
-                  Some items are priced by actual weight. The final payable amount will be confirmed
-                  after picking.
+                  Some items are priced by actual weight. Stripe will authorise up to{' '}
+                  {money(paymentIntent?.amountMinor ?? summary.totalMinor, summary.currency)}. Only
+                  the final picked amount will be captured.
                 </div>
               )}
             </>
           )}
-          <p>
-            Payment method: Cash on Delivery. Please have the confirmed amount available when the
-            order arrives.
-          </p>
-          <button className="button full" onClick={() => void pay()} disabled={!sessionId}>
-            Place Cash on Delivery order
-          </button>
+          {!stripePromise || !stripePublishableKey ? (
+            <>
+              <p className="notice">
+                Card payments are being configured. Cash on delivery is available for this order.
+              </p>
+              <button
+                className="button full"
+                type="button"
+                disabled={!sessionId}
+                onClick={() => void placeCashOnDelivery()}
+              >
+                Place cash on delivery order
+              </button>
+            </>
+          ) : paymentIntent ? (
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret: paymentIntent.clientSecret,
+                appearance: {
+                  theme: 'stripe',
+                  variables: { colorPrimary: 'rgb(11, 81, 63)', borderRadius: '6px' },
+                },
+              }}
+            >
+              <StripePaymentForm paymentIntentId={paymentIntent.id} onError={setError} />
+            </Elements>
+          ) : (
+            <p>Preparing secure payment…</p>
+          )}
         </section>
       )}
       {error && (
@@ -336,6 +383,48 @@ export default function CheckoutPage() {
         </p>
       )}
     </main>
+  );
+}
+
+function StripePaymentForm({
+  paymentIntentId,
+  onError,
+}: Readonly<{ paymentIntentId: string; onError: (message: string) => void }>) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!stripe || !elements || submitting) return;
+    setSubmitting(true);
+    onError('');
+
+    const returnUrl = `${window.location.origin}/payment-return?payment=${encodeURIComponent(paymentIntentId)}`;
+    const result = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: returnUrl },
+      redirect: 'if_required',
+    });
+
+    if (result.error) {
+      onError(result.error.message ?? 'Payment could not be completed');
+      setSubmitting(false);
+      return;
+    }
+
+    router.push(`/payment-return?payment=${encodeURIComponent(paymentIntentId)}`);
+  }
+
+  return (
+    <form className="stripe-payment" onSubmit={(event) => void submit(event)}>
+      <PaymentElement options={{ layout: 'tabs' }} />
+      <button className="button full" type="submit" disabled={!stripe || !elements || submitting}>
+        {submitting ? 'Processing payment…' : 'Pay securely and place order'}
+      </button>
+      <small>Payments are encrypted and processed securely by Stripe.</small>
+    </form>
   );
 }
 

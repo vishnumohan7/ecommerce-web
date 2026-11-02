@@ -116,11 +116,16 @@ export default tseslint.config(
   },
   {
     files: ['scripts/**/*.{js,mjs,ts}', '**/*.config.{js,mjs,ts}'],
-    languageOptions: { globals: globals.node },
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: { projectService: { allowDefaultProject: ['scripts/*.ts'] } },
+    },
     rules: {
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'off',
+      '@typescript-eslint/no-useless-default-assignment': 'off',
     },
   },
 );

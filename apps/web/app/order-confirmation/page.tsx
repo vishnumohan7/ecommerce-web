@@ -3,8 +3,11 @@ import Link from 'next/link';
 
 export default async function Confirmation({
   searchParams,
-}: Readonly<{ searchParams: Promise<{ payment?: string; status?: string; order?: string }> }>) {
+}: Readonly<{
+  searchParams: Promise<{ payment?: string; status?: string; order?: string; method?: string }>;
+}>) {
   const data = await searchParams;
+  const isCard = data.method === 'card';
   return (
     <main className="confirmation-page">
       <section className="confirmation-hero">
@@ -12,10 +15,7 @@ export default async function Confirmation({
         <div>
           <p className="eyebrow">Order confirmed</p>
           <h1>Thank you. Your order has been placed.</h1>
-          <p>
-            Your order, invoice and fulfilment record are ready. Payment will be collected on
-            delivery.
-          </p>
+          <p>Your order, invoice and fulfilment record are ready.</p>
         </div>
         <div className="confirmation-actions">
           <Link
@@ -37,13 +37,17 @@ export default async function Confirmation({
       <section className="confirmation-grid">
         <article>
           <p className="eyebrow">Payment</p>
-          <h2>Cash on delivery</h2>
+          <h2>{isCard ? 'Paid securely by card' : 'Cash on delivery'}</h2>
           {data.payment && (
             <p>
               Reference <code>{data.payment}</code>
             </p>
           )}
-          <p>Payment remains pending until collection at delivery.</p>
+          <p>
+            {isCard
+              ? 'Stripe has confirmed your payment.'
+              : 'Payment remains pending until collection at delivery.'}
+          </p>
         </article>
         <article>
           <p className="eyebrow">Fulfilment</p>

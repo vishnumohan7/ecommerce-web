@@ -245,7 +245,7 @@ Status: COMPLETE — focused compile/functionality gate passed on 2026-10-06; br
 
 Status: COMPLETE — live customer account/content wiring and focused API/storefront typechecks passed on 2026-10-06; broad regression deferred for delivery speed.
 
-## Milestone 17 — Admin dashboard (parallel preview)
+## Milestone 17 — Admin dashboard
 
 - [x] Responsive Larkon-inspired admin shell and navigation implemented without copying vendor source or assets
 - [x] Dashboard reads live health, catalogue, and search APIs and handles unavailable/empty states
@@ -259,8 +259,8 @@ Status: COMPLETE — live customer account/content wiring and focused API/storef
 - [x] Orders list/detail, grocery/alcohol grouping, fulfilment transitions, and invoice download are wired to the live API
 - [x] Returns queue, approve/reject disposition controls, and card/store-credit refund initiation are wired to the live API
 - [x] Admin lint, strict typecheck, tests, production build, and four-route HTTP smoke pass
-- [ ] Secure admin authentication and RBAC session flow
-- [ ] Product, inventory, promotion, order, refund, customer, settings, and audit management workflows
+- [x] Secure admin authentication and RBAC session flow
+- [x] Product, inventory, promotion, order, refund, customer, settings, and audit management workflows
 - [ ] Milestone 17 reporting APIs and final browser accessibility/visual regression gate
 
-Status: IN PROGRESS — useful read-only preview is live; this is not full Milestone 17 completion.
+Status: IN PROGRESS — operational workflows are live; final reporting, browser accessibility and visual regression verification remain.

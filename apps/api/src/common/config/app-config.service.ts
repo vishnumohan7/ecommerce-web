@@ -5,7 +5,6 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
-  STORAGE_ENDPOINT: z.string().url(),
   DEFAULT_TENANT_ID: z.string().uuid().default('00000000-0000-4000-8000-000000000001'),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('denes-commerce'),

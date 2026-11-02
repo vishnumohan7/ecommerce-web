@@ -223,7 +223,11 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       where: { id: intent.checkoutSessionId, ...owner },
     });
     if (!session) throw new NotFoundException('Payment intent not found');
-    return this.publicIntent(intent);
+    const order = await this.db.client.order.findFirst({
+      where: { tenantId: intent.tenantId, idempotencyKey: intent.checkoutSessionId },
+      select: { id: true, orderNumber: true, paymentStatus: true },
+    });
+    return { ...this.publicIntent(intent), order };
   }
 
   async webhook(payload: Buffer, signature: string) {

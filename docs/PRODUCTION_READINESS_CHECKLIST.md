@@ -1,6 +1,6 @@
 # Production Readiness Milestone Checklist
 
-Last audited: 2026-10-11
+Last audited: 2026-11-02
 
 This is the authoritative go-live checklist for the bespoke single-client UK grocery and alcohol commerce platform. It supersedes optimistic completion labels in historical milestone notes, while retaining those notes as implementation evidence.
 
@@ -11,6 +11,8 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 - [x] Customer web, admin panel and shared backend are in the current release.
 - [x] Flutter is being delivered separately and is excluded from this release gate.
 - [x] No standalone driver application or driver workflow is required.
+- [x] Epos Now/POS inventory integration has been called off by the client and is excluded from release scope.
+- [x] Stripe is the client-confirmed production payment provider; COD remains a configuration fallback until Stripe keys are installed.
 - [x] This is a single-client bespoke deployment, not a multitenant or licensed product.
 - [ ] Remove remaining multitenant identifiers, services, schema fields and seed assumptions without breaking live data.
 - [x] Remove any remaining driver package/artifacts and confirm they are excluded from builds.
@@ -20,24 +22,24 @@ This is the authoritative go-live checklist for the bespoke single-client UK gro
 
 Milestones are strict release gates: a milestone is marked complete only when every item in that gate is complete. The progress column distinguishes completed implementation from remaining launch verification and external configuration.
 
-| Milestone | Gate                                     | Checklist progress | Gate status                           |
-| --------- | ---------------------------------------- | ------------------ | ------------------------------------- |
-| 0         | Scope and architecture cleanup           | 7/10 (70%)         | In progress                           |
-| 1         | Production infrastructure and data       | 5/14 (36%)         | In progress                           |
-| 2         | Authentication and customer accounts     | 9/13 (69%)         | In progress                           |
-| 3         | Transactional email and notifications    | 6/13 (46%)         | Provider connected; lifecycle pending |
-| 4         | Catalogue, media and inventory           | 11/15 (73%)        | In progress                           |
-| 5         | Customer storefront                      | 3/12 (25%)         | In progress                           |
-| 6         | Checkout, Stripe and order finalisation  | 2/12 (17%)         | Stripe intentionally postponed        |
-| 7         | Orders, fulfilment, invoices and refunds | 3/11 (27%)         | In progress                           |
-| 8         | Admin operations and reporting           | 5/14 (36%)         | In progress                           |
-| 9         | Security, privacy and compliance         | 2/11 (18%)         | Review and client approval required   |
-| 10        | Reliability, monitoring and performance  | 1/10 (10%)         | Production verification required      |
-| 11        | UAT and go-live                          | 0/11 (0%)          | Starts after release gates            |
+| Milestone | Gate                                     | Checklist progress | Gate status                            |
+| --------- | ---------------------------------------- | ------------------ | -------------------------------------- |
+| 0         | Scope and architecture cleanup           | 7/10 (70%)         | In progress                            |
+| 1         | Production infrastructure and data       | 5/14 (36%)         | In progress                            |
+| 2         | Authentication and customer accounts     | 9/13 (69%)         | In progress                            |
+| 3         | Transactional email and notifications    | 6/13 (46%)         | Provider connected; lifecycle pending  |
+| 4         | Catalogue, media and inventory           | 11/15 (73%)        | In progress                            |
+| 5         | Customer storefront                      | 3/12 (25%)         | In progress                            |
+| 6         | Checkout, Stripe and order finalisation  | 5/12 (42%)         | Integration complete; keys/UAT pending |
+| 7         | Orders, fulfilment, invoices and refunds | 3/11 (27%)         | In progress                            |
+| 8         | Admin operations and reporting           | 5/14 (36%)         | In progress                            |
+| 9         | Security, privacy and compliance         | 2/11 (18%)         | Review and client approval required    |
+| 10        | Reliability, monitoring and performance  | 1/10 (10%)         | Production verification required       |
+| 11        | UAT and go-live                          | 0/11 (0%)          | Starts after release gates             |
 
 ## Admin-only production gate
 
-This gate separates the administrator application from unfinished storefront, Stripe and client-owned launch configuration.
+This gate separates the administrator application from unfinished storefront and client-owned launch configuration.
 
 - [x] Admin is deployed and authenticates against the production API.
 - [x] Core catalogue, inventory, promotion, order, return, delivery, pricing, customer, review, content, reporting, settings and audit routes exist.
@@ -75,7 +77,7 @@ Exit gate: no user-facing or database behaviour depends on tenant selection, lic
 - [x] API, admin and storefront are deployed to Vercel.
 - [x] Deployments are connected to the GitHub `main` branch.
 - [x] Storefront production `API_BASE_URL` points to the live API.
-- [x] Database access uses portable Prisma/PostgreSQL and media uses an S3-compatible storage port; migration to AWS RDS/Aurora and S3 is not blocked by a Supabase SDK dependency.
+- [x] Database access and media persistence use portable Prisma/PostgreSQL; migration to AWS RDS/Aurora is not blocked by a Supabase SDK dependency.
 - [ ] Define and verify production, preview and local environment-variable matrices.
 - [ ] Configure custom domains, HTTPS redirects and final CORS origins.
 - [ ] Rotate the exposed Supabase database password and update every deployment safely.
@@ -166,10 +168,10 @@ Exit gate: every customer journey works against production-like data with no moc
 - [x] Server-authoritative pricing, delivery, coupons, VAT and stock reservations exist.
 - [x] Payment-intent, webhook, idempotency and order-finalisation services exist.
 - [ ] Configure production/test Stripe keys and webhook signing secret in Vercel.
-- [ ] Replace the current payment-intent-only button with Stripe Payment Element/Checkout UI.
+- [x] Replace the current payment-intent-only button with Stripe Payment Element/Checkout UI.
 - [ ] Complete 3D Secure, processing, failure, cancellation and retry experiences.
-- [ ] Do not show “order confirmed” until a signed webhook finalises the order.
-- [ ] Automatically process persisted Stripe webhook jobs.
+- [x] Do not show “order confirmed” until a signed webhook finalises the order.
+- [x] Automatically process persisted Stripe webhook jobs.
 - [ ] Verify one cart creates exactly one payment, one order and one invoice.
 - [ ] Reconcile displayed basket, checkout, captured payment, order and invoice totals to the penny.
 - [ ] Verify Apple Pay/Google Pay only if enabled and supported by the configured Stripe account.
