@@ -11,6 +11,6 @@ import { AdminCatalogController } from './admin-catalog.controller';
   imports: [SearchModule],
   controllers: [CatalogController, AdminCatalogController, ImageController, TaxonomyController],
   providers: [CatalogService, ImageService, TaxonomyService],
-  exports: [CatalogService, TaxonomyService],
+  exports: [CatalogService, ImageService, TaxonomyService],
 })
 export class CatalogModule {}

@@ -1,5 +1,12 @@
 /* eslint-disable local/no-jsx-literals */
-import { createBanner, createContentBlock, saveCmsPage, toggleBanner } from '../actions';
+import {
+  createBanner,
+  createContentBlock,
+  deleteBanner,
+  saveCmsPage,
+  toggleBanner,
+  updateBanner,
+} from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { fetchContent } from '../lib/api';
@@ -60,29 +67,116 @@ export default async function ContentPage({
                 </label>
                 <button className="button button-primary">Add slide</button>
               </form>
-              <div className="banner-list">
-                {result.data.banners.map((item) => (
-                  <div className="banner-row" key={item.id}>
-                    <img src={item.imageUrl} alt="" />
-                    <div>
-                      <strong>{item.title}</strong>
-                      <small>
-                        {item.subtitle ?? 'No supporting text'} · Position {item.position}
-                      </small>
-                    </div>
-                    <span
-                      className={`status-badge ${item.active ? 'status-active' : 'status-down'}`}
-                    >
-                      <span />
-                      {item.active ? 'Active' : 'Inactive'}
-                    </span>
-                    <form action={toggleBanner}>
-                      <input type="hidden" name="id" value={item.id} />
-                      <input type="hidden" name="active" value={String(item.active)} />
-                      <button className="text-action">{item.active ? 'Pause' : 'Enable'}</button>
-                    </form>
-                  </div>
-                ))}
+              <div className="table-wrap banner-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Preview</th>
+                      <th>Slide</th>
+                      <th>Schedule</th>
+                      <th>Order</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.data.banners.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <img className="banner-thumbnail" src={item.imageUrl} alt="" />
+                        </td>
+                        <td>
+                          <strong>{item.title}</strong>
+                          <small className="cell-subtext">
+                            {item.subtitle ?? 'No supporting text'}
+                          </small>
+                        </td>
+                        <td>{formatSchedule(item.startsAt, item.endsAt)}</td>
+                        <td>{item.position}</td>
+                        <td>
+                          <span
+                            className={`status-badge ${item.active ? 'status-active' : 'status-down'}`}
+                          >
+                            <span />
+                            {item.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="banner-actions">
+                          <details className="row-editor">
+                            <summary className="text-action">Edit</summary>
+                            <form action={updateBanner} encType="multipart/form-data">
+                              <input type="hidden" name="id" value={item.id} />
+                              <input type="hidden" name="currentImageUrl" value={item.imageUrl} />
+                              <input
+                                name="title"
+                                defaultValue={item.title}
+                                aria-label="Slide heading"
+                                required
+                              />
+                              <input
+                                name="subtitle"
+                                defaultValue={item.subtitle ?? ''}
+                                placeholder="Supporting text"
+                              />
+                              <input
+                                name="linkUrl"
+                                type="url"
+                                defaultValue={item.linkUrl ?? ''}
+                                placeholder="Button destination URL"
+                              />
+                              <input
+                                name="position"
+                                type="number"
+                                min="0"
+                                defaultValue={item.position}
+                                aria-label="Display order"
+                              />
+                              <label>
+                                Starts
+                                <input
+                                  name="startsAt"
+                                  type="datetime-local"
+                                  defaultValue={dateTimeInput(item.startsAt)}
+                                />
+                              </label>
+                              <label>
+                                Ends
+                                <input
+                                  name="endsAt"
+                                  type="datetime-local"
+                                  defaultValue={dateTimeInput(item.endsAt)}
+                                />
+                              </label>
+                              <label className="wide-field">
+                                Replace image
+                                <input
+                                  name="desktopImage"
+                                  type="file"
+                                  accept="image/jpeg,image/png,image/webp,image/avif"
+                                />
+                              </label>
+                              <button className="button button-primary">Save changes</button>
+                            </form>
+                          </details>
+                          <form action={toggleBanner}>
+                            <input type="hidden" name="id" value={item.id} />
+                            <input type="hidden" name="active" value={String(item.active)} />
+                            <button className="text-action">
+                              {item.active ? 'Pause' : 'Enable'}
+                            </button>
+                          </form>
+                          <form action={deleteBanner}>
+                            <input type="hidden" name="id" value={item.id} />
+                            <button className="text-action danger">Delete</button>
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {result.data.banners.length === 0 && (
+                  <div className="panel-empty">No slides have been added yet.</div>
+                )}
               </div>
             </article>
             <article className="panel">
@@ -172,4 +266,19 @@ export default async function ContentPage({
       )}
     </>
   );
+}
+
+function dateTimeInput(value: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function formatSchedule(startsAt: string | null, endsAt: string | null) {
+  if (!startsAt && !endsAt) return 'Always';
+  const format = (value: string) =>
+    new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  if (startsAt && endsAt) return `${format(startsAt)} – ${format(endsAt)}`;
+  return startsAt ? `From ${format(startsAt)}` : `Until ${format(endsAt!)}`;
 }

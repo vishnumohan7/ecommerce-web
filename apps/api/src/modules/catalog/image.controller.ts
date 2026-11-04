@@ -48,13 +48,4 @@ export class ImageController {
   remove(@Param('id') id: string, @Param('imageId') imageId: string) {
     return this.images.remove(id, imageId);
   }
-  @Post('banner-assets')
-  @RequirePermissions('settings.write')
-  @ApiBearerAuth()
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024, files: 1 } }))
-  uploadBanner(@UploadedFile() file: Express.Multer.File) {
-    if (!file) throw new Error('Banner image is required');
-    return this.images.uploadBanner(file.buffer);
-  }
 }

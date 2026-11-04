@@ -1,13 +1,29 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '../../common/auth/auth.decorators';
+import { ImageService } from '../catalog/image.service';
 import { AdminService } from './admin.service';
 
 @ApiTags('Admin operations')
 @ApiBearerAuth()
 @Controller('api/v1/admin')
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly images: ImageService,
+  ) {}
 
   @Get('dashboard') @RequirePermissions('reports.read') dashboard(
     @Query('from') from?: string,
@@ -74,11 +90,24 @@ export class AdminController {
   ) {
     return this.admin.createBanner(body);
   }
+  @Post('content/banner-assets')
+  @RequirePermissions('settings.write')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024, files: 1 } }))
+  uploadBannerAsset(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new Error('Banner image is required');
+    return this.images.uploadBanner(file.buffer);
+  }
   @Patch('content/banners/:id') @RequirePermissions('settings.write') updateBanner(
     @Param('id') id: string,
     @Body() body: unknown,
   ) {
     return this.admin.updateBanner(id, body);
+  }
+  @Delete('content/banners/:id')
+  @RequirePermissions('settings.write')
+  deleteBanner(@Param('id') id: string) {
+    return this.admin.deleteBanner(id);
   }
   @Post('content/blocks') @RequirePermissions('settings.write') createBlock(@Body() body: unknown) {
     return this.admin.createContentBlock(body);

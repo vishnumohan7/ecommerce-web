@@ -440,6 +440,14 @@ export class AdminService {
     return updated;
   }
 
+  async deleteBanner(id: string) {
+    const existing = await this.db.client.banner.findFirst({ where: { id } });
+    if (!existing) throw new NotFoundException('Banner not found');
+    await this.db.client.banner.delete({ where: { id } });
+    await this.audit('BANNER_DELETED', 'Banner', id, existing, undefined);
+    return { deleted: true, id };
+  }
+
   async createContentBlock(body: unknown) {
     const input = contentBlockCreateSchema.parse(body);
     const created = await this.db.client.cmsContentBlock.create({

@@ -964,7 +964,7 @@ export async function createBanner(data: FormData) {
     const upload = new FormData();
     upload.set('file', desktopImage);
     const uploaded = await adminFormMutation<{ imageUrl: string }>(
-      '/api/v1/products/banner-assets',
+      '/api/v1/admin/content/banner-assets',
       upload,
     );
     if (!uploaded.ok) finish('/content', uploaded, '');
@@ -992,6 +992,44 @@ export async function toggleBanner(data: FormData) {
     { active: textValue(data, 'active') !== 'true' },
   );
   finish('/content', result, 'Banner status updated.');
+}
+
+export async function updateBanner(data: FormData) {
+  const id = textValue(data, 'id');
+  const desktopImage = data.get('desktopImage');
+  let imageUrl = textValue(data, 'currentImageUrl');
+  if (desktopImage instanceof File && desktopImage.size > 0) {
+    const upload = new FormData();
+    upload.set('file', desktopImage);
+    const uploaded = await adminFormMutation<{ imageUrl: string }>(
+      '/api/v1/admin/content/banner-assets',
+      upload,
+    );
+    if (!uploaded.ok) finish('/content', uploaded, '');
+    imageUrl = uploaded.data.imageUrl;
+  }
+  const result = await adminMutation(
+    `/api/v1/admin/content/banners/${encodeURIComponent(id)}`,
+    'PATCH',
+    {
+      title: textValue(data, 'title'),
+      subtitle: textValue(data, 'subtitle') || null,
+      imageUrl,
+      linkUrl: textValue(data, 'linkUrl') || null,
+      position: Number(textValue(data, 'position') || '0'),
+      startsAt: textValue(data, 'startsAt') || null,
+      endsAt: textValue(data, 'endsAt') || null,
+    },
+  );
+  finish('/content', result, 'Slide updated.');
+}
+
+export async function deleteBanner(data: FormData) {
+  const result = await adminMutation(
+    `/api/v1/admin/content/banners/${encodeURIComponent(textValue(data, 'id'))}`,
+    'DELETE',
+  );
+  finish('/content', result, 'Slide deleted.');
 }
 
 export async function createContentBlock(data: FormData) {
