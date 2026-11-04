@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { browserApi, money } from '../lib/store-api';
+import { browserApi, money, type Category } from '../lib/store-api';
 
 interface BasketHeader {
   currency: string;
@@ -17,6 +17,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [basket, setBasket] = useState({ count: 0, total: '£0.00' });
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     void browserApi<BasketHeader>('/api/v1/cart')
@@ -26,6 +27,14 @@ export function SiteHeader() {
           0,
         );
         setBasket({ count, total: money(cart.totals.grandTotalMinor, cart.currency) });
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    void browserApi<{ items: Category[] }>('/api/v1/categories?limit=50')
+      .then((result) => {
+        setCategories(result.items);
       })
       .catch(() => undefined);
   }, []);
@@ -102,9 +111,35 @@ export function SiteHeader() {
         </nav>
       </header>
       <nav className={`category-nav ${open ? 'open' : ''}`} aria-label="Main navigation">
-        <Link className="all-categories" href="/category/all">
-          <span aria-hidden="true">☰</span> All categories <span aria-hidden="true">⌄</span>
-        </Link>
+        <details className="categories-menu">
+          <summary className="all-categories">
+            <span aria-hidden="true">☰</span> All categories{' '}
+            <span className="menu-chevron" aria-hidden="true">
+              ⌄
+            </span>
+          </summary>
+          <div className="categories-dropdown">
+            <Link className="view-all-categories" href="/category/all">
+              View all categories
+            </Link>
+            {categories.map((category) => (
+              <Link key={category.id} href={`/category/${category.slug}?id=${category.id}`}>
+                {category.imageUrl ? (
+                  <span
+                    className="category-thumb"
+                    style={{ backgroundImage: `url(${category.imageUrl})` }}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className="category-initial" aria-hidden="true">
+                    {category.name.slice(0, 1)}
+                  </span>
+                )}
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        </details>
         <Link
           className={pathname === '/category/groceries' ? 'active' : undefined}
           href="/category/groceries"

@@ -1146,13 +1146,87 @@ body {
   font-size: 0.82rem;
   font-weight: 500;
 }
-.category-nav .all-categories {
+.categories-menu {
+  position: relative;
   min-width: 13.5rem;
   margin-right: auto;
+}
+.category-nav .all-categories {
+  min-width: 13.5rem;
+  height: 48px;
+  display: flex;
+  align-items: center;
   gap: 0.75rem;
   border-right: 1px solid rgb(255 255 255 / 14%);
+  color: #edf7f1;
+  cursor: pointer;
+  font-size: 0.82rem;
   font-weight: 750;
+  list-style: none;
   text-transform: uppercase;
+}
+.category-nav .all-categories::-webkit-details-marker {
+  display: none;
+}
+.menu-chevron {
+  color: #69caa2;
+  transition: transform 160ms ease;
+}
+.categories-menu[open] .menu-chevron {
+  transform: rotate(180deg);
+}
+.categories-dropdown {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: min(46rem, calc(100vw - 3.5rem));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.3rem;
+  padding: 0.8rem;
+  border: 1px solid #cfe0d8;
+  border-radius: 0.55rem;
+  background: white;
+  box-shadow: 0 1rem 2.5rem rgb(3 42 32 / 22%);
+}
+.category-nav .categories-dropdown a {
+  min-height: 3.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.35rem;
+  color: #17382d;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: none;
+}
+.category-nav .categories-dropdown a:hover,
+.category-nav .categories-dropdown a:focus-visible {
+  background: #edf8f1;
+  color: #073b2d;
+}
+.category-thumb,
+.category-initial {
+  width: 2.15rem;
+  height: 2.15rem;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background-color: #dff1e7;
+  background-position: center;
+  background-size: cover;
+  color: #0b513b;
+  font-weight: 800;
+}
+.category-nav .categories-dropdown .view-all-categories {
+  grid-column: 1 / -1;
+  min-height: 2.5rem;
+  border-bottom: 1px solid #e2ebe6;
+  border-radius: 0;
+  color: #0b684b;
 }
 .category-nav a.active::after {
   position: absolute;
@@ -1855,8 +1929,17 @@ body {
   .category-nav.open {
     display: flex;
   }
+  .categories-menu,
   .category-nav .all-categories {
-    margin-right: 0;
+    width: 100%;
+    min-width: 0;
+  }
+  .categories-dropdown {
+    position: static;
+    width: 100%;
+    grid-template-columns: 1fr;
+    margin: 0 0 0.5rem;
+    box-shadow: none;
   }
   .trust-strip {
     justify-content: flex-start;
