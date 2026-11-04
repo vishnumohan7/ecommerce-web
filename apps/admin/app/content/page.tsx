@@ -43,7 +43,7 @@ export default async function ContentPage({
                 </div>
                 <span className="count-pill">{result.data.banners.length}</span>
               </header>
-              <form action={createBanner} className="content-form" encType="multipart/form-data">
+              <form action={createBanner} className="content-form">
                 <input name="title" placeholder="Slide heading" required />
                 <input name="subtitle" placeholder="Supporting text" />
                 <label className="wide-field">
@@ -104,7 +104,7 @@ export default async function ContentPage({
                         <td className="banner-actions">
                           <details className="row-editor">
                             <summary className="text-action">Edit</summary>
-                            <form action={updateBanner} encType="multipart/form-data">
+                            <form action={updateBanner}>
                               <input type="hidden" name="id" value={item.id} />
                               <input type="hidden" name="currentImageUrl" value={item.imageUrl} />
                               <input

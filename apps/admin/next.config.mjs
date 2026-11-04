@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
+  },
   eslint: {
     // Lint remains available via `pnpm --filter @app/admin lint` without blocking deployments.
     ignoreDuringBuilds: true,
