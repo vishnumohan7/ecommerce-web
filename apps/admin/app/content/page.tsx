@@ -1,12 +1,5 @@
 /* eslint-disable local/no-jsx-literals */
-import {
-  createBanner,
-  createContentBlock,
-  deleteBanner,
-  saveCmsPage,
-  toggleBanner,
-  updateBanner,
-} from '../actions';
+import { createContentBlock, deleteBanner, saveCmsPage, toggleBanner } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { fetchContent } from '../lib/api';
@@ -43,7 +36,13 @@ export default async function ContentPage({
                 </div>
                 <span className="count-pill">{result.data.banners.length}</span>
               </header>
-              <form action={createBanner} className="content-form">
+              <form
+                action="/api/banner-slides"
+                method="post"
+                encType="multipart/form-data"
+                className="content-form"
+              >
+                <input type="hidden" name="intent" value="create" />
                 <input name="title" placeholder="Slide heading" required />
                 <input name="subtitle" placeholder="Supporting text" />
                 <label className="wide-field">
@@ -104,7 +103,12 @@ export default async function ContentPage({
                         <td className="banner-actions">
                           <details className="row-editor">
                             <summary className="text-action">Edit</summary>
-                            <form action={updateBanner}>
+                            <form
+                              action="/api/banner-slides"
+                              method="post"
+                              encType="multipart/form-data"
+                            >
+                              <input type="hidden" name="intent" value="update" />
                               <input type="hidden" name="id" value={item.id} />
                               <input type="hidden" name="currentImageUrl" value={item.imageUrl} />
                               <input
