@@ -1304,15 +1304,16 @@ body {
 }
 .home-slider {
   position: relative;
-  width: min(80rem, calc(100% - 2.5rem));
+  width: calc(100% - 1rem);
   min-height: 31rem;
-  margin: 1.3rem auto 0;
+  margin: 0.75rem auto 0;
 }
 .home-slide {
   position: absolute;
   inset: 0;
   width: 100%;
   margin: 0;
+  overflow: hidden;
   opacity: 0;
   visibility: hidden;
   transition:
@@ -1348,7 +1349,7 @@ body {
   border-color: #f6bd35;
 }
 .home-hero > div {
-  max-width: 36rem;
+  max-width: min(38rem, 52%);
 }
 .hero-kicker {
   display: inline-flex;
@@ -1362,10 +1363,10 @@ body {
   text-transform: uppercase;
 }
 .home-hero h1 {
-  max-width: 12ch;
+  max-width: 11ch;
   margin: 1rem 0;
   font:
-    500 clamp(3rem, 6vw, 5.5rem)/0.98 Georgia,
+    500 clamp(2.75rem, 4.5vw, 4.5rem)/1.02 Georgia,
     serif;
 }
 .home-hero > div > p:not(.hero-kicker) {
@@ -1996,6 +1997,13 @@ body {
   .home-hero {
     min-height: 27rem;
     padding: 2rem;
+  }
+  .home-slider {
+    width: calc(100% - 1rem);
+    min-height: 27rem;
+  }
+  .home-hero > div {
+    max-width: 100%;
   }
   .home-hero h1 {
     font-size: 3rem;
