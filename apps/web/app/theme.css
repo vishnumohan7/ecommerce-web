@@ -971,8 +971,8 @@ footer small {
 
 /* Angadi storefront visual system */
 :root {
-  --angadi: #073b2d;
-  --angadi-deep: #032a20;
+  --angadi: #0b412f;
+  --angadi-deep: #06271e;
   --angadi-soft: #edf8f1;
   --angadi-gold: #f4b82f;
   --angadi-cream: #fbfaf6;
@@ -983,70 +983,94 @@ body {
   color: #14251f;
 }
 .utility-strip {
-  min-height: 29px;
+  min-height: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 0.32rem max(1.25rem, calc((100vw - 80rem) / 2));
-  background: #052b21;
-  color: #d8eddf;
-  font-size: 0.68rem;
+  padding: 0.35rem 1.25rem;
+  background: #06271e;
+  color: #d8eee5;
+  font-size: 0.82rem;
 }
 .utility-strip > div,
 .utility-strip nav {
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  gap: 1.8rem;
+}
+.utility-strip i {
+  margin-right: 0.35rem;
+  color: #f4c03b;
+  font-style: normal;
 }
 .utility-strip a {
   color: inherit;
   text-decoration: none;
 }
 .site-header {
-  grid-template-columns: auto minmax(18rem, 1fr) auto;
-  gap: 2rem;
-  padding: 0.78rem max(1.25rem, calc((100vw - 80rem) / 2));
+  grid-template-columns: 19rem minmax(20rem, 1fr) auto;
+  gap: 2.6rem;
+  min-height: 92px;
+  padding: 0.9rem 1.75rem;
   background: var(--angadi);
   color: white;
 }
 .brand {
   display: grid;
-  grid-template-columns: 2.65rem auto;
-  column-gap: 0.65rem;
+  grid-template-columns: 3rem auto;
+  column-gap: 0.75rem;
   color: white;
   font-family: Georgia, serif;
   letter-spacing: 0.08em;
 }
 .brand > span {
   grid-row: 1 / 3;
-  background: #b8cc66;
-  color: var(--angadi);
+  width: 3rem;
+  height: 3rem;
+  position: relative;
+  background: linear-gradient(145deg, #8bd69d, #e2c348);
+}
+.brand > span::before {
+  position: absolute;
+  width: 1.35rem;
+  height: 0.75rem;
+  border-radius: 0 100% 0 100%;
+  background: #092e22;
+  content: '';
+  transform: rotate(12deg);
 }
 .brand > strong {
   align-self: end;
-  font-size: 1.3rem;
+  font-size: 1.7rem;
   line-height: 1;
 }
 .brand > small {
   color: #5ed0a1;
   font-family: Inter, sans-serif;
-  font-size: 0.46rem;
+  font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .header-search {
-  border: 0;
-  border-radius: 0.3rem;
+  height: 50px;
+  border: 2px solid #72c9a3;
+  border-radius: 0.35rem;
   background: white;
 }
 .header-search input {
   color: #263c34;
+  padding-inline: 1.2rem;
+  font-size: 0.95rem;
 }
 .header-search button {
-  min-height: 2.6rem;
+  width: 52px;
+  min-height: 46px;
+  padding: 0;
   background: var(--angadi-gold);
   color: #13261e;
+  font-size: 1.55rem;
 }
 .account-nav {
   display: flex;
@@ -1057,8 +1081,8 @@ body {
   grid-template-columns: auto auto;
   column-gap: 0.55rem;
   align-content: center;
-  min-width: 6.5rem;
-  padding: 0.35rem 0.55rem;
+  min-width: 8rem;
+  padding: 0.45rem 0.7rem;
   border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 0.4rem;
   color: white !important;
@@ -1067,6 +1091,33 @@ body {
   grid-row: 1 / 3;
   align-self: center;
   color: #55cb98;
+}
+.account-nav .account-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid #1aa67a;
+  border-radius: 50%;
+  font-size: 1.2rem;
+}
+.basket-icon {
+  position: relative;
+  font-size: 1.2rem;
+}
+.basket-icon b {
+  position: absolute;
+  top: -0.6rem;
+  right: -0.65rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  background: #e6553c;
+  color: white;
+  font-size: 0.62rem;
+  line-height: 1rem;
+  text-align: center;
 }
 .account-nav small {
   color: #67be9d;
@@ -1080,20 +1131,42 @@ body {
   background: rgb(255 255 255 / 6%);
 }
 .category-nav {
-  gap: clamp(0.9rem, 2.6vw, 2.25rem);
-  padding: 0.55rem 1rem;
+  justify-content: flex-end;
+  gap: clamp(1rem, 2.75vw, 2.7rem);
+  min-height: 48px;
+  padding: 0 1.75rem;
   border: 0;
   background: #032a20;
 }
 .category-nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   color: #edf7f1;
-  font-size: 0.72rem;
+  font-size: 0.82rem;
+  font-weight: 500;
 }
-.category-nav a:first-child {
+.category-nav .all-categories {
+  min-width: 13.5rem;
   margin-right: auto;
+  gap: 0.75rem;
+  border-right: 1px solid rgb(255 255 255 / 14%);
+  font-weight: 750;
+  text-transform: uppercase;
+}
+.category-nav a.active::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.35rem;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--angadi-gold);
+  content: '';
 }
 .category-nav .offers-link {
-  padding: 0.18rem 0.8rem;
+  align-self: center;
+  padding: 0.18rem 0.9rem;
   border-radius: 999px;
   background: #db5a3e;
   color: white;
@@ -1782,7 +1855,7 @@ body {
   .category-nav.open {
     display: flex;
   }
-  .category-nav a:first-child {
+  .category-nav .all-categories {
     margin-right: 0;
   }
   .trust-strip {
