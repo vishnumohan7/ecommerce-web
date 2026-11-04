@@ -54,9 +54,11 @@ export class ImageService {
     }
     const primaryUrl = assets[4] ?? assets[0];
     if (!primaryUrl) throw new BadRequestException('Image processing failed');
-    const position = featured ? 0 : await this.db.client.productImage.count({
-      where: { productId, variantId: null },
-    });
+    const position = featured
+      ? 0
+      : await this.db.client.productImage.count({
+          where: { productId, variantId: null },
+        });
     await this.db.transaction(async (tx, tenantId) => {
       if (featured)
         await tx.productImage.updateMany({
@@ -127,6 +129,25 @@ export class ImageService {
       await this.db.client.category.update({ where: { id, tenantId }, data: { imageUrl } });
     else await this.db.client.brand.update({ where: { id, tenantId }, data: { imageUrl } });
     return { imageUrl };
+  }
+  async uploadBanner(bytes: Buffer): Promise<{ imageUrl: string }> {
+    if (bytes.length === 0 || bytes.length > 10 * 1024 * 1024)
+      throw new BadRequestException('Image size is invalid');
+    if (!this.detect(bytes)) throw new BadRequestException('Unsupported image payload');
+    const metadata = await sharp(bytes, {
+      failOn: 'error',
+      limitInputPixels: 64_000_000,
+    }).metadata();
+    if (!metadata.width || !metadata.height || metadata.width > 8000 || metadata.height > 8000)
+      throw new BadRequestException('Image dimensions are invalid');
+    const digest = createHash('sha256').update(bytes).digest('hex');
+    const image = await sharp(bytes)
+      .rotate()
+      .resize({ width: 2400, height: 1200, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 86 })
+      .toBuffer();
+    const stored = await this.storage.put(`banners/${digest}.webp`, image, 'image/webp');
+    return { imageUrl: stored.url };
   }
   detect(bytes: Buffer): AllowedImage | undefined {
     if (bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) return 'image/jpeg';

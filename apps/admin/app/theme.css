@@ -2186,6 +2186,48 @@ td code {
 .content-form .button {
   grid-column: 1/-1;
 }
+.banner-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.banner-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.banner-row img {
+  width: 112px;
+  height: 62px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f4f6f8;
+}
+.banner-row div {
+  min-width: 0;
+}
+.banner-row strong,
+.banner-row small {
+  display: block;
+}
+.banner-row small {
+  margin-top: 4px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 760px) {
+  .banner-row {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+  .banner-row img {
+    width: 84px;
+    height: 52px;
+  }
+}
 .content-form .button {
   justify-self: start;
 }

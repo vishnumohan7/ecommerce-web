@@ -958,10 +958,23 @@ export async function retryNotification(data: FormData) {
 }
 
 export async function createBanner(data: FormData) {
+  const desktopImage = data.get('desktopImage');
+  let imageUrl = textValue(data, 'imageUrl');
+  if (desktopImage instanceof File && desktopImage.size > 0) {
+    const upload = new FormData();
+    upload.set('file', desktopImage);
+    const uploaded = await adminFormMutation<{ imageUrl: string }>(
+      '/api/v1/products/banner-assets',
+      upload,
+    );
+    if (!uploaded.ok) finish('/content', uploaded, '');
+    imageUrl = uploaded.data.imageUrl;
+  }
+  if (!imageUrl) finish('/content', { ok: false, error: 'Choose a desktop banner image.' }, '');
   const result = await adminMutation('/api/v1/admin/content/banners', 'POST', {
     title: textValue(data, 'title'),
     subtitle: textValue(data, 'subtitle') || null,
-    imageUrl: textValue(data, 'imageUrl'),
+    imageUrl,
     mobileImageUrl: textValue(data, 'mobileImageUrl') || null,
     linkUrl: textValue(data, 'linkUrl') || null,
     position: Number(textValue(data, 'position') || '0'),
