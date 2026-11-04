@@ -119,9 +119,6 @@ export function SiteHeader() {
             </span>
           </summary>
           <div className="categories-dropdown">
-            <Link className="view-all-categories" href="/category/all">
-              View all categories
-            </Link>
             {categories.map((category) => (
               <Link key={category.id} href={`/category/${category.slug}?id=${category.id}`}>
                 {category.imageUrl ? (
@@ -138,6 +135,12 @@ export function SiteHeader() {
                 {category.name}
               </Link>
             ))}
+            <Link className="view-all-categories" href="/category/all">
+              <span className="category-initial" aria-hidden="true">
+                ▦
+              </span>
+              View all categories
+            </Link>
           </div>
         </details>
         <Link
