@@ -2,6 +2,7 @@
 import { createContentBlock, deleteBanner, saveCmsPage, toggleBanner } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
+import { BannerUploadForm } from '../components/banner-upload-form';
 import { fetchContent } from '../lib/api';
 export const dynamic = 'force-dynamic';
 export default async function ContentPage({
@@ -36,12 +37,7 @@ export default async function ContentPage({
                 </div>
                 <span className="count-pill">{result.data.banners.length}</span>
               </header>
-              <form
-                action="/api/banner-slides"
-                method="post"
-                encType="multipart/form-data"
-                className="content-form"
-              >
+              <BannerUploadForm className="content-form">
                 <input type="hidden" name="intent" value="create" />
                 <input name="title" placeholder="Slide heading" required />
                 <input name="subtitle" placeholder="Supporting text" />
@@ -65,7 +61,7 @@ export default async function ContentPage({
                   <input name="endsAt" type="datetime-local" />
                 </label>
                 <button className="button button-primary">Add slide</button>
-              </form>
+              </BannerUploadForm>
               <div className="table-wrap banner-table-wrap">
                 <table>
                   <thead>
@@ -103,11 +99,7 @@ export default async function ContentPage({
                         <td className="banner-actions">
                           <details className="row-editor">
                             <summary className="text-action">Edit</summary>
-                            <form
-                              action="/api/banner-slides"
-                              method="post"
-                              encType="multipart/form-data"
-                            >
+                            <BannerUploadForm>
                               <input type="hidden" name="intent" value="update" />
                               <input type="hidden" name="id" value={item.id} />
                               <input type="hidden" name="currentImageUrl" value={item.imageUrl} />
@@ -160,7 +152,7 @@ export default async function ContentPage({
                                 />
                               </label>
                               <button className="button button-primary">Save changes</button>
-                            </form>
+                            </BannerUploadForm>
                           </details>
                           <form action={toggleBanner}>
                             <input type="hidden" name="id" value={item.id} />

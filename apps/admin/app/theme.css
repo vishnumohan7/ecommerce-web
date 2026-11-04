@@ -2250,6 +2250,19 @@ td code {
 .row-editor .button {
   grid-column: 1 / -1;
 }
+.form-progress,
+.form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+.form-progress {
+  color: var(--muted);
+}
+.form-error {
+  color: #a62f2f;
+}
 .banner-row {
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr) auto auto;
