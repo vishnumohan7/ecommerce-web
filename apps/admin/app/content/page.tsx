@@ -50,6 +50,14 @@ export default async function ContentPage({
                     required
                   />
                 </label>
+                <label className="wide-field">
+                  Mobile banner image (optional)
+                  <input
+                    name="mobileImage"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                  />
+                </label>
                 <input name="linkUrl" type="url" placeholder="Button destination URL" />
                 <input name="position" type="number" min="0" defaultValue="0" />
                 <label>
@@ -104,6 +112,11 @@ export default async function ContentPage({
                               <input type="hidden" name="id" value={item.id} />
                               <input type="hidden" name="currentImageUrl" value={item.imageUrl} />
                               <input
+                                type="hidden"
+                                name="currentMobileImageUrl"
+                                value={item.mobileImageUrl ?? ''}
+                              />
+                              <input
                                 name="title"
                                 defaultValue={item.title}
                                 aria-label="Slide heading"
@@ -144,12 +157,25 @@ export default async function ContentPage({
                                 />
                               </label>
                               <label className="wide-field">
-                                Replace image
+                                Replace desktop image
                                 <input
                                   name="desktopImage"
                                   type="file"
                                   accept="image/jpeg,image/png,image/webp,image/avif"
                                 />
+                              </label>
+                              <label className="wide-field">
+                                Replace mobile image
+                                <input
+                                  name="mobileImage"
+                                  type="file"
+                                  accept="image/jpeg,image/png,image/webp,image/avif"
+                                />
+                                <small>
+                                  {item.mobileImageUrl
+                                    ? 'A mobile image is currently configured.'
+                                    : 'The desktop image is currently used on mobile.'}
+                                </small>
                               </label>
                               <button className="button button-primary">Save changes</button>
                             </BannerUploadForm>

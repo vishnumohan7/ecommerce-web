@@ -21,9 +21,11 @@ export function BannerUploadForm({
 
     try {
       const data = new FormData(event.currentTarget);
-      const image = data.get('desktopImage');
-      if (image instanceof File && image.size > 0) {
-        data.set('desktopImage', await optimiseBanner(image));
+      for (const field of ['desktopImage', 'mobileImage']) {
+        const image = data.get(field);
+        if (image instanceof File && image.size > 0) {
+          data.set(field, await optimiseBanner(image));
+        }
       }
 
       const response = await fetch('/api/banner-slides', { method: 'POST', body: data });

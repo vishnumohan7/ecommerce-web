@@ -20,19 +20,15 @@ function destination(request: Request, result: { ok: boolean; error?: string }, 
 export async function POST(request: Request) {
   const data = await request.formData();
   const intent = value(data, 'intent');
-  const image = data.get('desktopImage');
-  let imageUrl = value(data, 'currentImageUrl');
-
-  if (image instanceof File && image.size > 0) {
-    const upload = new FormData();
-    upload.set('file', image);
-    const uploaded = await adminFormMutation<{ imageUrl: string }>(
-      '/api/v1/admin/content/banner-assets',
-      upload,
-    );
-    if (!uploaded.ok) return destination(request, uploaded, '');
-    imageUrl = uploaded.data.imageUrl;
-  }
+  const desktop = await uploadImage(data, 'desktopImage', value(data, 'currentImageUrl'));
+  if (!desktop.ok) return destination(request, desktop, '');
+  const mobile = await uploadImage(
+    data,
+    'mobileImage',
+    value(data, 'currentMobileImageUrl'),
+  );
+  if (!mobile.ok) return destination(request, mobile, '');
+  const imageUrl = desktop.imageUrl;
 
   if (!imageUrl) {
     return destination(request, { ok: false, error: 'Choose a desktop banner image.' }, '');
@@ -42,7 +38,7 @@ export async function POST(request: Request) {
     title: value(data, 'title'),
     subtitle: value(data, 'subtitle') || null,
     imageUrl,
-    mobileImageUrl: null,
+    mobileImageUrl: mobile.imageUrl || null,
     linkUrl: value(data, 'linkUrl') || null,
     position: Number(value(data, 'position') || '0'),
     startsAt: value(data, 'startsAt') || null,
@@ -64,4 +60,21 @@ export async function POST(request: Request) {
     active: true,
   });
   return destination(request, result, 'Slide created.');
+}
+
+async function uploadImage(data: FormData, field: string, currentImageUrl: string) {
+  const image = data.get(field);
+  if (!(image instanceof File) || image.size === 0) {
+    return { ok: true as const, imageUrl: currentImageUrl };
+  }
+
+  const upload = new FormData();
+  upload.set('file', image);
+  const uploaded = await adminFormMutation<{ imageUrl: string }>(
+    '/api/v1/admin/content/banner-assets',
+    upload,
+  );
+  return uploaded.ok
+    ? { ok: true as const, imageUrl: uploaded.data.imageUrl }
+    : { ok: false as const, error: uploaded.error };
 }
