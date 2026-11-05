@@ -2225,14 +2225,18 @@ td code {
   white-space: nowrap;
 }
 .banner-actions form {
+  display: flex;
+  align-items: center;
   margin: 0;
 }
 .banner-action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
-  padding: 7px 11px;
+  width: 76px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 10px;
   border: 1px solid #b9dfcc;
   border-radius: 7px;
   background: #eef8f3;
