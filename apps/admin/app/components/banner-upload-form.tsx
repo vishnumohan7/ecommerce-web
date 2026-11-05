@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from 'react';
 
-const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 1024 * 1024;
 const MAX_WIDTH = 2400;
 const MAX_HEIGHT = 1200;
 
@@ -22,7 +22,7 @@ export function BannerUploadForm({
     try {
       const data = new FormData(event.currentTarget);
       const image = data.get('desktopImage');
-      if (image instanceof File && image.size > MAX_UPLOAD_BYTES) {
+      if (image instanceof File && image.size > 0) {
         data.set('desktopImage', await optimiseBanner(image));
       }
 
@@ -72,7 +72,7 @@ async function optimiseBanner(file: File) {
     blob = await canvasBlob(canvas, quality);
   }
   if (blob.size > MAX_UPLOAD_BYTES) {
-    throw new Error('The image remains too large. Please choose an image under 8 MB.');
+    throw new Error('The image remains too large after optimisation. Please choose a smaller image.');
   }
   return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.webp`, { type: 'image/webp' });
 }
