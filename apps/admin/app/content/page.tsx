@@ -28,7 +28,7 @@ export default async function ContentPage({
       ) : (
         <>
           <section className="admin-grid">
-            <article className="panel">
+            <article className="panel slider-management-panel">
               <header className="panel-header">
                 <div>
                   <p className="eyebrow">Homepage slider</p>
@@ -71,7 +71,7 @@ export default async function ContentPage({
                 <button className="button button-primary">Add slide</button>
               </BannerUploadForm>
               <div className="table-wrap banner-table-wrap">
-                <table>
+                <table className="banner-management-table">
                   <thead>
                     <tr>
                       <th>Preview</th>
@@ -106,7 +106,7 @@ export default async function ContentPage({
                         </td>
                         <td className="banner-actions">
                           <details className="row-editor">
-                            <summary className="text-action">Edit</summary>
+                            <summary className="banner-action-button">Edit</summary>
                             <BannerUploadForm>
                               <input type="hidden" name="intent" value="update" />
                               <input type="hidden" name="id" value={item.id} />
@@ -183,13 +183,13 @@ export default async function ContentPage({
                           <form action={toggleBanner}>
                             <input type="hidden" name="id" value={item.id} />
                             <input type="hidden" name="active" value={String(item.active)} />
-                            <button className="text-action">
+                            <button className="banner-action-button">
                               {item.active ? 'Pause' : 'Enable'}
                             </button>
                           </form>
                           <form action={deleteBanner}>
                             <input type="hidden" name="id" value={item.id} />
-                            <button className="text-action danger">Delete</button>
+                            <button className="banner-action-button danger">Delete</button>
                           </form>
                         </td>
                       </tr>

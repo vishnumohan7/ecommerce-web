@@ -2193,6 +2193,25 @@ td code {
 .banner-table-wrap {
   overflow: visible;
 }
+.slider-management-panel {
+  grid-column: 1 / -1;
+}
+.banner-management-table {
+  min-width: 1040px;
+}
+.banner-management-table th:nth-child(1) {
+  width: 130px;
+}
+.banner-management-table th:nth-child(3) {
+  width: 150px;
+}
+.banner-management-table th:nth-child(4),
+.banner-management-table th:nth-child(5) {
+  width: 90px;
+}
+.banner-management-table th:nth-child(6) {
+  width: 210px;
+}
 .banner-thumbnail {
   width: 104px;
   height: 58px;
@@ -2207,6 +2226,30 @@ td code {
 }
 .banner-actions form {
   margin: 0;
+}
+.banner-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 7px 11px;
+  border: 1px solid #b9dfcc;
+  border-radius: 7px;
+  background: #eef8f3;
+  color: #286b50;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+.banner-action-button:hover {
+  border-color: #74c69d;
+  background: #dff2e8;
+}
+.banner-action-button.danger {
+  border-color: #efc7c7;
+  background: #fff4f4;
+  color: #b13d3d;
 }
 .row-editor {
   position: relative;
