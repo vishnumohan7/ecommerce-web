@@ -276,7 +276,7 @@ export default async function ContentPage({
                         {item.active ? 'Active' : 'Inactive'}
                       </span>
                       <div className="banner-actions">
-                        <details className="row-editor">
+                        <details className="row-editor promo-card-editor">
                           <summary className="banner-action-button">Edit</summary>
                           <BannerUploadForm endpoint="/api/promo-cards">
                             <input type="hidden" name="id" value={item.id} />

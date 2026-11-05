@@ -4482,6 +4482,70 @@ td code {
   font-weight: 700;
   gap: 5px;
 }
+
+/* Promotional cards use an expanded editor row rather than the compact table popover. */
+.promo-card-row {
+  position: relative;
+  transition: padding-bottom 160ms ease;
+}
+.promo-card-row:has(.promo-card-editor[open]) {
+  padding-bottom: 390px;
+}
+.promo-card-editor {
+  position: static;
+  margin: 0;
+}
+.promo-card-editor > form {
+  position: absolute;
+  z-index: 4;
+  top: 112px;
+  right: 20px;
+  left: 20px;
+  width: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #dbe5df;
+  border-radius: 12px;
+  background: #fbfdfc;
+  box-shadow: 0 12px 32px rgb(20 31 27 / 10%);
+  white-space: normal;
+}
+.promo-card-editor textarea,
+.promo-card-editor select {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid #dfe3e8;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+.promo-card-editor textarea,
+.promo-card-editor .wide-field,
+.promo-card-editor .button,
+.promo-card-editor .form-progress,
+.promo-card-editor .form-error {
+  grid-column: 1 / -1;
+}
+.promo-card-editor .button {
+  width: max-content;
+  min-width: 150px;
+}
+@media (max-width: 900px) {
+  .promo-card-row:has(.promo-card-editor[open]) {
+    padding-bottom: 610px;
+  }
+  .promo-card-editor > form {
+    top: 205px;
+    grid-template-columns: 1fr;
+  }
+  .promo-card-editor > form > * {
+    grid-column: 1;
+  }
+}
 .inline-edit-form input {
   background: #fff;
   border: 1px solid var(--line);
