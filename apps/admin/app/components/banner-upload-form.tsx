@@ -3,8 +3,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 
 const MAX_UPLOAD_BYTES = 1024 * 1024;
-const MAX_WIDTH = 2400;
-const MAX_HEIGHT = 1200;
+const MAX_WIDTH = 1920;
+const MAX_HEIGHT = 960;
 
 export function BannerUploadForm({
   children,
@@ -55,22 +55,39 @@ export function BannerUploadForm({
 async function optimiseBanner(file: File) {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_WIDTH / bitmap.width, MAX_HEIGHT / bitmap.height);
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
+  let width = Math.max(1, Math.round(bitmap.width * scale));
+  let height = Math.max(1, Math.round(bitmap.height * scale));
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('This browser could not process the selected image.');
-  context.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
+  let quality = 0.82;
+  let blob: Blob;
 
-  let quality = 0.86;
-  let blob = await canvasBlob(canvas, quality);
-  while (blob.size > MAX_UPLOAD_BYTES && quality > 0.5) {
-    quality -= 0.08;
+  do {
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('This browser could not process the selected image.');
+    context.drawImage(bitmap, 0, 0, width, height);
     blob = await canvasBlob(canvas, quality);
+
+    if (blob.size > MAX_UPLOAD_BYTES) {
+      if (quality > 0.5) quality -= 0.08;
+      else {
+        width = Math.max(960, Math.round(width * 0.82));
+        height = Math.max(1, Math.round((width * bitmap.height) / bitmap.width));
+        quality = 0.74;
+      }
+    }
+  } while (blob.size > MAX_UPLOAD_BYTES && width > 960);
+
+  if (blob.size > MAX_UPLOAD_BYTES) {
+    canvas.width = 960;
+    canvas.height = Math.max(1, Math.round((960 * bitmap.height) / bitmap.width));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('This browser could not process the selected image.');
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    blob = await canvasBlob(canvas, 0.5);
   }
+  bitmap.close();
   if (blob.size > MAX_UPLOAD_BYTES) {
     throw new Error('The image remains too large after optimisation. Please choose a smaller image.');
   }
