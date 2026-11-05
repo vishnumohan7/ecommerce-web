@@ -18,6 +18,7 @@ import {
   userRoleUpdateSchema,
   bannerCreateSchema,
   contentBlockCreateSchema,
+  contentBlockUpdateSchema,
   cmsPageUpsertSchema,
   reportFilterSchema,
   staffCreateSchema,
@@ -462,6 +463,34 @@ export class AdminService {
     });
     await this.audit('CONTENT_BLOCK_CREATED', 'CmsContentBlock', created.id, undefined, created);
     return created;
+  }
+
+  async updateContentBlock(id: string, body: unknown) {
+    const existing = await this.db.client.cmsContentBlock.findFirst({ where: { id } });
+    if (!existing) throw new NotFoundException('Content block not found');
+    const input = contentBlockUpdateSchema.parse(body);
+    const data: Prisma.CmsContentBlockUncheckedUpdateInput = {};
+    if (input.type !== undefined) data.type = input.type;
+    if (input.title !== undefined) data.title = input.title;
+    if (input.content !== undefined) data.content = input.content as Prisma.InputJsonValue;
+    if (input.position !== undefined) data.position = input.position;
+    if (input.startsAt !== undefined) data.startsAt = input.startsAt;
+    if (input.endsAt !== undefined) data.endsAt = input.endsAt;
+    if (input.active !== undefined) data.active = input.active;
+    const updated = await this.db.client.cmsContentBlock.update({
+      where: { id },
+      data,
+    });
+    await this.audit('CONTENT_BLOCK_UPDATED', 'CmsContentBlock', id, existing, updated);
+    return updated;
+  }
+
+  async deleteContentBlock(id: string) {
+    const existing = await this.db.client.cmsContentBlock.findFirst({ where: { id } });
+    if (!existing) throw new NotFoundException('Content block not found');
+    await this.db.client.cmsContentBlock.delete({ where: { id } });
+    await this.audit('CONTENT_BLOCK_DELETED', 'CmsContentBlock', id, existing, undefined);
+    return { deleted: true, id };
   }
 
   async upsertCmsPage(body: unknown) {

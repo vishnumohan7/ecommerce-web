@@ -1047,6 +1047,25 @@ export async function createContentBlock(data: FormData) {
   }
 }
 
+export async function toggleContentBlock(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(
+    `/api/v1/admin/content/blocks/${encodeURIComponent(id)}`,
+    'PATCH',
+    { active: textValue(data, 'active') !== 'true' },
+  );
+  finish('/content', result, 'Promotional card status updated.');
+}
+
+export async function deleteContentBlock(data: FormData) {
+  const id = textValue(data, 'id');
+  const result = await adminMutation(
+    `/api/v1/admin/content/blocks/${encodeURIComponent(id)}`,
+    'DELETE',
+  );
+  finish('/content', result, 'Promotional card deleted.');
+}
+
 export async function saveCmsPage(data: FormData) {
   const result = await adminMutation('/api/v1/admin/content/pages', 'POST', {
     type: textValue(data, 'type'),

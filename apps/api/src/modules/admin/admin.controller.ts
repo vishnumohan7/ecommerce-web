@@ -112,6 +112,17 @@ export class AdminController {
   @Post('content/blocks') @RequirePermissions('settings.write') createBlock(@Body() body: unknown) {
     return this.admin.createContentBlock(body);
   }
+  @Patch('content/blocks/:id') @RequirePermissions('settings.write') updateBlock(
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.admin.updateContentBlock(id, body);
+  }
+  @Delete('content/blocks/:id') @RequirePermissions('settings.write') deleteBlock(
+    @Param('id') id: string,
+  ) {
+    return this.admin.deleteContentBlock(id);
+  }
   @Post('content/pages') @RequirePermissions('settings.write') savePage(@Body() body: unknown) {
     return this.admin.upsertCmsPage(body);
   }

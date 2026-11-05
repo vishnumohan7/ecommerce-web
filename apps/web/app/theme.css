@@ -1431,6 +1431,8 @@ body {
   padding: 1.6rem;
   border-radius: 0.65rem;
   background: linear-gradient(145deg, #0c5c45, #06382b);
+  background-position: center;
+  background-size: cover;
   color: white;
   text-decoration: none;
 }

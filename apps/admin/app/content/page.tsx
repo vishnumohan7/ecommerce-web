@@ -1,5 +1,11 @@
 /* eslint-disable local/no-jsx-literals */
-import { createContentBlock, deleteBanner, saveCmsPage, toggleBanner } from '../actions';
+import {
+  deleteBanner,
+  deleteContentBlock,
+  saveCmsPage,
+  toggleBanner,
+  toggleContentBlock,
+} from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { BannerUploadForm } from '../components/banner-upload-form';
@@ -11,6 +17,9 @@ export default async function ContentPage({
   searchParams: Promise<{ success?: string; error?: string }>;
 }) {
   const [query, result] = await Promise.all([searchParams, fetchContent()]);
+  const promoCards = result.ok
+    ? result.data.blocks.filter((block) => block.type === 'PROMO_BLOCK')
+    : [];
   return (
     <>
       <section className="page-heading">
@@ -201,41 +210,142 @@ export default async function ContentPage({
                 )}
               </div>
             </article>
-            <article className="panel">
+            <article className="panel promo-card-panel">
               <header className="panel-header">
                 <div>
-                  <p className="eyebrow">Homepage layout</p>
-                  <h2>Content blocks</h2>
+                  <p className="eyebrow">Homepage merchandising</p>
+                  <h2>Promotional cards</h2>
+                  <p>
+                    Manage the image and content for the three feature cards below the categories.
+                  </p>
                 </div>
-                <span className="count-pill">{result.data.blocks.length}</span>
+                <span className="count-pill">{promoCards.length}</span>
               </header>
-              <form action={createContentBlock} className="content-form">
-                <select name="type">
-                  <option value="FEATURED_PRODUCTS">Featured products</option>
-                  <option value="CATEGORY_TILES">Category tiles</option>
-                  <option value="PROMO_BLOCK">Promotion block</option>
-                </select>
-                <input name="title" placeholder="Block title" />
-                <input name="position" type="number" min="0" defaultValue="0" />
+              <BannerUploadForm endpoint="/api/promo-cards" className="content-form">
+                <input name="eyebrow" placeholder="Eyebrow, e.g. Chilled selection" required />
+                <input name="title" placeholder="Card heading" required />
                 <textarea
                   className="wide-field"
-                  name="content"
-                  rows={5}
-                  defaultValue="{}"
-                  aria-label="Block JSON"
+                  name="description"
+                  rows={3}
+                  placeholder="Card description"
+                  required
                 />
-                <button className="button button-primary">Add block</button>
-              </form>
-              <div className="record-list">
-                {result.data.blocks.map((item) => (
-                  <div className="record-row" key={item.id}>
-                    <div>
-                      <strong>{item.title ?? item.type.replaceAll('_', ' ')}</strong>
-                      <small>{item.type.replaceAll('_', ' ')}</small>
-                    </div>
-                    <span className="soft-badge">Position {item.position}</span>
-                  </div>
-                ))}
+                <input name="buttonLabel" placeholder="Button label" required />
+                <input
+                  name="linkUrl"
+                  placeholder="Destination, e.g. /category/fresh-food"
+                  required
+                />
+                <label className="wide-field">
+                  Card image
+                  <input
+                    name="promoImage"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    required
+                  />
+                </label>
+                <select name="tone" defaultValue="fresh" aria-label="Colour treatment">
+                  <option value="fresh">Fresh green</option>
+                  <option value="pantry">Pantry olive</option>
+                  <option value="drinks">Drinks burgundy</option>
+                </select>
+                <input name="position" type="number" min="0" defaultValue="0" />
+                <button className="button button-primary">Add card</button>
+              </BannerUploadForm>
+              <div className="promo-card-list">
+                {promoCards.map((item) => {
+                  const content = item.content;
+                  const imageUrl = stringContent(content.imageUrl);
+                  return (
+                    <article className="promo-card-row" key={item.id}>
+                      <div
+                        className={`promo-card-preview ${stringContent(content.tone) || 'fresh'}`}
+                        style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
+                      />
+                      <div className="promo-card-copy">
+                        <small>{stringContent(content.eyebrow) || 'Promotional card'}</small>
+                        <strong>{item.title}</strong>
+                        <span>{stringContent(content.description)}</span>
+                      </div>
+                      <span
+                        className={`status-badge ${item.active ? 'status-active' : 'status-down'}`}
+                      >
+                        <span />
+                        {item.active ? 'Active' : 'Inactive'}
+                      </span>
+                      <div className="banner-actions">
+                        <details className="row-editor">
+                          <summary className="banner-action-button">Edit</summary>
+                          <BannerUploadForm endpoint="/api/promo-cards">
+                            <input type="hidden" name="id" value={item.id} />
+                            <input type="hidden" name="currentImageUrl" value={imageUrl} />
+                            <input
+                              name="eyebrow"
+                              defaultValue={stringContent(content.eyebrow)}
+                              required
+                            />
+                            <input name="title" defaultValue={item.title ?? ''} required />
+                            <textarea
+                              name="description"
+                              rows={3}
+                              defaultValue={stringContent(content.description)}
+                              required
+                            />
+                            <input
+                              name="buttonLabel"
+                              defaultValue={stringContent(content.buttonLabel)}
+                              required
+                            />
+                            <input
+                              name="linkUrl"
+                              defaultValue={stringContent(content.linkUrl)}
+                              required
+                            />
+                            <label className="wide-field">
+                              Replace card image
+                              <input
+                                name="promoImage"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/avif"
+                              />
+                            </label>
+                            <select
+                              name="tone"
+                              defaultValue={stringContent(content.tone) || 'fresh'}
+                            >
+                              <option value="fresh">Fresh green</option>
+                              <option value="pantry">Pantry olive</option>
+                              <option value="drinks">Drinks burgundy</option>
+                            </select>
+                            <input
+                              name="position"
+                              type="number"
+                              min="0"
+                              defaultValue={item.position}
+                            />
+                            <button className="button button-primary">Save changes</button>
+                          </BannerUploadForm>
+                        </details>
+                        <form action={toggleContentBlock}>
+                          <input type="hidden" name="id" value={item.id} />
+                          <input type="hidden" name="active" value={String(item.active)} />
+                          <button className="banner-action-button">
+                            {item.active ? 'Pause' : 'Enable'}
+                          </button>
+                        </form>
+                        <form action={deleteContentBlock}>
+                          <input type="hidden" name="id" value={item.id} />
+                          <button className="banner-action-button danger">Delete</button>
+                        </form>
+                      </div>
+                    </article>
+                  );
+                })}
+                {promoCards.length === 0 && (
+                  <div className="panel-empty">No promotional cards have been added.</div>
+                )}
               </div>
             </article>
           </section>
@@ -302,5 +412,10 @@ function formatSchedule(startsAt: string | null, endsAt: string | null) {
   const format = (value: string) =>
     new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
   if (startsAt && endsAt) return `${format(startsAt)} – ${format(endsAt)}`;
-  return startsAt ? `From ${format(startsAt)}` : `Until ${format(endsAt!)}`;
+  if (startsAt) return `From ${format(startsAt)}`;
+  return endsAt ? `Until ${format(endsAt)}` : 'Always';
+}
+
+function stringContent(value: unknown) {
+  return typeof value === 'string' ? value : '';
 }

@@ -1,3 +1,4 @@
+/* eslint-disable local/no-jsx-literals */
 import Link from 'next/link';
 import { ProductGrid } from '../components/product-card';
 import { HomeSlider, type HomeSlide } from '../components/home-slider';
@@ -8,6 +9,47 @@ interface HomeContent {
   blocks: Array<{ id: string; type: string; title?: string | null; content: unknown }>;
 }
 
+interface PromoCard {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  linkUrl: string;
+  imageUrl?: string;
+  tone: 'fresh' | 'pantry' | 'drinks';
+}
+
+const fallbackPromoCards: PromoCard[] = [
+  {
+    id: 'fresh',
+    eyebrow: 'Chilled selection',
+    title: 'Fresh food',
+    description: 'Browse chilled and fresh products available from the live catalogue.',
+    buttonLabel: 'Shop fresh food →',
+    linkUrl: '/category/fresh-food',
+    tone: 'fresh',
+  },
+  {
+    id: 'pantry',
+    eyebrow: 'Pantry essentials',
+    title: 'Groceries',
+    description: 'Rice, grains, spices, snacks and everyday household favourites.',
+    buttonLabel: 'Shop groceries →',
+    linkUrl: '/category/all',
+    tone: 'pantry',
+  },
+  {
+    id: 'drinks',
+    eyebrow: '18+ · drink responsibly',
+    title: 'Drinks',
+    description: 'Age-gated browsing and Challenge 25 controls at delivery.',
+    buttonLabel: 'Browse drinks →',
+    linkUrl: '/alcohol',
+    tone: 'drinks',
+  },
+];
+
 export default async function Home({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ ageGate?: string }> }>) {
@@ -17,6 +59,12 @@ export default async function Home({
     serverApi<{ items: Category[] }>('/api/v1/categories?limit=12'),
     serverApi<HomeContent>('/api/v1/content/home'),
   ]);
+  const configuredPromoCards = (content?.blocks ?? [])
+    .filter((block) => block.type === 'PROMO_BLOCK')
+    .map(promoCardFromBlock)
+    .filter((card): card is PromoCard => card !== null);
+  const promoCards = configuredPromoCards.length ? configuredPromoCards : fallbackPromoCards;
+  const remainingBlocks = (content?.blocks ?? []).filter((block) => block.type !== 'PROMO_BLOCK');
   return (
     <main className="storefront-home">
       {ageGate === 'declined' && (
@@ -49,24 +97,23 @@ export default async function Home({
         </div>
       </section>
       <section className="home-section story-grid">
-        <Link href="/category/fresh-food" className="story-card fresh">
-          <small>Chilled selection</small>
-          <h2>Fresh food</h2>
-          <p>Browse chilled and fresh products available from the live catalogue.</p>
-          <b>Shop fresh food →</b>
-        </Link>
-        <Link href="/category/all" className="story-card pantry">
-          <small>Pantry essentials</small>
-          <h2>Groceries</h2>
-          <p>Rice, grains, spices, snacks and everyday household favourites.</p>
-          <b>Shop groceries →</b>
-        </Link>
-        <Link href="/alcohol" className="story-card drinks">
-          <small>18+ · drink responsibly</small>
-          <h2>Drinks</h2>
-          <p>Age-gated browsing and Challenge 25 controls at delivery.</p>
-          <b>Browse drinks →</b>
-        </Link>
+        {promoCards.map((card) => (
+          <Link
+            key={card.id}
+            href={card.linkUrl}
+            className={`story-card ${card.tone}`}
+            style={
+              card.imageUrl
+                ? { backgroundImage: `${cardGradient(card.tone)}, url(${card.imageUrl})` }
+                : undefined
+            }
+          >
+            <small>{card.eyebrow}</small>
+            <h2>{card.title}</h2>
+            <p>{card.description}</p>
+            <b>{card.buttonLabel}</b>
+          </Link>
+        ))}
       </section>
       <section className="home-section">
         <div className="section-heading">
@@ -85,9 +132,9 @@ export default async function Home({
           </div>
         )}
       </section>
-      {content?.blocks.length ? (
+      {remainingBlocks.length ? (
         <section className="home-section cms-blocks">
-          {content.blocks.slice(0, 2).map((block) => (
+          {remainingBlocks.slice(0, 2).map((block) => (
             <article key={block.id}>
               <p className="eyebrow">{block.type.replaceAll('_', ' ')}</p>
               {block.title && <h2>{block.title}</h2>}
@@ -98,6 +145,30 @@ export default async function Home({
       ) : null}
     </main>
   );
+}
+
+function promoCardFromBlock(block: HomeContent['blocks'][number]): PromoCard | null {
+  if (!block.title || !block.content || typeof block.content !== 'object') return null;
+  const content = block.content as Record<string, unknown>;
+  const read = (key: string) => (typeof content[key] === 'string' ? content[key] : '');
+  const tone = read('tone');
+  const imageUrl = read('imageUrl');
+  return {
+    id: block.id,
+    eyebrow: read('eyebrow'),
+    title: block.title,
+    description: read('description'),
+    buttonLabel: read('buttonLabel') || 'Shop now →',
+    linkUrl: read('linkUrl') || '/category/all',
+    ...(imageUrl ? { imageUrl } : {}),
+    tone: tone === 'pantry' || tone === 'drinks' ? tone : 'fresh',
+  };
+}
+
+function cardGradient(tone: PromoCard['tone']) {
+  if (tone === 'drinks') return 'linear-gradient(90deg, rgba(54,17,20,.96), rgba(31,41,36,.35))';
+  if (tone === 'pantry') return 'linear-gradient(90deg, rgba(67,57,31,.96), rgba(33,58,45,.35))';
+  return 'linear-gradient(90deg, rgba(6,56,43,.97), rgba(6,56,43,.28))';
 }
 
 function CmsBody({ content }: Readonly<{ content: unknown }>) {

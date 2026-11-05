@@ -535,6 +535,8 @@ export interface ContentData {
     title: string | null;
     position: number;
     active: boolean;
+    startsAt: string | null;
+    endsAt: string | null;
     content: Record<string, unknown>;
   }>;
   pages: Array<{

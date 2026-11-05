@@ -2196,6 +2196,64 @@ td code {
 .slider-management-panel {
   grid-column: 1 / -1;
 }
+.promo-card-panel {
+  grid-column: 1 / -1;
+}
+.promo-card-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.promo-card-row {
+  display: grid;
+  grid-template-columns: 150px minmax(260px, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.promo-card-preview {
+  width: 150px;
+  height: 82px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #0c5c45, #06382b) center/cover;
+}
+.promo-card-preview.pantry {
+  background-color: #3f432c;
+}
+.promo-card-preview.drinks {
+  background-color: #3e2222;
+}
+.promo-card-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.promo-card-copy small {
+  color: var(--accent-strong);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.promo-card-copy strong {
+  font-size: 14px;
+}
+.promo-card-copy span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 1050px) {
+  .promo-card-row {
+    grid-template-columns: 120px minmax(200px, 1fr);
+  }
+  .promo-card-row > .status-badge,
+  .promo-card-row > .banner-actions {
+    justify-self: start;
+  }
+}
 .banner-management-table {
   min-width: 1040px;
 }

@@ -166,6 +166,7 @@ export const contentBlockCreateSchema = z.object({
   endsAt: optionalDate.optional(),
   active: z.boolean().default(true),
 });
+export const contentBlockUpdateSchema = contentBlockCreateSchema.partial();
 export const cmsPageUpsertSchema = z.object({
   type: z.enum(['TERMS', 'PRIVACY', 'COOKIE', 'RETURNS', 'ALCOHOL_POLICY', 'DELIVERY_POLICY']),
   locale: z.string().min(2).max(20).default('en-GB'),
