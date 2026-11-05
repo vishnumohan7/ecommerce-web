@@ -1331,12 +1331,13 @@ body {
   left: 50%;
   bottom: 20px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   transform: translateX(-50%);
 }
 .slider-controls button {
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
+  min-height: 7px;
   padding: 0;
   border: 1px solid rgb(255 255 255 / 75%);
   border-radius: 999px;
@@ -1344,7 +1345,7 @@ body {
   cursor: pointer;
 }
 .slider-controls button.is-active {
-  width: 28px;
+  width: 20px;
   background: #f6bd35;
   border-color: #f6bd35;
 }
