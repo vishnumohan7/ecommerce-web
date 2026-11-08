@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { ProductGrid } from '../components/product-card';
 import { HomeSlider, type HomeSlide } from '../components/home-slider';
+import { CategoryCarousel } from '../components/category-carousel';
 import { serverApi, type Category, type Product } from '../lib/store-api';
 
 interface HomeContent {
@@ -103,20 +104,7 @@ export default async function Home({
           </div>
           <Link href="/category/all">View all →</Link>
         </div>
-        <div className="category-orbits">
-          {(categories?.items ?? []).slice(0, 8).map((category) => (
-            <Link key={category.id} href={`/category/${category.slug}?id=${category.id}`}>
-              <span
-                style={
-                  category.imageUrl ? { backgroundImage: `url(${category.imageUrl})` } : undefined
-                }
-              >
-                {!category.imageUrl && category.name.slice(0, 1)}
-              </span>
-              <strong>{category.name}</strong>
-            </Link>
-          ))}
-        </div>
+        <CategoryCarousel categories={categories?.items ?? []} />
       </section>
       <section className="home-section story-grid">
         {promoCards.map((card) => (
