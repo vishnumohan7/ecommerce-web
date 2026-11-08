@@ -6,7 +6,13 @@ import { serverApi, type Category, type Product } from '../lib/store-api';
 
 interface HomeContent {
   banners: HomeSlide[];
-  blocks: Array<{ id: string; type: string; title?: string | null; content: unknown }>;
+  blocks: Array<{
+    id: string;
+    type: string;
+    title?: string | null;
+    content: unknown;
+    products?: Product[];
+  }>;
 }
 
 interface PromoCard {
@@ -64,7 +70,23 @@ export default async function Home({
     .map(promoCardFromBlock)
     .filter((card): card is PromoCard => card !== null);
   const promoCards = configuredPromoCards.length ? configuredPromoCards : fallbackPromoCards;
-  const remainingBlocks = (content?.blocks ?? []).filter((block) => block.type !== 'PROMO_BLOCK');
+  const configuredProductRows = (content?.blocks ?? []).filter(
+    (block) => block.type === 'FEATURED_PRODUCTS',
+  );
+  const productRows = configuredProductRows.length
+    ? configuredProductRows
+    : [
+        {
+          id: 'featured-products',
+          type: 'FEATURED_PRODUCTS',
+          title: 'Featured products',
+          content: { eyebrow: 'From the live catalogue', linkUrl: '/search' },
+          products: products?.slice(0, 12) ?? [],
+        },
+      ];
+  const remainingBlocks = (content?.blocks ?? []).filter(
+    (block) => block.type !== 'PROMO_BLOCK' && block.type !== 'FEATURED_PRODUCTS',
+  );
   return (
     <main className="storefront-home">
       {ageGate === 'declined' && (
@@ -115,23 +137,26 @@ export default async function Home({
           </Link>
         ))}
       </section>
-      <section className="home-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">From the live catalogue</p>
-            <h2>Featured products</h2>
-          </div>
-          <Link href="/search">View all →</Link>
-        </div>
-        {products ? (
-          <ProductGrid products={products.slice(0, 12)} />
-        ) : (
-          <div className="error-state">
-            <h2>Catalogue unavailable</h2>
-            <p>Please try again shortly.</p>
-          </div>
-        )}
-      </section>
+      {productRows.map((row) => {
+        const rowContent = objectContent(row.content);
+        const rowProducts = row.products ?? [];
+        return (
+          <section className="home-section" key={row.id}>
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">{textContent(rowContent.eyebrow) || 'Curated products'}</p>
+                <h2>{row.title || 'Products'}</h2>
+              </div>
+              <Link href={textContent(rowContent.linkUrl) || '/category/all'}>View all →</Link>
+            </div>
+            {rowProducts.length ? (
+              <ProductGrid products={rowProducts} />
+            ) : (
+              <div className="empty-product-row">Products will appear here when available.</div>
+            )}
+          </section>
+        );
+      })}
       {remainingBlocks.length ? (
         <section className="home-section cms-blocks">
           {remainingBlocks.slice(0, 2).map((block) => (
@@ -181,4 +206,14 @@ function CmsBody({ content }: Readonly<{ content: unknown }>) {
     if (typeof text === 'string') return <p>{text}</p>;
   }
   return null;
+}
+
+function objectContent(value: unknown) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function textContent(value: unknown) {
+  return typeof value === 'string' ? value : '';
 }

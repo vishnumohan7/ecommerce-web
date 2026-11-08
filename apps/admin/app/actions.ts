@@ -1066,6 +1066,33 @@ export async function deleteContentBlock(data: FormData) {
   finish('/content', result, 'Promotional card deleted.');
 }
 
+export async function saveProductRow(data: FormData) {
+  const id = textValue(data, 'id');
+  const mode = textValue(data, 'mode') || 'MANUAL';
+  const payload = {
+    type: 'FEATURED_PRODUCTS',
+    title: textValue(data, 'title'),
+    position: Number(textValue(data, 'position') || '0'),
+    content: {
+      eyebrow: textValue(data, 'eyebrow'),
+      mode,
+      limit: Number(textValue(data, 'limit') || '6'),
+      linkUrl: textValue(data, 'linkUrl') || '/category/all',
+      productIds: data
+        .getAll('productIds')
+        .filter((value): value is string => typeof value === 'string'),
+    },
+  };
+  const result = id
+    ? await adminMutation(
+        `/api/v1/admin/content/blocks/${encodeURIComponent(id)}`,
+        'PATCH',
+        payload,
+      )
+    : await adminMutation('/api/v1/admin/content/blocks', 'POST', { ...payload, active: true });
+  finish('/content', result, id ? 'Product row updated.' : 'Product row created.');
+}
+
 export async function saveCmsPage(data: FormData) {
   const result = await adminMutation('/api/v1/admin/content/pages', 'POST', {
     type: textValue(data, 'type'),

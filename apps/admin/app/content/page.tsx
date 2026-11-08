@@ -3,23 +3,32 @@ import {
   deleteBanner,
   deleteContentBlock,
   saveCmsPage,
+  saveProductRow,
   toggleBanner,
   toggleContentBlock,
 } from '../actions';
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { BannerUploadForm } from '../components/banner-upload-form';
-import { fetchContent } from '../lib/api';
+import { fetchAdminProducts, fetchContent } from '../lib/api';
 export const dynamic = 'force-dynamic';
 export default async function ContentPage({
   searchParams,
 }: {
   searchParams: Promise<{ success?: string; error?: string }>;
 }) {
-  const [query, result] = await Promise.all([searchParams, fetchContent()]);
+  const [query, result, productsResult] = await Promise.all([
+    searchParams,
+    fetchContent(),
+    fetchAdminProducts({ pageSize: 100, status: 'ACTIVE', sort: 'name-asc' }),
+  ]);
   const promoCards = result.ok
     ? result.data.blocks.filter((block) => block.type === 'PROMO_BLOCK')
     : [];
+  const productRows = result.ok
+    ? result.data.blocks.filter((block) => block.type === 'FEATURED_PRODUCTS')
+    : [];
+  const products = productsResult.ok ? productsResult.data.items : [];
   return (
     <>
       <section className="page-heading">
@@ -348,6 +357,153 @@ export default async function ContentPage({
                 )}
               </div>
             </article>
+            <article className="panel product-row-panel">
+              <header className="panel-header">
+                <div>
+                  <p className="eyebrow">Product merchandising</p>
+                  <h2>Storefront product rows</h2>
+                  <p>
+                    Create reusable product sections and control how their products are selected.
+                  </p>
+                </div>
+                <span className="count-pill">{productRows.length}</span>
+              </header>
+              <form action={saveProductRow} className="content-form product-row-form">
+                <input name="eyebrow" placeholder="Eyebrow, e.g. Customer favourites" />
+                <input name="title" placeholder="Row title, e.g. Best sellers" required />
+                <select name="mode" defaultValue="MANUAL">
+                  <option value="MANUAL">Manually assigned products</option>
+                  <option value="BEST_SELLERS">Best sellers (automatic)</option>
+                  <option value="TOP_RATED">Top rated (automatic)</option>
+                  <option value="NEW_ARRIVALS">New arrivals (automatic)</option>
+                </select>
+                <input
+                  name="limit"
+                  type="number"
+                  min="1"
+                  max="12"
+                  defaultValue="6"
+                  aria-label="Maximum products"
+                />
+                <input
+                  name="linkUrl"
+                  defaultValue="/category/all"
+                  placeholder="View all destination"
+                />
+                <input
+                  name="position"
+                  type="number"
+                  min="0"
+                  defaultValue="10"
+                  aria-label="Display order"
+                />
+                <fieldset className="product-row-picker wide-field">
+                  <legend>Products for manually assigned rows</legend>
+                  {products.map((product) => (
+                    <label key={product.id}>
+                      <input type="checkbox" name="productIds" value={product.id} />
+                      <span>{product.name}</span>
+                      <small>{product.sku}</small>
+                    </label>
+                  ))}
+                </fieldset>
+                <button className="button button-primary">Add product row</button>
+              </form>
+              <div className="product-row-list">
+                {productRows.map((item) => {
+                  const content = item.content;
+                  const selectedIds = stringArrayContent(content.productIds);
+                  const mode = stringContent(content.mode) || 'MANUAL';
+                  return (
+                    <details className="product-row-editor" key={item.id}>
+                      <summary>
+                        <div>
+                          <small>{stringContent(content.eyebrow) || rowModeLabel(mode)}</small>
+                          <strong>{item.title}</strong>
+                        </div>
+                        <span className="soft-badge">{rowModeLabel(mode)}</span>
+                        <span className="soft-badge">Position {item.position}</span>
+                        <span
+                          className={`status-badge ${item.active ? 'status-active' : 'status-down'}`}
+                        >
+                          <span />
+                          {item.active ? 'Active' : 'Inactive'}
+                        </span>
+                        <b>Edit</b>
+                      </summary>
+                      <div className="product-row-edit-body">
+                        <form action={saveProductRow} className="content-form product-row-form">
+                          <input type="hidden" name="id" value={item.id} />
+                          <input
+                            name="eyebrow"
+                            defaultValue={stringContent(content.eyebrow)}
+                            placeholder="Eyebrow"
+                          />
+                          <input name="title" defaultValue={item.title ?? ''} required />
+                          <select name="mode" defaultValue={mode}>
+                            <option value="MANUAL">Manually assigned products</option>
+                            <option value="BEST_SELLERS">Best sellers (automatic)</option>
+                            <option value="TOP_RATED">Top rated (automatic)</option>
+                            <option value="NEW_ARRIVALS">New arrivals (automatic)</option>
+                          </select>
+                          <input
+                            name="limit"
+                            type="number"
+                            min="1"
+                            max="12"
+                            defaultValue={numberContent(content.limit, 6)}
+                            aria-label="Maximum products"
+                          />
+                          <input
+                            name="linkUrl"
+                            defaultValue={stringContent(content.linkUrl) || '/category/all'}
+                          />
+                          <input
+                            name="position"
+                            type="number"
+                            min="0"
+                            defaultValue={item.position}
+                            aria-label="Display order"
+                          />
+                          <fieldset className="product-row-picker wide-field">
+                            <legend>Products for manually assigned rows</legend>
+                            {products.map((product) => (
+                              <label key={product.id}>
+                                <input
+                                  type="checkbox"
+                                  name="productIds"
+                                  value={product.id}
+                                  defaultChecked={selectedIds.includes(product.id)}
+                                />
+                                <span>{product.name}</span>
+                                <small>{product.sku}</small>
+                              </label>
+                            ))}
+                          </fieldset>
+                          <button className="button button-primary">Save row</button>
+                        </form>
+                        <div className="product-row-secondary-actions">
+                          <form action={toggleContentBlock}>
+                            <input type="hidden" name="id" value={item.id} />
+                            <input type="hidden" name="active" value={String(item.active)} />
+                            <button className="banner-action-button">
+                              {item.active ? 'Pause' : 'Enable'}
+                            </button>
+                          </form>
+                          <form action={deleteContentBlock}>
+                            <input type="hidden" name="id" value={item.id} />
+                            <button className="banner-action-button danger">Delete</button>
+                          </form>
+                        </div>
+                      </div>
+                    </details>
+                  );
+                })}
+                {productRows.length === 0 && (
+                  <div className="panel-empty">No product rows have been configured.</div>
+                )}
+              </div>
+            </article>
           </section>
           <article className="panel section-gap">
             <header className="panel-header">
@@ -418,4 +574,24 @@ function formatSchedule(startsAt: string | null, endsAt: string | null) {
 
 function stringContent(value: unknown) {
   return typeof value === 'string' ? value : '';
+}
+
+function stringArrayContent(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+function numberContent(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function rowModeLabel(mode: string) {
+  const labels: Record<string, string> = {
+    MANUAL: 'Manual selection',
+    BEST_SELLERS: 'Best sellers',
+    TOP_RATED: 'Top rated',
+    NEW_ARRIVALS: 'New arrivals',
+  };
+  return labels[mode] ?? 'Product row';
 }

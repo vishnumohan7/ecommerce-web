@@ -374,7 +374,65 @@ export class CustomerService {
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
       }),
     ]);
-    return { banners, blocks };
+    const resolvedBlocks = await Promise.all(
+      blocks.map(async (block) => ({
+        ...block,
+        products:
+          block.type === 'FEATURED_PRODUCTS' ? await this.resolveProductRow(block.content) : [],
+      })),
+    );
+    return { banners, blocks: resolvedBlocks };
+  }
+
+  private async resolveProductRow(content: Prisma.JsonValue) {
+    if (!content || Array.isArray(content) || typeof content !== 'object') return [];
+    const config = content as Record<string, Prisma.JsonValue>;
+    const mode = typeof config.mode === 'string' ? config.mode : 'MANUAL';
+    const limit = Math.min(Math.max(Number(config.limit) || 6, 1), 12);
+    let productIds: string[] = [];
+
+    if (mode === 'BEST_SELLERS') {
+      const sales = await this.db.client.orderItem.groupBy({
+        by: ['productId'],
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: 'desc' } },
+        take: limit * 3,
+      });
+      productIds = sales.map((sale) => sale.productId);
+    } else if (mode === 'MANUAL' && Array.isArray(config.productIds)) {
+      productIds = config.productIds.filter((id): id is string => typeof id === 'string');
+    }
+    if ((mode === 'MANUAL' || mode === 'BEST_SELLERS') && productIds.length === 0) return [];
+
+    const products = await this.db.client.product.findMany({
+      where: {
+        status: 'ACTIVE',
+        isAlcohol: false,
+        ...(productIds.length ? { id: { in: productIds } } : {}),
+      },
+      orderBy:
+        mode === 'TOP_RATED'
+          ? [{ ratingAverageBps: 'desc' }, { ratingCount: 'desc' }]
+          : mode === 'NEW_ARRIVALS'
+            ? { createdAt: 'desc' }
+            : { updatedAt: 'desc' },
+      take:
+        mode === 'MANUAL' || mode === 'BEST_SELLERS' ? Math.max(productIds.length, limit) : limit,
+    });
+    const ordered = productIds.length
+      ? productIds.flatMap((id) => products.filter((product) => product.id === id))
+      : products;
+    const selected = ordered.slice(0, limit);
+    const images = selected.length
+      ? await this.db.client.productImage.findMany({
+          where: { productId: { in: selected.map((product) => product.id) } },
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+        })
+      : [];
+    return selected.map((product) => ({
+      ...product,
+      images: images.filter((image) => image.productId === product.id),
+    }));
   }
 
   legalContent(type: string, locale = 'en-GB') {

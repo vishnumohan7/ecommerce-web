@@ -1470,6 +1470,14 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
   gap: 1rem;
 }
+.empty-product-row {
+  padding: 2rem;
+  border: 1px dashed #cfded6;
+  border-radius: 0.65rem;
+  background: #f8fbf9;
+  color: #627269;
+  text-align: center;
+}
 .product-card {
   position: relative;
   border-color: #e0e7e2;
