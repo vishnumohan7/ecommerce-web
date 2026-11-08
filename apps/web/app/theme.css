@@ -1389,9 +1389,13 @@ body {
   font-weight: 800;
   text-decoration: none;
 }
+.category-section {
+  padding-bottom: 1.4rem;
+}
 .category-orbits {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(8, minmax(0, 7.5rem));
+  justify-content: center;
   gap: 1rem;
 }
 .category-orbits a {
