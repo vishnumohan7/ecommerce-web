@@ -6,6 +6,7 @@ import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { ConfirmSubmitButton } from '../components/confirm-submit-button';
 import { TablePagination } from '../components/table-pagination';
+import { TaxonomyImageForm } from '../components/taxonomy-image-form';
 import { fetchAdminCategories, fetchCategories } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Categories' };
@@ -58,7 +59,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
           </div>
           <span className="count-badge">{result.data.total} categories</span>
         </div>
-        <form action={createCategory} className="taxonomy-page-form">
+        <TaxonomyImageForm action={createCategory} className="taxonomy-page-form">
           <label className="form-field">
             <span>Category name</span>
             <input name="name" placeholder="e.g. Fresh food" required />
@@ -100,7 +101,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
           <button className="button button-primary" type="submit">
             Add category
           </button>
-        </form>
+        </TaxonomyImageForm>
         <form action="/categories" className="order-filters taxonomy-filters">
           <input
             aria-label="Search categories"

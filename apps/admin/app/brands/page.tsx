@@ -6,6 +6,7 @@ import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { ConfirmSubmitButton } from '../components/confirm-submit-button';
 import { TablePagination } from '../components/table-pagination';
+import { TaxonomyImageForm } from '../components/taxonomy-image-form';
 import { fetchAdminBrands } from '../lib/api';
 
 export const metadata: Metadata = { title: 'Brands' };
@@ -51,7 +52,7 @@ export default async function BrandsPage({ searchParams }: Props) {
           </div>
           <span className="count-badge">{result.data.total} brands</span>
         </div>
-        <form action={createBrand} className="taxonomy-page-form brand-page-form">
+        <TaxonomyImageForm action={createBrand} className="taxonomy-page-form brand-page-form">
           <label className="form-field">
             <span>Brand name</span>
             <input name="name" placeholder="e.g. Coca-Cola" required />
@@ -78,7 +79,7 @@ export default async function BrandsPage({ searchParams }: Props) {
           <button className="button button-primary" type="submit">
             Add brand
           </button>
-        </form>
+        </TaxonomyImageForm>
         <form action="/brands" className="order-filters taxonomy-filters">
           <input
             aria-label="Search brands"
