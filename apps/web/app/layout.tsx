@@ -64,13 +64,47 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
             <Link href="/alcohol">Alcohol</Link>
             <Link href="/offers">Offers</Link>
           </nav>
+          <nav aria-label="Customer service">
+            <strong>Customer service</strong>
+            <Link href="/help/contact">Contact Us</Link>
+            <Link href="/help/delivery">Delivery Information</Link>
+            <Link href="/legal/returns">Returns &amp; Refunds</Link>
+            <Link href="/legal/terms">Terms &amp; Conditions</Link>
+            <Link href="/legal/privacy">Privacy Policy</Link>
+            <Link href="/help/responsible-drinking">Responsible Drinking</Link>
+          </nav>
+          <div className="footer-connect">
+            <strong>Follow us</strong>
+            <div className="footer-social" aria-label="Social media">
+              <a href="#" aria-label="Instagram">
+                ◎
+              </a>
+              <a href="#" aria-label="Facebook">
+                f
+              </a>
+              <a href="#" aria-label="YouTube">
+                ▶
+              </a>
+            </div>
+            <strong className="payment-heading">Secure payments</strong>
+            <div className="payment-badges" aria-label="Accepted payment methods">
+              <span>VISA</span>
+              <span>Mastercard</span>
+              <span>Apple Pay</span>
+              <span>Google Pay</span>
+              <span>Stripe</span>
+            </div>
+          </div>
           <div className="footer-bottom">
             <small>
               © 2026 Angadi. All rights reserved. UK Wide Delivery | Fresh. Authentic. Always.
             </small>
-            <a className="back-to-top" href="#top" aria-label="Back to top">
-              ↑
-            </a>
+            <div>
+              <small>Kerala &amp; Indian Groceries &amp; Drinks Delivered Across the UK</small>
+              <a className="back-to-top" href="#top" aria-label="Back to top">
+                ↑
+              </a>
+            </div>
           </div>
         </footer>
         <CookieBanner />
