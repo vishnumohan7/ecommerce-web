@@ -59,7 +59,11 @@ export default async function CategoriesPage({ searchParams }: Props) {
           </div>
           <span className="count-badge">{result.data.total} categories</span>
         </div>
-        <TaxonomyImageForm action={createCategory} className="taxonomy-page-form">
+        <TaxonomyImageForm
+          action={createCategory}
+          className="taxonomy-page-form"
+          successMessage="Category created."
+        >
           <label className="form-field">
             <span>Category name</span>
             <input name="name" placeholder="e.g. Fresh food" required />

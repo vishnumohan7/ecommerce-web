@@ -2,21 +2,25 @@
 
 /* eslint-disable local/no-jsx-literals */
 import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 const MAX_IMAGE_BYTES = 900 * 1024;
 const MAX_IMAGE_EDGE = 1400;
 
 interface TaxonomyImageFormProps {
-  action: (data: FormData) => Promise<void>;
+  action: (data: FormData) => Promise<{ ok: boolean; error?: string }>;
   children: ReactNode;
   className?: string;
+  successMessage: string;
 }
 
 export function TaxonomyImageForm({
   action,
   children,
   className,
+  successMessage,
 }: Readonly<TaxonomyImageFormProps>) {
+  const router = useRouter();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,15 +28,20 @@ export function TaxonomyImageForm({
     event.preventDefault();
     if (processing) return;
 
+    const form = event.currentTarget;
     setProcessing(true);
     setError('');
     try {
-      const data = new FormData(event.currentTarget);
+      const data = new FormData(form);
       const image = data.get('image');
       if (image instanceof File && image.size > 0) {
         data.set('image', await optimiseTaxonomyImage(image));
       }
-      await action(data);
+      const result = await action(data);
+      if (!result.ok) throw new Error(result.error ?? 'The item could not be saved.');
+      form.reset();
+      router.replace(`?success=${encodeURIComponent(successMessage)}`);
+      router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'The category could not be saved.');
       setProcessing(false);

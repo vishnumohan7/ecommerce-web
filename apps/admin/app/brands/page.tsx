@@ -52,7 +52,11 @@ export default async function BrandsPage({ searchParams }: Props) {
           </div>
           <span className="count-badge">{result.data.total} brands</span>
         </div>
-        <TaxonomyImageForm action={createBrand} className="taxonomy-page-form brand-page-form">
+        <TaxonomyImageForm
+          action={createBrand}
+          className="taxonomy-page-form brand-page-form"
+          successMessage="Brand created."
+        >
           <label className="form-field">
             <span>Brand name</span>
             <input name="name" placeholder="e.g. Coca-Cola" required />

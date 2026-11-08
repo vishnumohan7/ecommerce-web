@@ -28,9 +28,9 @@ export async function createCategory(data: FormData) {
     position: Number(textValue(data, 'position') || '0'),
     active: true,
   });
-  if (!result.ok) finish('/categories', result, '');
+  if (!result.ok) return result;
   const upload = await uploadTaxonomyImage('categories', result.data.id, data.get('image'));
-  finish('/categories', upload, 'Category created.');
+  return upload;
 }
 
 export async function createBrand(data: FormData) {
@@ -38,9 +38,9 @@ export async function createBrand(data: FormData) {
     name: textValue(data, 'name'),
     slug: textValue(data, 'slug'),
   });
-  if (!result.ok) finish('/brands', result, '');
+  if (!result.ok) return result;
   const upload = await uploadTaxonomyImage('brands', result.data.id, data.get('image'));
-  finish('/brands', upload, 'Brand created.');
+  return upload;
 }
 
 async function uploadTaxonomyImage(
