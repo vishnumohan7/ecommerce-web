@@ -1903,8 +1903,8 @@ body {
   min-height: 391px;
   display: grid;
   grid-template-columns: minmax(360px, 2fr) repeat(3, minmax(150px, 1fr));
-  grid-template-rows: 218px auto;
-  gap: 0 36px;
+  grid-template-rows: auto auto;
+  gap: 32px 36px;
   padding: 65px 24px 48px;
   background: #0e241b;
   color: #fff;
@@ -1912,8 +1912,10 @@ body {
 .site-footer nav {
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 14px;
+  min-width: 0;
 }
 .site-footer strong {
   font-size: 16px;
