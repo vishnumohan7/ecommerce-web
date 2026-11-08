@@ -1076,6 +1076,7 @@ export async function saveProductRow(data: FormData) {
     content: {
       eyebrow: textValue(data, 'eyebrow'),
       mode,
+      categoryId: textValue(data, 'categoryId') || null,
       limit: Number(textValue(data, 'limit') || '6'),
       linkUrl: textValue(data, 'linkUrl') || '/category/all',
       productIds: data

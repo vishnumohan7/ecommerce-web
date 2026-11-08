@@ -10,17 +10,24 @@ import {
 import { ActionMessage } from '../components/action-message';
 import { ApiNotice } from '../components/api-notice';
 import { BannerUploadForm } from '../components/banner-upload-form';
-import { fetchAdminProducts, fetchContent } from '../lib/api';
+import {
+  fetchAdminProducts,
+  fetchCategories,
+  fetchContent,
+  type Category,
+  type Product,
+} from '../lib/api';
 export const dynamic = 'force-dynamic';
 export default async function ContentPage({
   searchParams,
 }: {
   searchParams: Promise<{ success?: string; error?: string }>;
 }) {
-  const [query, result, productsResult] = await Promise.all([
+  const [query, result, productsResult, categoriesResult] = await Promise.all([
     searchParams,
     fetchContent(),
     fetchAdminProducts({ pageSize: 100, status: 'ACTIVE', sort: 'name-asc' }),
+    fetchCategories(),
   ]);
   const promoCards = result.ok
     ? result.data.blocks.filter((block) => block.type === 'PROMO_BLOCK')
@@ -29,6 +36,9 @@ export default async function ContentPage({
     ? result.data.blocks.filter((block) => block.type === 'FEATURED_PRODUCTS')
     : [];
   const products = productsResult.ok ? productsResult.data.items : [];
+  const categories = categoriesResult.ok
+    ? categoriesResult.data.items.filter((category) => category.active)
+    : [];
   return (
     <>
       <section className="page-heading">
@@ -369,44 +379,7 @@ export default async function ContentPage({
                 <span className="count-pill">{productRows.length}</span>
               </header>
               <form action={saveProductRow} className="content-form product-row-form">
-                <input name="eyebrow" placeholder="Eyebrow, e.g. Customer favourites" />
-                <input name="title" placeholder="Row title, e.g. Best sellers" required />
-                <select name="mode" defaultValue="MANUAL">
-                  <option value="MANUAL">Manually assigned products</option>
-                  <option value="BEST_SELLERS">Best sellers (automatic)</option>
-                  <option value="TOP_RATED">Top rated (automatic)</option>
-                  <option value="NEW_ARRIVALS">New arrivals (automatic)</option>
-                </select>
-                <input
-                  name="limit"
-                  type="number"
-                  min="1"
-                  max="12"
-                  defaultValue="6"
-                  aria-label="Maximum products"
-                />
-                <input
-                  name="linkUrl"
-                  defaultValue="/category/all"
-                  placeholder="View all destination"
-                />
-                <input
-                  name="position"
-                  type="number"
-                  min="0"
-                  defaultValue="10"
-                  aria-label="Display order"
-                />
-                <fieldset className="product-row-picker wide-field">
-                  <legend>Products for manually assigned rows</legend>
-                  {products.map((product) => (
-                    <label key={product.id}>
-                      <input type="checkbox" name="productIds" value={product.id} />
-                      <span>{product.name}</span>
-                      <small>{product.sku}</small>
-                    </label>
-                  ))}
-                </fieldset>
+                <ProductRowFields products={products} categories={categories} />
                 <button className="button button-primary">Add product row</button>
               </form>
               <div className="product-row-list">
@@ -434,52 +407,20 @@ export default async function ContentPage({
                       <div className="product-row-edit-body">
                         <form action={saveProductRow} className="content-form product-row-form">
                           <input type="hidden" name="id" value={item.id} />
-                          <input
-                            name="eyebrow"
-                            defaultValue={stringContent(content.eyebrow)}
-                            placeholder="Eyebrow"
+                          <ProductRowFields
+                            products={products}
+                            categories={categories}
+                            values={{
+                              eyebrow: stringContent(content.eyebrow),
+                              title: item.title ?? '',
+                              mode,
+                              categoryId: stringContent(content.categoryId),
+                              limit: numberContent(content.limit, 6),
+                              linkUrl: stringContent(content.linkUrl) || '/category/all',
+                              position: item.position,
+                              productIds: selectedIds,
+                            }}
                           />
-                          <input name="title" defaultValue={item.title ?? ''} required />
-                          <select name="mode" defaultValue={mode}>
-                            <option value="MANUAL">Manually assigned products</option>
-                            <option value="BEST_SELLERS">Best sellers (automatic)</option>
-                            <option value="TOP_RATED">Top rated (automatic)</option>
-                            <option value="NEW_ARRIVALS">New arrivals (automatic)</option>
-                          </select>
-                          <input
-                            name="limit"
-                            type="number"
-                            min="1"
-                            max="12"
-                            defaultValue={numberContent(content.limit, 6)}
-                            aria-label="Maximum products"
-                          />
-                          <input
-                            name="linkUrl"
-                            defaultValue={stringContent(content.linkUrl) || '/category/all'}
-                          />
-                          <input
-                            name="position"
-                            type="number"
-                            min="0"
-                            defaultValue={item.position}
-                            aria-label="Display order"
-                          />
-                          <fieldset className="product-row-picker wide-field">
-                            <legend>Products for manually assigned rows</legend>
-                            {products.map((product) => (
-                              <label key={product.id}>
-                                <input
-                                  type="checkbox"
-                                  name="productIds"
-                                  value={product.id}
-                                  defaultChecked={selectedIds.includes(product.id)}
-                                />
-                                <span>{product.name}</span>
-                                <small>{product.sku}</small>
-                              </label>
-                            ))}
-                          </fieldset>
                           <button className="button button-primary">Save row</button>
                         </form>
                         <div className="product-row-secondary-actions">
@@ -552,6 +493,114 @@ export default async function ContentPage({
           </article>
         </>
       )}
+    </>
+  );
+}
+
+interface ProductRowValues {
+  eyebrow: string;
+  title: string;
+  mode: string;
+  categoryId: string;
+  limit: number;
+  linkUrl: string;
+  position: number;
+  productIds: string[];
+}
+
+function ProductRowFields({
+  products,
+  categories,
+  values = {
+    eyebrow: '',
+    title: '',
+    mode: 'MANUAL',
+    categoryId: '',
+    limit: 6,
+    linkUrl: '/category/all',
+    position: 10,
+    productIds: [],
+  },
+}: {
+  products: Product[];
+  categories: Category[];
+  values?: ProductRowValues;
+}) {
+  const selectedCount = values.productIds.length;
+  return (
+    <>
+      <label className="form-field">
+        <span>Section label</span>
+        <input
+          name="eyebrow"
+          defaultValue={values.eyebrow}
+          placeholder="e.g. Customer favourites"
+        />
+        <small>Small text displayed above the row title.</small>
+      </label>
+      <label className="form-field">
+        <span>Row title</span>
+        <input name="title" defaultValue={values.title} placeholder="e.g. Best sellers" required />
+        <small>Main heading shown on the storefront.</small>
+      </label>
+      <label className="form-field">
+        <span>Product source</span>
+        <select name="mode" defaultValue={values.mode}>
+          <option value="MANUAL">Manually assigned products</option>
+          <option value="BEST_SELLERS">Best sellers (automatic)</option>
+          <option value="TOP_RATED">Top rated (automatic)</option>
+          <option value="NEW_ARRIVALS">New arrivals (automatic)</option>
+        </select>
+        <small>Choose manual products or an automatically calculated list.</small>
+      </label>
+      <label className="form-field">
+        <span>Category</span>
+        <select name="categoryId" defaultValue={values.categoryId}>
+          <option value="">All categories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+        <small>Limits automatic rows to products in this category.</small>
+      </label>
+      <label className="form-field">
+        <span>Maximum products</span>
+        <input name="limit" type="number" min="1" max="12" defaultValue={values.limit} />
+        <small>Number of product cards displayed, from 1 to 12.</small>
+      </label>
+      <label className="form-field">
+        <span>View-all destination</span>
+        <input name="linkUrl" defaultValue={values.linkUrl} placeholder="e.g. /category/all" />
+        <small>Storefront URL opened by the View all link.</small>
+      </label>
+      <label className="form-field">
+        <span>Display order</span>
+        <input name="position" type="number" min="0" defaultValue={values.position} />
+        <small>Lower numbers appear first on the homepage.</small>
+      </label>
+      <details className="product-multiselect wide-field">
+        <summary>
+          <span>Products for manual selection</span>
+          <strong>{selectedCount ? `${String(selectedCount)} selected` : 'Choose products'}</strong>
+        </summary>
+        <div className="product-row-picker">
+          {products.map((product) => (
+            <label key={product.id}>
+              <input
+                type="checkbox"
+                name="productIds"
+                value={product.id}
+                defaultChecked={values.productIds.includes(product.id)}
+              />
+              <span>{product.name}</span>
+              <small>{product.sku}</small>
+            </label>
+          ))}
+          {products.length === 0 && <p>No active products are available.</p>}
+        </div>
+      </details>
     </>
   );
 }

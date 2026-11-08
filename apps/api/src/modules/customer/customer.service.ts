@@ -388,6 +388,7 @@ export class CustomerService {
     if (!content || Array.isArray(content) || typeof content !== 'object') return [];
     const config = content as Record<string, Prisma.JsonValue>;
     const mode = typeof config.mode === 'string' ? config.mode : 'MANUAL';
+    const categoryId = typeof config.categoryId === 'string' ? config.categoryId : undefined;
     const limit = Math.min(Math.max(Number(config.limit) || 6, 1), 12);
     let productIds: string[] = [];
 
@@ -408,6 +409,7 @@ export class CustomerService {
       where: {
         status: 'ACTIVE',
         isAlcohol: false,
+        ...(categoryId ? { categoryId } : {}),
         ...(productIds.length ? { id: { in: productIds } } : {}),
       },
       orderBy:
