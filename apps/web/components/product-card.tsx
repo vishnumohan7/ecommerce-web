@@ -60,7 +60,8 @@ export function ProductCard({ product }: Readonly<{ product: Product }>) {
 export function ProductGrid({
   products,
   empty = 'No products match this selection.',
-}: Readonly<{ products: Product[]; empty?: string }>) {
+  layout = 'grid',
+}: Readonly<{ products: Product[]; empty?: string; layout?: 'grid' | 'list' }>) {
   if (!products.length)
     return (
       <div className="empty-state">
@@ -69,7 +70,7 @@ export function ProductGrid({
       </div>
     );
   return (
-    <div className="product-grid">
+    <div className={`product-grid${layout === 'list' ? ' product-grid-list' : ''}`}>
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
