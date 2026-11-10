@@ -30,17 +30,25 @@ export function ProductCard({ product }: Readonly<{ product: Product }>) {
         style={image ? { backgroundImage: `url(${image})` } : undefined}
       >
         <span className={product.isAlcohol ? 'age-pill' : 'category-pill'}>
-          {product.isAlcohol ? '18+' : product.categoryName ?? 'Grocery'}
+          {product.isAlcohol ? '18+' : (product.categoryName ?? 'Grocery')}
         </span>
-        <span className="save-mark" aria-hidden="true">♡</span>
+        <span className="save-mark" aria-hidden="true">
+          {'\u2661'}
+        </span>
         {!image && <b>{product.name.slice(0, 1)}</b>}
       </Link>
       <div className="product-copy">
         <p className="product-meta">{product.brandName ?? product.sku}</p>
-        <h3><Link href={`/product/${product.id}`}>{product.name}</Link></h3>
-        {product.unitPriceDisplay && <p className="unit-price">{product.unitPriceDisplay}</p>}
+        <h3>
+          <Link href={`/product/${product.id}`}>{product.name}</Link>
+        </h3>
+        <p className="unit-price">{product.unitPriceDisplay || '\u00A0'}</p>
         <p className="price">{money(product.priceMinor, product.currency)}</p>
-        <button className="button compact" onClick={add} disabled={state === 'Adding…'}>
+        <button
+          className="button compact"
+          onClick={() => void add()}
+          disabled={state === 'Adding…'}
+        >
           {state === 'Adding…' ? state : '+ Add to basket'}
         </button>
         {state && state !== 'Adding…' && <small role="status">{state}</small>}
@@ -49,7 +57,22 @@ export function ProductCard({ product }: Readonly<{ product: Product }>) {
   );
 }
 
-export function ProductGrid({ products, empty = 'No products match this selection.' }: Readonly<{ products: Product[]; empty?: string }>) {
-  if (!products.length) return <div className="empty-state"><h2>Nothing here yet</h2><p>{empty}</p></div>;
-  return <div className="product-grid">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div>;
+export function ProductGrid({
+  products,
+  empty = 'No products match this selection.',
+}: Readonly<{ products: Product[]; empty?: string }>) {
+  if (!products.length)
+    return (
+      <div className="empty-state">
+        <h2>{'Nothing here yet'}</h2>
+        <p>{empty}</p>
+      </div>
+    );
+  return (
+    <div className="product-grid">
+      {products.map((product) => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  );
 }

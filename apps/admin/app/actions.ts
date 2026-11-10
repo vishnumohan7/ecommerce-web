@@ -213,13 +213,20 @@ export async function importCatalogue(data: FormData) {
   const upload = new FormData();
   upload.set('file', file);
   const policy = textValue(data, 'duplicatePolicy') || 'fail';
-  const dryRun = data.get('dryRun') === 'on';
-  const result = await adminFormMutation<{ jobId: string; applied: number; errors?: unknown[] }>(
+  const dryRun = textValue(data, 'mode') !== 'apply';
+  const result = await adminFormMutation<{
+    jobId: string;
+    applied: number;
+    changes?: Array<{ sku: string; operation: 'create' | 'update' }>;
+    errors?: unknown[];
+  }>(
     `/api/v1/catalog/imports?duplicatePolicy=${encodeURIComponent(policy)}&dryRun=${String(dryRun)}`,
     upload,
   );
   const success = result.ok
-    ? `${dryRun ? 'Validation complete' : 'Import complete'} · ${String(result.data.applied)} rows applied · job ${result.data.jobId}`
+    ? dryRun
+      ? `Validation passed · ${String(result.data.changes?.length ?? 0)} products ready to import · no products added · job ${result.data.jobId}`
+      : `Import complete · ${String(result.data.applied)} products added or updated · job ${result.data.jobId}`
     : '';
   finish('/products/import', result, success);
 }

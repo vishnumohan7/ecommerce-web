@@ -64,15 +64,18 @@ export default async function CatalogueImportPage({ searchParams }: Props) {
                 <option value="fail">Fail validation</option>
               </select>
             </label>
-            <label className="checkbox-field">
-              <input name="dryRun" type="checkbox" defaultChecked /> Validate only (recommended
-              first)
-            </label>
             <div className="form-actions">
-              <button className="button button-primary" type="submit">
-                Run catalogue import
+              <button className="button button-muted" name="mode" value="validate" type="submit">
+                Validate file
+              </button>
+              <button className="button button-primary" name="mode" value="apply" type="submit">
+                Import products
               </button>
             </div>
+            <p className="page-note wide-field">
+              Validate checks every row without adding products. Import products validates the file
+              and then writes all valid rows in one transaction.
+            </p>
           </form>
         </article>
         <article className="panel import-guide">

@@ -1517,6 +1517,8 @@ body {
 }
 .product-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   border-color: #e0e7e2;
   border-radius: 0.65rem;
   box-shadow: 0 0.3rem 1rem rgb(7 59 45 / 5%);
@@ -1572,23 +1574,36 @@ body {
     serif;
 }
 .product-copy {
+  flex: 1;
+  grid-template-rows: 2rem 2.5rem 1.1rem minmax(2.4rem, 1fr) auto auto;
   gap: 0.3rem;
   padding: 0.85rem;
 }
 .product-copy h3 {
   min-height: 2.5rem;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 0.82rem;
   line-height: 1.25;
 }
 .product-copy .product-meta {
+  min-height: 2rem;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: #79867f;
   font-size: 0.54rem;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 .product-copy .unit-price {
   min-height: 1.1rem;
 }
 .product-copy .price {
+  align-self: end;
   margin-top: 0.4rem;
   color: #0d543e;
 }
