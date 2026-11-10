@@ -24,6 +24,9 @@ export interface Product {
   onOffer?: boolean;
   categoryName?: string;
   brandName?: string | null;
+  countryOfOrigin?: string;
+  storageType?: string;
+  dietaryTags?: string[];
   imageUrl?: string | null;
   images?: Array<{ id: string; url: string; altText: string; position: number }>;
   variants?: Array<{
