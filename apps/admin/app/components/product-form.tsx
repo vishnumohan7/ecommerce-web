@@ -3,6 +3,7 @@ import type { Brand, Category, Product, Warehouse } from '../lib/api';
 import { AlcoholProductFields } from './alcohol-product-fields';
 import { ProductIdentityFields } from './product-identity-fields';
 import { ProductVariantFields } from './product-variant-fields';
+import { minorToGbp } from '../lib/money';
 
 interface Props {
   action: (data: FormData) => void | Promise<void>;
@@ -56,12 +57,14 @@ export function ProductForm({
         </select>
       </label>
       <label>
-        Price (pence)
+        Price (GBP)
         <input
-          name="priceMinor"
+          name="priceGbp"
           type="number"
           min="0"
-          defaultValue={product?.priceMinor}
+          step="0.01"
+          placeholder="0.00"
+          defaultValue={minorToGbp(product?.priceMinor)}
           required
         />
       </label>
@@ -82,12 +85,14 @@ export function ProductForm({
         </select>
       </label>
       <label>
-        Price per kg (pence)
+        Price per kg (GBP)
         <input
-          name="pricePerKgMinor"
+          name="pricePerKgGbp"
           type="number"
           min="0"
-          defaultValue={product?.pricePerKgMinor ?? ''}
+          step="0.01"
+          placeholder="0.00"
+          defaultValue={minorToGbp(product?.pricePerKgMinor)}
         />
       </label>
       <label>

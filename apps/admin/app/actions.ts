@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { adminFormMutation, adminMutation } from './lib/api';
 import { productSlug } from './lib/product-slug';
+import { gbpToMinor } from './lib/money';
 
 function textValue(data: FormData, key: string) {
   const value = data.get(key);
@@ -74,13 +75,15 @@ function productInput(data: FormData) {
     slug: slugValue(data),
     name: textValue(data, 'name'),
     description: textValue(data, 'description'),
-    priceMinor: textValue(data, 'priceMinor'),
+    priceMinor: gbpToMinor(textValue(data, 'priceGbp')),
     currency: 'GBP',
     vatRateBps: alcohol ? 2000 : Number(textValue(data, 'vatRateBps')),
     taxCategory: alcohol ? 'STANDARD_20' : textValue(data, 'taxCategory'),
     pricingMode,
     pricePerKgMinor:
-      pricingMode === 'WEIGHT_ESTIMATED' ? textValue(data, 'pricePerKgMinor') || null : null,
+      pricingMode === 'WEIGHT_ESTIMATED'
+        ? gbpToMinor(textValue(data, 'pricePerKgGbp')) || null
+        : null,
     estimatedWeightGrams:
       pricingMode === 'WEIGHT_ESTIMATED' ? optionalNumber(data, 'estimatedWeightGrams') : null,
     weightToleranceBps:
@@ -153,7 +156,7 @@ export async function createProduct(data: FormData) {
 
   const names = textValues(data, 'variantName');
   const skus = textValues(data, 'variantSku');
-  const prices = textValues(data, 'variantPriceMinor');
+  const prices = textValues(data, 'variantPriceGbp').map(gbpToMinor);
   const packSizes = textValues(data, 'variantPackSize');
   const weights = textValues(data, 'variantWeightGrams');
   const flavours = textValues(data, 'variantFlavour');
@@ -291,7 +294,7 @@ export async function createProductVariant(data: FormData) {
     {
       sku: textValue(data, 'sku'),
       name: textValue(data, 'name'),
-      priceMinor: textValue(data, 'priceMinor'),
+      priceMinor: gbpToMinor(textValue(data, 'priceGbp')),
       currency: 'GBP',
       packSize: textValue(data, 'packSize') || null,
       weightGrams: optionalNumber(data, 'weightGrams'),
@@ -327,7 +330,7 @@ export async function updateProductVariant(data: FormData) {
     {
       sku: textValue(data, 'sku'),
       name: textValue(data, 'name'),
-      priceMinor: textValue(data, 'priceMinor'),
+      priceMinor: gbpToMinor(textValue(data, 'priceGbp')),
       currency: 'GBP',
       packSize: textValue(data, 'packSize') || null,
       weightGrams: optionalNumber(data, 'weightGrams'),

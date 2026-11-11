@@ -14,6 +14,7 @@ import {
   updateProductVariant,
   uploadProductImage,
 } from '../../actions';
+import { minorToGbp } from '../../lib/money';
 import { ActionMessage } from '../../components/action-message';
 import { ApiNotice } from '../../components/api-notice';
 import { ConfirmSubmitButton } from '../../components/confirm-submit-button';
@@ -267,12 +268,13 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                         <input name="sku" defaultValue={variant.sku} required />
                       </label>
                       <label>
-                        Price (pence)
+                        Price (GBP)
                         <input
-                          name="priceMinor"
+                          name="priceGbp"
                           type="number"
                           min="0"
-                          defaultValue={variant.priceMinor}
+                          step="0.01"
+                          defaultValue={minorToGbp(variant.priceMinor)}
                           required
                         />
                       </label>
@@ -343,8 +345,15 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                 <input name="sku" required placeholder={`${product.sku}-750`} />
               </label>
               <label>
-                Price (pence)
-                <input name="priceMinor" inputMode="numeric" required />
+                Price (GBP)
+                <input
+                  name="priceGbp"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  required
+                />
               </label>
               <label>
                 Pack size

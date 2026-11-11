@@ -44,7 +44,9 @@ export function ProductVariantFields({ warehouses }: Readonly<Props>) {
               <button
                 className="variant-remove"
                 type="button"
-                onClick={() => setRows((current) => current.filter((item) => item !== row))}
+                onClick={() => {
+                  setRows((current) => current.filter((item) => item !== row));
+                }}
               >
                 Remove
               </button>
@@ -57,8 +59,15 @@ export function ProductVariantFields({ warehouses }: Readonly<Props>) {
                 <input name="variantSku" placeholder="SKU-750ML" required />
               </label>
               <label>
-                Price (pence)
-                <input name="variantPriceMinor" type="number" min="0" required />
+                Price (GBP)
+                <input
+                  name="variantPriceGbp"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  required
+                />
               </label>
               <label>
                 Pack size
