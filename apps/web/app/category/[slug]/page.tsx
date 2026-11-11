@@ -9,6 +9,7 @@ type SearchQuery = Record<string, string | string[] | undefined> & {
   id?: string;
   sort?: string;
   page?: string;
+  pageSize?: string;
   brand?: string | string[];
   minPrice?: string;
   maxPrice?: string;
@@ -32,7 +33,15 @@ interface SearchResponse {
   facets: Record<string, SearchFacet[]>;
   resultCount: number;
 }
-const PAGE_SIZE = 8;
+const DEFAULT_PAGE_SIZE = 8;
+const PAGE_SIZE_OPTIONS = [8, 12, 16, 24] as const;
+
+function selectedPageSize(value: string | undefined) {
+  const requested = Number.parseInt(value ?? '', 10);
+  return PAGE_SIZE_OPTIONS.includes(requested as (typeof PAGE_SIZE_OPTIONS)[number])
+    ? requested
+    : DEFAULT_PAGE_SIZE;
+}
 
 function values(value: string | string[] | undefined) {
   if (!value) return [];
@@ -117,12 +126,13 @@ export default async function CategoryPage({
   ]);
   const products = result?.items ?? [];
   const resultCount = result?.resultCount ?? products.length;
-  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const pageSize = selectedPageSize(query.pageSize);
+  const totalPages = Math.max(1, Math.ceil(products.length / pageSize));
   const requestedPage = Math.max(1, Number.parseInt(query.page ?? '1', 10) || 1);
   const page = Math.min(requestedPage, totalPages);
-  const pageProducts = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const firstResult = products.length ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const lastResult = Math.min(page * PAGE_SIZE, products.length);
+  const pageProducts = products.slice((page - 1) * pageSize, page * pageSize);
+  const firstResult = products.length ? (page - 1) * pageSize + 1 : 0;
+  const lastResult = Math.min(page * pageSize, products.length);
   const title = slug === 'all' ? 'All groceries' : (current?.name ?? slug.replaceAll('-', ' '));
   const categoryFacets = globalFacets?.facets.category;
   const brandFacets = result?.facets.brand;
@@ -311,7 +321,7 @@ export default async function CategoryPage({
                 of {resultCount}
               </span>
               <form>
-                {hiddenFields(query, ['sort', 'page'])}
+                {hiddenFields(query, ['sort', 'pageSize', 'page'])}
                 <label>
                   Sort:
                   <select name="sort" defaultValue={query.sort ?? 'relevance'}>
@@ -320,6 +330,16 @@ export default async function CategoryPage({
                     <option value="price-desc">Price: high to low</option>
                     <option value="rating-desc">Top rated</option>
                     <option value="name-asc">Name A–Z</option>
+                  </select>
+                </label>
+                <label>
+                  Show:
+                  <select name="pageSize" defaultValue={String(pageSize)}>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <option value={size} key={size}>
+                        {size} per page
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <button className="button compact">Apply</button>

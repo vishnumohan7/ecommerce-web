@@ -1883,6 +1883,9 @@ body {
   background: white;
   font-size: 0.62rem;
 }
+.results-controls select[name='pageSize'] {
+  width: 7.5rem;
+}
 .results-controls .button {
   min-height: 2rem;
   padding: 0.4rem 0.65rem;
