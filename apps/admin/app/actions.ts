@@ -218,11 +218,29 @@ export async function importCatalogue(data: FormData) {
     jobId: string;
     applied: number;
     changes?: Array<{ sku: string; operation: 'create' | 'update' }>;
-    errors?: unknown[];
+    errors?: Array<{ rowNumber: number; field?: string; message: string }>;
   }>(
     `/api/v1/catalog/imports?duplicatePolicy=${encodeURIComponent(policy)}&dryRun=${String(dryRun)}`,
     upload,
   );
+  if (result.ok && result.data.errors?.length) {
+    const sample = result.data.errors
+      .slice(0, 3)
+      .map(
+        (error) =>
+          `row ${String(error.rowNumber)}${error.field ? ` ${error.field}` : ''}: ${error.message}`,
+      )
+      .join('; ');
+    const remaining = result.data.errors.length - 3;
+    finish(
+      '/products/import',
+      {
+        ok: false,
+        error: `Import rejected without adding products. ${sample}${remaining > 0 ? `; ${String(remaining)} more error${remaining === 1 ? '' : 's'}` : ''}. Job ${result.data.jobId}`,
+      },
+      '',
+    );
+  }
   const success = result.ok
     ? dryRun
       ? `Validation passed · ${String(result.data.changes?.length ?? 0)} products ready to import · no products added · job ${result.data.jobId}`
