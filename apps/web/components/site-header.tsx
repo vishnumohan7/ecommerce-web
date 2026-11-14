@@ -4,32 +4,91 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { basketChangedEvent } from '../lib/basket-events';
 import { browserApi, money, type Category } from '../lib/store-api';
+
+interface BasketItem {
+  id: string;
+  productId: string;
+  name: string;
+  quantity: number;
+  currentPriceMinor: string;
+  lineTotalMinor: string;
+  imageUrl?: string | null;
+}
 
 interface BasketHeader {
   currency: string;
-  groups: Array<{ items: Array<{ quantity: number }> }>;
-  totals: { grandTotalMinor: string };
+  groups: Array<{ items: BasketItem[] }>;
+  totals: { subtotalMinor: string; grandTotalMinor: string };
 }
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [basket, setBasket] = useState({ count: 0, total: '£0.00' });
+  const [basketOpen, setBasketOpen] = useState(false);
+  const [basket, setBasket] = useState<BasketHeader | null>(null);
+  const [basketError, setBasketError] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
 
-  useEffect(() => {
-    void browserApi<BasketHeader>('/api/v1/cart')
-      .then((cart) => {
-        const count = cart.groups.reduce(
-          (total, group) => total + group.items.reduce((sum, item) => sum + item.quantity, 0),
-          0,
-        );
-        setBasket({ count, total: money(cart.totals.grandTotalMinor, cart.currency) });
-      })
-      .catch(() => undefined);
+  const refreshBasket = useCallback(async () => {
+    try {
+      setBasket(await browserApi<BasketHeader>('/api/v1/cart'));
+      setBasketError('');
+    } catch (error) {
+      setBasketError(error instanceof Error ? error.message : 'Basket unavailable');
+    }
   }, []);
+
+  const basketItems = basket?.groups.flatMap((group) => group.items) ?? [];
+  const basketCount = basketItems.reduce((total, item) => total + item.quantity, 0);
+
+  async function changeBasketItem(item: BasketItem, quantity: number) {
+    try {
+      const updated = await browserApi<BasketHeader>(
+        `/api/v1/cart/items/${item.id}`,
+        quantity < 1
+          ? { method: 'DELETE' }
+          : { method: 'PATCH', body: JSON.stringify({ quantity }) },
+      );
+      setBasket(updated);
+      setBasketError('');
+    } catch (error) {
+      setBasketError(error instanceof Error ? error.message : 'Could not update basket');
+    }
+  }
+
+  useEffect(() => {
+    const handleBasketChange = () => {
+      void refreshBasket();
+      setBasketOpen(true);
+    };
+    const handleFocus = () => {
+      void refreshBasket();
+    };
+
+    void refreshBasket();
+    window.addEventListener(basketChangedEvent, handleBasketChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener(basketChangedEvent, handleBasketChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refreshBasket]);
+
+  useEffect(() => {
+    if (!basketOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setBasketOpen(false);
+    };
+    document.body.classList.add('basket-drawer-visible');
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.classList.remove('basket-drawer-visible');
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [basketOpen]);
 
   useEffect(() => {
     void browserApi<{ items: Category[] }>('/api/v1/categories?limit=50')
@@ -101,13 +160,25 @@ export function SiteHeader() {
             <small>Namaskaram</small>
             <strong>Account</strong>
           </Link>
-          <Link className="cart-link" href="/cart">
+          <button
+            className="cart-link"
+            type="button"
+            onClick={() => {
+              setBasketOpen(true);
+            }}
+            aria-expanded={basketOpen}
+            aria-controls="basket-drawer"
+          >
             <span className="basket-icon" aria-hidden="true">
-              ♨{basket.count > 0 && <b>{basket.count}</b>}
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M5.5 9.5h13l-1.1 9H6.6l-1.1-9Z" />
+                <path d="m8.5 9.5 3.5-5 3.5 5M9 12.5v3.5m3-3.5v3.5m3-3.5v3.5" />
+              </svg>
+              {basketCount > 0 && <b>{basketCount > 99 ? '99+' : basketCount}</b>}
             </span>
             <small>Basket</small>
-            <strong>{basket.total}</strong>
-          </Link>
+            <strong>{money(basket?.totals.grandTotalMinor ?? 0, basket?.currency)}</strong>
+          </button>
         </nav>
       </header>
       <nav className={`category-nav ${open ? 'open' : ''}`} aria-label="Main navigation">
@@ -192,6 +263,158 @@ export function SiteHeader() {
           Offers
         </Link>
       </nav>
+      <button
+        className={`basket-backdrop${basketOpen ? ' open' : ''}`}
+        type="button"
+        aria-label="Close basket"
+        onClick={() => {
+          setBasketOpen(false);
+        }}
+      />
+      <aside
+        id="basket-drawer"
+        className={`basket-drawer${basketOpen ? ' open' : ''}`}
+        aria-hidden={!basketOpen}
+        aria-label="Your basket"
+      >
+        <header>
+          <div>
+            <p>Your basket</p>
+            <span>
+              {basketCount} {basketCount === 1 ? 'item' : 'items'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setBasketOpen(false);
+            }}
+            aria-label="Close basket"
+          >
+            ×
+          </button>
+        </header>
+        {basketError && (
+          <p className="basket-drawer-error" role="alert">
+            {basketError}
+          </p>
+        )}
+        {basketItems.length > 0 ? (
+          <>
+            <div className="basket-delivery-progress">
+              {(() => {
+                const subtotal = Number(basket?.totals.subtotalMinor ?? 0);
+                const remaining = Math.max(0, 4000 - subtotal);
+                return (
+                  <>
+                    <strong>
+                      {remaining > 0
+                        ? `${money(remaining, basket?.currency)} away from free delivery`
+                        : 'Free delivery unlocked'}
+                    </strong>
+                    <span>
+                      <i style={{ width: `${String(Math.min(100, subtotal / 40))}%` }} />
+                    </span>
+                    <small>Free grocery delivery on qualifying orders over £40</small>
+                  </>
+                );
+              })()}
+            </div>
+            <div className="basket-drawer-items">
+              {basketItems.map((item) => (
+                <article key={item.id}>
+                  <Link
+                    className={`basket-drawer-image${item.imageUrl ? ' has-image' : ''}`}
+                    href={`/product/${item.productId}`}
+                    style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}
+                    onClick={() => {
+                      setBasketOpen(false);
+                    }}
+                  >
+                    {!item.imageUrl && item.name.slice(0, 1)}
+                  </Link>
+                  <div>
+                    <Link
+                      href={`/product/${item.productId}`}
+                      onClick={() => {
+                        setBasketOpen(false);
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                    <small>{money(item.currentPriceMinor, basket?.currency)} each</small>
+                    <div className="basket-drawer-quantity">
+                      <button
+                        type="button"
+                        onClick={() => void changeBasketItem(item, item.quantity - 1)}
+                        aria-label={`Reduce ${item.name}`}
+                      >
+                        −
+                      </button>
+                      <output>{item.quantity}</output>
+                      <button
+                        type="button"
+                        onClick={() => void changeBasketItem(item, item.quantity + 1)}
+                        aria-label={`Add another ${item.name}`}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="basket-drawer-line-total">
+                    <button
+                      type="button"
+                      onClick={() => void changeBasketItem(item, 0)}
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      ×
+                    </button>
+                    <strong>{money(item.lineTotalMinor, basket?.currency)}</strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <footer>
+              <div>
+                <span>Total</span>
+                <strong>{money(basket?.totals.grandTotalMinor ?? 0, basket?.currency)}</strong>
+              </div>
+              <Link
+                className="button full"
+                href="/checkout"
+                onClick={() => {
+                  setBasketOpen(false);
+                }}
+              >
+                Checkout · {money(basket?.totals.grandTotalMinor ?? 0, basket?.currency)}
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => {
+                  setBasketOpen(false);
+                }}
+              >
+                View and edit basket
+              </Link>
+            </footer>
+          </>
+        ) : (
+          <div className="basket-drawer-empty">
+            <span aria-hidden="true">🛒</span>
+            <h2>Your basket is empty</h2>
+            <p>Add products and they will appear here.</p>
+            <Link
+              className="button"
+              href="/category/all"
+              onClick={() => {
+                setBasketOpen(false);
+              }}
+            >
+              Start shopping
+            </Link>
+          </div>
+        )}
+      </aside>
     </>
   );
 }

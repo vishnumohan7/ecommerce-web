@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { notifyBasketChanged } from '../lib/basket-events';
 import { browserApi, money, productImage, type Product } from '../lib/store-api';
 
 export function ProductCard({ product }: Readonly<{ product: Product }>) {
@@ -15,6 +16,7 @@ export function ProductCard({ product }: Readonly<{ product: Product }>) {
         method: 'POST',
         body: JSON.stringify({ productId: product.id, quantity: 1 }),
       });
+      notifyBasketChanged();
       setState('Added');
     } catch (error) {
       setState(error instanceof Error ? error.message : 'Could not add');

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { notifyBasketChanged } from '../../../lib/basket-events';
 import { browserApi } from '../../../lib/store-api';
 
 export function AddProduct({ productId }: Readonly<{ productId: string }>) {
@@ -15,6 +16,7 @@ export function AddProduct({ productId }: Readonly<{ productId: string }>) {
         method: 'POST',
         body: JSON.stringify({ productId, quantity }),
       });
+      notifyBasketChanged();
       if (redirect) window.location.assign('/cart');
       else setMessage('Added to your basket.');
     } catch (error) {
@@ -67,6 +69,7 @@ export function AddBundle({ productIds }: Readonly<{ productIds: string[] }>) {
           body: JSON.stringify({ productId, quantity: 1 }),
         });
       }
+      notifyBasketChanged();
       setMessage('Bundle added to your basket.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to add bundle');
