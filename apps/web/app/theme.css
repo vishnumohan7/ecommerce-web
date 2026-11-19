@@ -3602,6 +3602,56 @@ body.basket-drawer-visible {
     padding-inline: 0.75rem;
     border-bottom: 1px solid rgb(255 255 255 / 9%);
   }
+  .category-nav.open > a:not(.offers-link) {
+    display: none;
+  }
+  .category-nav.open .categories-menu {
+    display: block;
+    width: 100%;
+    margin: 0;
+  }
+  .category-nav.open .all-categories {
+    display: none;
+  }
+  .category-nav.open .categories-dropdown {
+    position: static;
+    display: flex;
+    width: 100%;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .category-nav.open .categories-dropdown a,
+  .category-nav.open .categories-dropdown .view-all-categories {
+    min-height: 3rem;
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid rgb(255 255 255 / 9%);
+    color: #f4faf6;
+    background: transparent;
+  }
+  .category-nav.open .categories-dropdown a:hover,
+  .category-nav.open .categories-dropdown a:focus-visible {
+    color: #fff;
+    background: rgb(255 255 255 / 7%);
+  }
+  .category-nav.open .category-thumb,
+  .category-nav.open .category-initial {
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    border-color: rgb(255 255 255 / 22%);
+  }
+  .category-nav.open .view-all-categories {
+    margin-bottom: 0.35rem;
+  }
+  .category-nav.open .offers-link {
+    margin-top: 0.35rem;
+    border-bottom: 0;
+  }
   .trust-strip {
     gap: 1.5rem;
     padding-inline: 0.75rem;
