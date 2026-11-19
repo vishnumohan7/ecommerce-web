@@ -27,6 +27,7 @@ interface BasketHeader {
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [mobileNavView, setMobileNavView] = useState<'menu' | 'categories'>('menu');
   const [basketOpen, setBasketOpen] = useState(false);
   const [basket, setBasket] = useState<BasketHeader | null>(null);
   const [basketError, setBasketError] = useState('');
@@ -91,6 +92,23 @@ export function SiteHeader() {
   }, [basketOpen]);
 
   useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.body.classList.add('mobile-nav-visible');
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.classList.remove('mobile-nav-visible');
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     void browserApi<{ items: Category[] }>('/api/v1/categories?limit=50')
       .then((result) => {
         setCategories(result.items);
@@ -126,7 +144,8 @@ export function SiteHeader() {
           className="menu-button"
           type="button"
           onClick={() => {
-            setOpen((value) => !value);
+            setMobileNavView('menu');
+            setOpen(true);
           }}
           aria-expanded={open}
           aria-label="Open categories"
@@ -184,7 +203,7 @@ export function SiteHeader() {
           </button>
         </nav>
       </header>
-      <nav className={`category-nav ${open ? 'open' : ''}`} aria-label="Main navigation">
+      <nav className="category-nav" aria-label="Main navigation">
         <details className="categories-menu">
           <summary className="all-categories">
             <span aria-hidden="true">☰</span> All categories{' '}
@@ -266,6 +285,90 @@ export function SiteHeader() {
           Offers
         </Link>
       </nav>
+      <button
+        className={`mobile-nav-backdrop${open ? ' open' : ''}`}
+        type="button"
+        aria-label="Close navigation"
+        onClick={() => { setOpen(false); }}
+      />
+      <aside className={`mobile-nav-drawer${open ? ' open' : ''}`} aria-hidden={!open}>
+        <header>
+          <strong>Navigation</strong>
+          <button type="button" aria-label="Close navigation" onClick={() => { setOpen(false); }}>
+            ×
+          </button>
+        </header>
+        <div className="mobile-nav-tabs" role="tablist" aria-label="Navigation sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileNavView === 'menu'}
+            onClick={() => { setMobileNavView('menu'); }}
+          >
+            Menu
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileNavView === 'categories'}
+            onClick={() => { setMobileNavView('categories'); }}
+          >
+            Categories
+          </button>
+        </div>
+        {mobileNavView === 'menu' ? (
+          <nav className="mobile-nav-links" aria-label="Mobile menu">
+            <Link href="/">
+              Home <span aria-hidden="true">›</span>
+            </Link>
+            <Link href="/category/all">
+              Shop all products <span aria-hidden="true">›</span>
+            </Link>
+            <button type="button" onClick={() => { setMobileNavView('categories'); }}>
+              Browse categories <span aria-hidden="true">›</span>
+            </button>
+            <Link href="/offers">
+              Offers <span aria-hidden="true">›</span>
+            </Link>
+            <Link href="/profile">
+              My account <span aria-hidden="true">›</span>
+            </Link>
+            <Link href="/orders">
+              Orders &amp; tracking <span aria-hidden="true">›</span>
+            </Link>
+            <Link href="/help/contact">
+              Help &amp; FAQ <span aria-hidden="true">›</span>
+            </Link>
+          </nav>
+        ) : (
+          <nav className="mobile-category-links" aria-label="Product categories">
+            {categories.map((category) => (
+              <Link key={category.id} href={`/category/${category.slug}?id=${category.id}`}>
+                {category.imageUrl ? (
+                  <span
+                    className="category-thumb"
+                    style={{ backgroundImage: `url(${category.imageUrl})` }}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className="category-initial" aria-hidden="true">
+                    {category.name.slice(0, 1)}
+                  </span>
+                )}
+                <strong>{category.name}</strong>
+                <span aria-hidden="true">›</span>
+              </Link>
+            ))}
+            <Link href="/category/all" className="mobile-view-all">
+              <span className="category-initial" aria-hidden="true">
+                ▦
+              </span>
+              <strong>View all categories</strong>
+              <span aria-hidden="true">›</span>
+            </Link>
+          </nav>
+        )}
+      </aside>
       <button
         className={`basket-backdrop${basketOpen ? ' open' : ''}`}
         type="button"

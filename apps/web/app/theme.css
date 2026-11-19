@@ -1197,7 +1197,9 @@ body.basket-drawer-visible {
   box-shadow: -16px 0 48px rgb(5 35 25 / 18%);
   transform: translateX(105%);
   visibility: hidden;
-  transition: transform 220ms ease, visibility 220ms;
+  transition:
+    transform 220ms ease,
+    visibility 220ms;
 }
 .basket-drawer.open {
   transform: translateX(0);
@@ -1515,6 +1517,10 @@ body.basket-drawer-visible {
   border-radius: 999px;
   background: #db5a3e;
   color: white;
+}
+.mobile-nav-backdrop,
+.mobile-nav-drawer {
+  display: none;
 }
 .trust-strip {
   display: flex;
@@ -2937,6 +2943,9 @@ body.basket-drawer-visible {
   }
 }
 @media (max-width: 760px) {
+  body.mobile-nav-visible {
+    overflow: hidden;
+  }
   .utility-strip > div span:not(:first-child),
   .utility-strip nav {
     display: none;
@@ -2979,9 +2988,6 @@ body.basket-drawer-visible {
     display: none;
     align-items: flex-start;
   }
-  .category-nav.open {
-    display: flex;
-  }
   .categories-menu,
   .category-nav .all-categories {
     width: 100%;
@@ -2993,6 +2999,133 @@ body.basket-drawer-visible {
     grid-template-columns: 1fr;
     margin: 0 0 0.5rem;
     box-shadow: none;
+  }
+  .mobile-nav-backdrop {
+    position: fixed;
+    z-index: 79;
+    inset: 0;
+    display: block;
+    border: 0;
+    background: rgb(0 0 0 / 52%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+  .mobile-nav-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .mobile-nav-drawer {
+    position: fixed;
+    z-index: 80;
+    inset: 0 auto 0 0;
+    width: min(88vw, 24rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    color: #17231f;
+    box-shadow: 1rem 0 3rem rgb(0 0 0 / 24%);
+    transform: translateX(-105%);
+    transition: transform 220ms ease;
+  }
+  .mobile-nav-drawer.open {
+    transform: translateX(0);
+  }
+  .mobile-nav-drawer > header {
+    min-height: 4.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    background: #082d24;
+    color: #fff;
+  }
+  .mobile-nav-drawer > header strong {
+    font-size: 1.2rem;
+    font-weight: 650;
+  }
+  .mobile-nav-drawer > header button {
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 2rem;
+    line-height: 1;
+  }
+  .mobile-nav-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #dce5e0;
+    background: #f3f6f4;
+  }
+  .mobile-nav-tabs button {
+    min-height: 3.6rem;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: #52615b;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .mobile-nav-tabs button[aria-selected='true'] {
+    border-bottom-color: #70c69d;
+    background: #fff;
+    color: #123b2f;
+    font-weight: 700;
+  }
+  .mobile-nav-links,
+  .mobile-category-links {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .mobile-nav-links a,
+  .mobile-nav-links button,
+  .mobile-category-links a {
+    width: 100%;
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 1.25rem;
+    border: 0;
+    border-bottom: 1px solid #e1e7e4;
+    background: #fff;
+    color: #27342f;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+  .mobile-nav-links a > span,
+  .mobile-nav-links button > span,
+  .mobile-category-links a > span:last-child {
+    margin-left: auto;
+    color: #648076;
+    font-size: 1.45rem;
+  }
+  .mobile-nav-links a:hover,
+  .mobile-nav-links button:hover,
+  .mobile-category-links a:hover {
+    background: #f0f8f4;
+  }
+  .mobile-category-links a {
+    min-height: 4.5rem;
+  }
+  .mobile-category-links strong {
+    font-size: 0.92rem;
+  }
+  .mobile-category-links .category-thumb,
+  .mobile-category-links .category-initial {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 2.75rem;
+  }
+  .mobile-category-links .mobile-view-all {
+    color: #0b684b;
   }
   .trust-strip {
     justify-content: flex-start;
