@@ -155,7 +155,10 @@ export function SiteHeader() {
         <nav className="account-nav" aria-label="Account and basket">
           <Link href="/profile">
             <span className="account-icon" aria-hidden="true">
-              ♙
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="8" r="3.25" />
+                <path d="M5.75 19c.7-4 2.8-6 6.25-6s5.55 2 6.25 6" />
+              </svg>
             </span>
             <small>Namaskaram</small>
             <strong>Account</strong>
