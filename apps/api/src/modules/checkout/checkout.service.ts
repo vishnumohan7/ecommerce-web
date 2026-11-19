@@ -184,7 +184,9 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
         code: 'GUEST_DETAILS_REQUIRED',
         message: 'Guest name, email, phone, and address are required',
       });
-    const summary = await this.validate(identity, input, true);
+    // Alcohol eligibility is checked by staff at handover under Challenge 25.
+    // Checkout records the requirement but does not collect date-of-birth data.
+    const summary = await this.validate(identity, input, false);
     const snapshot = normalise({ summary, request: input });
     const snapshotHash = hash(snapshot);
     const stale = await this.db.client.checkoutSession.findMany({
@@ -343,7 +345,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
                   where: { id: snapshot.request.deliverySlotId, active: true },
                 })
               : null;
-          await this.age.validate(identity, postcode);
+          await this.age.validate(identity, postcode, new Date(), false);
           current =
             (price.totalMinor + (selectedDeliveryOption?.surchargeMinor ?? 0n)).toString() ===
               snapshot.summary?.totalMinor &&

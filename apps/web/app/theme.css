@@ -546,7 +546,7 @@ main {
 }
 .steps {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   padding: 0;
   list-style: none;
 }
@@ -592,6 +592,14 @@ main {
   border-left: 0.3rem solid var(--green);
   background: var(--amber);
   color: var(--ink);
+}
+.age-delivery-notice strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #7d251e;
+}
+.age-delivery-notice p {
+  margin: 0;
 }
 .success-state,
 .empty-state,

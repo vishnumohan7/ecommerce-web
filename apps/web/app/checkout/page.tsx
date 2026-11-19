@@ -67,7 +67,6 @@ export default function CheckoutPage() {
     email: '',
     phone: '',
     slotId: '',
-    dateOfBirth: '',
   });
   async function validateAddress(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -122,37 +121,13 @@ export default function CheckoutPage() {
         });
         setPaymentIntent(intent);
       }
-      setStep(4);
+      setStep(3);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to reserve checkout');
     }
   }
   function continueFromDelivery() {
-    if (summary?.requiresAgeVerification) {
-      setError('');
-      setStep(3);
-      return;
-    }
     void createSession();
-  }
-  async function verifyAge() {
-    setError('');
-    try {
-      const verification = await browserApi<{ status: string; isOver18: boolean }>(
-        '/api/v1/age-verification/dob',
-        {
-          method: 'POST',
-          body: JSON.stringify({ dateOfBirth: details.dateOfBirth }),
-        },
-      );
-      if (!verification.isOver18 || verification.status !== 'PASSED') {
-        setError('You must be aged 18 or over to purchase age-restricted products.');
-        return;
-      }
-      await createSession();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to verify age');
-    }
   }
   async function placeCashOnDelivery() {
     setError('');
@@ -192,8 +167,7 @@ export default function CheckoutPage() {
       <ol className="steps">
         <li className={step >= 1 ? 'active' : ''}>Address</li>
         <li className={step >= 2 ? 'active' : ''}>Delivery</li>
-        <li className={step >= 3 ? 'active' : ''}>Age check</li>
-        <li className={step >= 4 ? 'active' : ''}>Place order</li>
+        <li className={step >= 3 ? 'active' : ''}>Place order</li>
       </ol>
       {step === 1 && (
         <form className="form-card" onSubmit={(event) => void validateAddress(event)}>
@@ -328,35 +302,6 @@ export default function CheckoutPage() {
       )}
       {step === 3 && (
         <section className="form-card">
-          <div className="age-badge">18+</div>
-          <h2>Age verification</h2>
-          <p>
-            Enter your date of birth to confirm purchase eligibility. Challenge 25 still applies at
-            delivery and the order cannot be left unattended.
-          </p>
-          <label>
-            Date of birth
-            <input
-              type="date"
-              required
-              autoComplete="bday"
-              value={details.dateOfBirth}
-              onChange={(e) => {
-                setDetails({ ...details, dateOfBirth: e.target.value });
-              }}
-            />
-          </label>
-          <button
-            className="button"
-            disabled={!details.dateOfBirth}
-            onClick={() => void verifyAge()}
-          >
-            Verify age and continue
-          </button>
-        </section>
-      )}
-      {step === 4 && (
-        <section className="form-card">
           <h2>Review and pay securely</h2>
           {summary && (
             <>
@@ -369,6 +314,15 @@ export default function CheckoutPage() {
                   Some items are priced by actual weight. Stripe will authorise up to{' '}
                   {money(paymentIntent?.amountMinor ?? summary.totalMinor, summary.currency)}. Only
                   the final picked amount will be captured.
+                </div>
+              )}
+              {summary.requiresAgeVerification && (
+                <div className="notice age-delivery-notice">
+                  <strong>Age verification required at delivery</strong>
+                  <p>
+                    The recipient must be aged 18 or over and may be asked for valid photo ID under
+                    Challenge 25. Age-restricted orders cannot be left unattended.
+                  </p>
                 </div>
               )}
             </>
