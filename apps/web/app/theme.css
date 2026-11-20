@@ -3452,6 +3452,73 @@ body.basket-drawer-visible {
 .account-main {
   min-width: 0;
 }
+.dashboard-confirmation {
+  margin-bottom: 1rem;
+  overflow: hidden;
+  border: 1px solid #cbded2;
+  border-radius: 0.55rem;
+  background: white;
+}
+.dashboard-confirmation-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem 1rem;
+  align-items: center;
+  padding: 1.35rem;
+  background: linear-gradient(110deg, #fff, #eef8f2);
+}
+.dashboard-confirmation-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.55rem;
+  background: var(--angadi);
+  color: #ffd782;
+  font-size: 1.35rem;
+}
+.dashboard-confirmation-heading h2 {
+  margin: 0.2rem 0;
+  font:
+    600 1.55rem Georgia,
+    serif;
+}
+.dashboard-confirmation-heading p:last-child {
+  margin: 0;
+  color: #65776e;
+  font-size: 0.75rem;
+}
+.dashboard-confirmation-heading .confirmation-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+}
+.dashboard-confirmation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.45fr 1fr;
+  border-top: 1px solid #e0e8e3;
+}
+.dashboard-confirmation-grid article {
+  min-width: 0;
+  padding: 1.2rem;
+}
+.dashboard-confirmation-grid article + article {
+  border-left: 1px solid #e0e8e3;
+}
+.dashboard-confirmation-grid h3 {
+  margin: 0.35rem 0;
+  font:
+    600 1.1rem Georgia,
+    serif;
+}
+.dashboard-confirmation-grid p {
+  margin: 0.35rem 0 0;
+  color: #62736b;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+.dashboard-confirmation-grid .payment-reference code {
+  overflow-wrap: anywhere;
+}
 .account-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3609,6 +3676,13 @@ body.basket-drawer-visible {
   }
   .confirmation-grid {
     grid-template-columns: 1fr;
+  }
+  .dashboard-confirmation-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-confirmation-grid article + article {
+    border-top: 1px solid #e0e8e3;
+    border-left: 0;
   }
 }
 @media (max-width: 1180px) and (min-width: 761px) {

@@ -34,7 +34,7 @@ export function PaymentReturn() {
         if (cancelled) return;
         if (payment.order) {
           router.replace(
-            `/order-confirmation?order=${encodeURIComponent(payment.order.id)}&payment=${encodeURIComponent(payment.id)}&method=card`,
+            `/orders?confirmed=${encodeURIComponent(payment.order.id)}&payment=${encodeURIComponent(payment.id)}&method=card`,
           );
           return;
         }

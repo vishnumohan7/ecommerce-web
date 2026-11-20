@@ -137,7 +137,7 @@ export default function CheckoutPage() {
         { method: 'POST', body: JSON.stringify({ checkoutSessionId: sessionId }) },
       );
       window.location.assign(
-        `/order-confirmation?order=${encodeURIComponent(order.orderId)}&payment=${encodeURIComponent(order.id ?? '')}`,
+        `/orders?confirmed=${encodeURIComponent(order.orderId)}&payment=${encodeURIComponent(order.id ?? '')}&method=cod`,
       );
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Order could not be placed');
