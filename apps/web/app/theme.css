@@ -968,6 +968,410 @@ footer small {
     justify-items: start;
   }
 }
+
+/* Customer account workspace */
+.account-page {
+  width: min(76rem, calc(100% - 2rem));
+  min-height: 42rem;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 5vw, 4.5rem) 0;
+}
+.account-page-narrow {
+  width: min(62rem, calc(100% - 2rem));
+}
+.account-page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
+.account-page-header h1 {
+  margin: 0.25rem 0 0.6rem;
+  color: var(--angadi-deep);
+  font:
+    700 clamp(2.5rem, 5vw, 4.25rem)/1 Georgia,
+    serif;
+}
+.account-page-header p {
+  max-width: 43rem;
+  margin-block: 0;
+  color: #627269;
+}
+.account-page-header .eyebrow {
+  color: #267057;
+}
+.button.secondary {
+  border: 1px solid #b9ccc1;
+  background: #fff;
+  color: var(--angadi);
+}
+.account-panel,
+.wishlist-panel {
+  overflow: hidden;
+  border: 1px solid #dbe5df;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 0.75rem 2rem rgb(6 39 30 / 5%);
+}
+.account-panel-heading,
+.wishlist-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
+  border-bottom: 1px solid #e3ebe6;
+}
+.account-panel-heading h2 {
+  margin: 0.15rem 0 0;
+  color: var(--angadi-deep);
+  font:
+    700 1.65rem/1.2 Georgia,
+    serif;
+}
+.account-panel-heading .eyebrow {
+  margin: 0;
+}
+.account-panel-heading > span {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: #edf7f1;
+  color: #267057;
+  font-weight: 800;
+}
+.address-book-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(22rem, 0.75fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.address-cards {
+  display: grid;
+  gap: 0;
+}
+.address-cards article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1.1rem;
+  align-items: start;
+  padding: 1.5rem 1.75rem;
+  border-bottom: 1px solid #e7ede9;
+}
+.address-cards article:last-child {
+  border-bottom: 0;
+}
+.address-cards article.is-default {
+  background: linear-gradient(90deg, #f1faf5, #fff 55%);
+}
+.address-card-icon {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: #e1f3e8;
+  color: var(--angadi);
+  font-size: 1.25rem;
+}
+.address-card-title {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  margin-bottom: 0.55rem;
+}
+.address-card-title h3 {
+  margin: 0;
+  color: #18251f;
+  font-size: 1.05rem;
+}
+.address-card-copy address {
+  color: #5d6b63;
+  font-style: normal;
+  line-height: 1.65;
+}
+.address-card-actions {
+  display: flex;
+  gap: 0.85rem;
+}
+.address-card-actions button {
+  border: 0;
+  background: transparent;
+  color: #276d55;
+  font-weight: 750;
+  cursor: pointer;
+}
+.address-card-actions .danger-link {
+  color: #b04444;
+}
+.address-form {
+  position: sticky;
+  top: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 0.75rem 2rem rgb(6 39 30 / 5%);
+}
+.address-form h2 {
+  margin: 0.15rem 0 0.35rem;
+  color: var(--angadi-deep);
+}
+.address-form p {
+  margin: 0;
+  color: #68766e;
+}
+.address-form label > span {
+  color: #78857e;
+  font-weight: 500;
+}
+.address-form .check-row {
+  display: flex;
+  align-items: center;
+}
+.address-form .check-row input {
+  flex: 0 0 auto;
+  min-height: auto;
+  width: 1rem;
+  height: 1rem;
+}
+.account-empty {
+  min-height: 20rem;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.75rem;
+  border: 1px dashed #bcd0c4;
+  border-radius: 1rem;
+  background: #fff;
+  text-align: center;
+}
+.account-empty h2,
+.account-empty h3,
+.account-empty p {
+  margin: 0;
+}
+.compact-empty {
+  margin: 1.5rem;
+  min-height: 14rem;
+}
+.empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #e9f7ef;
+  color: #267057;
+  font-size: 2rem;
+}
+.wishlist-summary span {
+  color: #708078;
+  font-size: 0.85rem;
+}
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+.wishlist-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid #dfe8e2;
+  border-radius: 0.85rem;
+  background: #fff;
+}
+.wishlist-art {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  background: #f0f7f3 center/contain no-repeat;
+  color: #277057;
+  text-decoration: none;
+}
+.wishlist-art span {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: #dff1e7;
+  font:
+    700 1.35rem Georgia,
+    serif;
+}
+.wishlist-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+.wishlist-copy h2 {
+  min-height: 2.7em;
+  margin: 0.45rem 0 0;
+  font:
+    700 1.05rem/1.35 Inter,
+    sans-serif;
+}
+.wishlist-copy h2 a {
+  color: #1d2923;
+  text-decoration: none;
+}
+.wishlist-copy .price {
+  margin: auto 0 0;
+  font-size: 1.35rem;
+}
+.stock-label {
+  color: #287251;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.stock-label.unavailable {
+  color: #a43f3f;
+}
+.wishlist-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+.wishlist-actions .button {
+  width: 100%;
+}
+.wishlist-actions .text-button {
+  padding: 0.6rem 0;
+  text-decoration: none;
+}
+.profile-form {
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: 1rem;
+  box-shadow: 0 0.75rem 2rem rgb(6 39 30 / 5%);
+}
+.profile-form-heading {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e3ebe6;
+}
+.profile-form-heading > span {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: #dff2e7;
+  color: #226c51;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.profile-form-heading h2,
+.profile-form-heading p {
+  margin: 0;
+}
+.profile-form-heading h2 {
+  font:
+    700 1.45rem Georgia,
+    serif;
+}
+.profile-form-heading p {
+  margin-top: 0.2rem;
+  color: #738078;
+}
+.profile-form input:disabled {
+  background: #f3f6f4;
+  color: #68766e;
+  cursor: not-allowed;
+}
+.profile-save-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.profile-save-row .button {
+  min-width: 12rem;
+}
+.profile-form hr {
+  width: 100%;
+  margin: 0.25rem 0;
+  border: 0;
+  border-top: 1px solid #e3ebe6;
+}
+.account-links-label {
+  margin: 0;
+  color: #69776f;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.profile-form .account-links {
+  margin: 0;
+}
+.form-success {
+  color: #287251;
+  font-weight: 700;
+}
+@media (max-width: 850px) {
+  .address-book-layout {
+    grid-template-columns: 1fr;
+  }
+  .address-form {
+    position: static;
+  }
+}
+@media (max-width: 600px) {
+  .account-page {
+    width: min(100% - 1.25rem, 76rem);
+    padding-block: 2rem;
+  }
+  .account-page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .account-page-header .button {
+    width: 100%;
+  }
+  .address-cards article {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 1.25rem;
+  }
+  .address-card-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+  .wishlist-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  .wishlist-card {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+  }
+  .wishlist-art {
+    aspect-ratio: auto;
+    min-height: 100%;
+  }
+  .wishlist-copy h2 {
+    min-height: auto;
+  }
+  .wishlist-actions {
+    grid-template-columns: 1fr;
+  }
+  .profile-save-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .profile-save-row .button {
+    width: 100%;
+  }
+}
 @media (max-width: 760px) {
   .account-layout {
     grid-template-columns: 1fr;

@@ -164,6 +164,17 @@ export class CustomerService {
         ageRestriction: true,
       },
     });
+    const images = await this.db.client.productImage.findMany({
+      where: { productId: { in: products.map((product) => product.id) }, variantId: null },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+      select: { productId: true, url: true },
+    });
+    const imageByProduct = new Map<string, string>();
+    for (const image of images) {
+      if (!imageByProduct.has(image.productId) && /^https?:\/\//.test(image.url)) {
+        imageByProduct.set(image.productId, image.url);
+      }
+    }
     const productById = new Map(products.map((product) => [product.id, product]));
     return {
       id: wishlist.id,
@@ -174,7 +185,9 @@ export class CustomerService {
           productId: item.productId,
           createdAt: item.createdAt,
           available: product?.status === 'ACTIVE',
-          product: product ?? null,
+          product: product
+            ? { ...product, imageUrl: imageByProduct.get(product.id) ?? null }
+            : null,
         };
       }),
     };

@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable local/no-jsx-literals -- Storefront account copy is currently English-only. */
 import Link from 'next/link';
-import { FormEvent, useEffect, useState } from 'react';
+import { SyntheticEvent, useEffect, useState } from 'react';
 import { browserApi } from '../../lib/store-api';
 interface ProfileData {
   id: string;
@@ -17,9 +18,11 @@ export default function Profile() {
   useEffect(() => {
     void browserApi<ProfileData>('/api/v1/profile')
       .then(setProfile)
-      .catch((reason: Error) => setError(reason.message));
+      .catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : 'Could not load profile');
+      });
   }, []);
-  async function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('Saving…');
     const values = Object.fromEntries(new FormData(event.currentTarget));
@@ -55,13 +58,30 @@ export default function Profile() {
       </main>
     );
   return (
-    <main className="section narrow">
-      <p className="eyebrow">Account</p>
-      <h1>My profile</h1>
+    <main className="account-page account-page-narrow">
+      <header className="account-page-header">
+        <div>
+          <p className="eyebrow">Your account</p>
+          <h1>Profile settings</h1>
+          <p>Keep your contact information up to date for order notifications and delivery.</p>
+        </div>
+      </header>
       {!profile ? (
         <div className="skeleton">Loading account…</div>
       ) : (
-        <form className="form-card" onSubmit={save}>
+        <form className="form-card profile-form" onSubmit={(event) => void save(event)}>
+          <div className="profile-form-heading">
+            <span aria-hidden="true">
+              {profile.firstName.slice(0, 1)}
+              {profile.lastName.slice(0, 1)}
+            </span>
+            <div>
+              <h2>
+                {profile.firstName} {profile.lastName}
+              </h2>
+              <p>Customer account</p>
+            </div>
+          </div>
           <label>
             Email address
             <input disabled value={profile.email} />
@@ -80,8 +100,16 @@ export default function Profile() {
             Phone
             <input name="phone" type="tel" defaultValue={profile.phone ?? ''} />
           </label>
-          <button className="button">Save profile</button>
-          {message && <p role="status">{message}</p>}
+          <div className="profile-save-row">
+            <button className="button">Save changes</button>
+            {message && (
+              <p className="form-success" role="status">
+                {message}
+              </p>
+            )}
+          </div>
+          <hr />
+          <p className="account-links-label">Manage your account</p>
           <div className="account-links">
             <Link href="/orders">Orders</Link>
             <Link href="/addresses">Addresses</Link>

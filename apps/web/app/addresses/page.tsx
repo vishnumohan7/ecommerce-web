@@ -1,4 +1,188 @@
 'use client';
-import Link from 'next/link'; import { FormEvent, useCallback, useEffect, useState } from 'react'; import { browserApi } from '../../lib/store-api';
-interface Address { id: string; label: string; line1: string; line2?: string | null; city: string; postcode: string; country: string; isDefault: boolean }
-export default function Page() { const [items, setItems] = useState<Address[] | null>(null); const [error, setError] = useState(''); const load = useCallback(() => browserApi<Address[]>('/api/v1/addresses').then(setItems).catch((reason: Error) => setError(reason.message)), []); useEffect(() => { void load(); }, [load]); async function create(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = event.currentTarget; const values = Object.fromEntries(new FormData(form)); try { await browserApi('/api/v1/addresses', { method: 'POST', body: JSON.stringify({ ...values, country: 'GB', isDefault: values.isDefault === 'on' }) }); form.reset(); await load(); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not save address'); } } async function remove(id: string) { await browserApi(`/api/v1/addresses/${id}`, { method: 'DELETE' }); await load(); } async function makeDefault(id: string) { await browserApi(`/api/v1/addresses/${id}`, { method: 'PATCH', body: JSON.stringify({ isDefault: true }) }); await load(); } if (error && items === null) return <main className="section narrow"><div className="empty-state"><h1>Sign in to manage addresses</h1><p>{error}</p><Link className="button" href="/auth/login">Sign in</Link></div></main>; return <main className="section"><p className="eyebrow">Your account</p><h1>Address book</h1><div className="account-layout"><section><h2>Saved addresses</h2>{items === null ? <div className="skeleton">Loading…</div> : items.length === 0 ? <div className="empty-state">No saved addresses yet.</div> : <div className="address-list">{items.map((item) => <article key={item.id}><div><h3>{item.label} {item.isDefault && <span className="status">Default</span>}</h3><address>{item.line1}{item.line2 ? `, ${item.line2}` : ''}, {item.city}, {item.postcode}</address></div><div>{!item.isDefault && <button onClick={() => void makeDefault(item.id)}>Make default</button>}<button onClick={() => void remove(item.id)}>Delete</button></div></article>)}</div>}</section><form className="form-card" onSubmit={create}><h2>Add an address</h2><label>Label<input required name="label" placeholder="Home" /></label><label>Address line 1<input required name="line1" /></label><label>Address line 2<input name="line2" /></label><label>Town or city<input required name="city" /></label><label>Postcode<input required name="postcode" /></label><label className="check-row"><input type="checkbox" name="isDefault" /> Make this my default</label><button className="button">Save address</button>{error && <p className="form-error">{error}</p>}</form></div></main>; }
+/* eslint-disable local/no-jsx-literals -- Storefront account copy is currently English-only. */
+
+import Link from 'next/link';
+import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { browserApi } from '../../lib/store-api';
+
+interface Address {
+  id: string;
+  label: string;
+  line1: string;
+  line2?: string | null;
+  city: string;
+  postcode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export default function AddressesPage() {
+  const [items, setItems] = useState<Address[] | null>(null);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const load = useCallback(
+    () =>
+      browserApi<Address[]>('/api/v1/addresses')
+        .then(setItems)
+        .catch((reason: unknown) => {
+          setError(reason instanceof Error ? reason.message : 'Could not load addresses');
+        }),
+    [],
+  );
+  useEffect(() => {
+    void load();
+  }, [load]);
+  async function create(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const values = Object.fromEntries(new FormData(form));
+    setMessage('Saving address…');
+    try {
+      await browserApi('/api/v1/addresses', {
+        method: 'POST',
+        body: JSON.stringify({ ...values, country: 'GB', isDefault: values.isDefault === 'on' }),
+      });
+      form.reset();
+      setError('');
+      setMessage('Address saved.');
+      await load();
+    } catch (reason) {
+      setMessage('');
+      setError(reason instanceof Error ? reason.message : 'Could not save address');
+    }
+  }
+  async function remove(id: string) {
+    await browserApi(`/api/v1/addresses/${id}`, { method: 'DELETE' });
+    await load();
+  }
+  async function makeDefault(id: string) {
+    await browserApi(`/api/v1/addresses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isDefault: true }),
+    });
+    await load();
+  }
+  if (error && items === null)
+    return (
+      <main className="account-page account-page-narrow">
+        <div className="empty-state account-empty">
+          <h1>Sign in to manage addresses</h1>
+          <p>{error}</p>
+          <Link className="button" href="/auth/login">
+            Sign in
+          </Link>
+        </div>
+      </main>
+    );
+
+  return (
+    <main className="account-page">
+      <header className="account-page-header">
+        <div>
+          <p className="eyebrow">Your account</p>
+          <h1>Address book</h1>
+          <p>Manage the delivery addresses available during checkout.</p>
+        </div>
+        <Link className="button secondary" href="/profile">
+          Back to account
+        </Link>
+      </header>
+      <div className="address-book-layout">
+        <section className="account-panel">
+          <div className="account-panel-heading">
+            <div>
+              <p className="eyebrow">Delivery</p>
+              <h2>Saved addresses</h2>
+            </div>
+            <span>{items?.length ?? 0}</span>
+          </div>
+          {items === null ? (
+            <div className="skeleton">Loading addresses…</div>
+          ) : items.length === 0 ? (
+            <div className="empty-state account-empty compact-empty">
+              <h3>No saved addresses</h3>
+              <p>Add your first delivery address using the form.</p>
+            </div>
+          ) : (
+            <div className="address-cards">
+              {items.map((item) => (
+                <article key={item.id} className={item.isDefault ? 'is-default' : ''}>
+                  <div className="address-card-icon" aria-hidden="true">
+                    ⌂
+                  </div>
+                  <div className="address-card-copy">
+                    <div className="address-card-title">
+                      <h3>{item.label}</h3>
+                      {item.isDefault && <span className="status">Default</span>}
+                    </div>
+                    <address>
+                      {item.line1}
+                      {item.line2 ? (
+                        <>
+                          <br />
+                          {item.line2}
+                        </>
+                      ) : null}
+                      <br />
+                      {item.city}, {item.postcode}
+                      <br />
+                      United Kingdom
+                    </address>
+                  </div>
+                  <div className="address-card-actions">
+                    {!item.isDefault && (
+                      <button onClick={() => void makeDefault(item.id)}>Make default</button>
+                    )}
+                    <button className="danger-link" onClick={() => void remove(item.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+        <form className="form-card address-form" onSubmit={(event) => void create(event)}>
+          <div>
+            <p className="eyebrow">New address</p>
+            <h2>Add an address</h2>
+            <p>Fields marked with * are required.</p>
+          </div>
+          <label>
+            Address label *<input required name="label" placeholder="e.g. Home or Work" />
+          </label>
+          <label>
+            Address line 1 *<input required name="line1" autoComplete="address-line1" />
+          </label>
+          <label>
+            Address line 2 <span>(optional)</span>
+            <input name="line2" autoComplete="address-line2" />
+          </label>
+          <div className="form-grid">
+            <label>
+              Town or city *<input required name="city" autoComplete="address-level2" />
+            </label>
+            <label>
+              Postcode *<input required name="postcode" autoComplete="postal-code" />
+            </label>
+          </div>
+          <label className="check-row">
+            <input type="checkbox" name="isDefault" />
+            <span>Use as my default delivery address</span>
+          </label>
+          <button className="button">Save address</button>
+          {message && (
+            <p className="form-success" role="status">
+              {message}
+            </p>
+          )}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+        </form>
+      </div>
+    </main>
+  );
+}
