@@ -43,7 +43,8 @@ export function AuthForm({
         accepted?: boolean;
       }>(`/api/v1/auth/${endpoint}`, { method: 'POST', body: JSON.stringify(body) });
       if (data.authenticated) {
-        router.push('/profile');
+        router.replace('/orders');
+        router.refresh();
       } else if (mode === 'register') {
         setMessage('Account created. We sent a verification link to your email address.');
       } else if (mode === 'forgot')
