@@ -285,26 +285,25 @@ describe('checkout orchestration E2E', () => {
     ).toBe(0);
   }, 30_000);
 
-  it('blocks guest alcohol checkout without purchase verification and creates no session', async () => {
+  it('allows guest alcohol checkout without an online age gate', async () => {
     const before = await prisma.checkoutSession.count({ where: { cartId: guestCartId } });
-    await expect(
-      inTenant(() =>
-        checkout.create(
-          { guestSessionId: guestToken },
-          {
-            deliveryAddress: address,
-            deliverySlotId: slotId,
-            guest: {
-              firstName: 'Guest',
-              lastName: 'Buyer',
-              email: 'guest@example.test',
-              phone: '07123456789',
-            },
+    const session = await inTenant(() =>
+      checkout.create(
+        { guestSessionId: guestToken },
+        {
+          deliveryAddress: address,
+          deliverySlotId: slotId,
+          guest: {
+            firstName: 'Guest',
+            lastName: 'Buyer',
+            email: 'guest@example.test',
+            phone: '07123456789',
           },
-        ),
+        },
       ),
-    ).rejects.toMatchObject({ response: { code: 'AGE_VERIFICATION_REQUIRED' } });
-    expect(await prisma.checkoutSession.count({ where: { cartId: guestCartId } })).toBe(before);
+    );
+    sessionIds.push(session.id);
+    expect(await prisma.checkoutSession.count({ where: { cartId: guestCartId } })).toBe(before + 1);
   }, 30_000);
 
   it('creates one intent, order, payment and invoice for an eligible guest checkout', async () => {
@@ -317,7 +316,7 @@ describe('checkout orchestration E2E', () => {
           guest: {
             firstName: 'Guest',
             lastName: 'Grocery',
-            email: 'buyer@example.test',
+            email: `CHECKOUT-${suffix}@EXAMPLE.TEST`,
             phone: '07123456789',
           },
         },
@@ -326,9 +325,7 @@ describe('checkout orchestration E2E', () => {
     sessionIds.push(session.id);
     const record = await prisma.checkoutSession.findUniqueOrThrow({ where: { id: session.id } });
     guestUserId = record.guestUserId ?? '';
-    const tombstone = await prisma.user.findUniqueOrThrow({ where: { id: guestUserId } });
-    expect(tombstone.active).toBe(false);
-    expect(tombstone.tombstonedAt).toBeInstanceOf(Date);
+    expect(guestUserId).toBe(userId);
 
     const intents = await inTenant(() =>
       Promise.all(

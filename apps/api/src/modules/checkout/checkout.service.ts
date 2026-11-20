@@ -222,19 +222,32 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
         });
       let guestUserId: string | null = null;
       if ('guestSessionId' in identity && input.guest) {
-        const guest = await tx.user.create({
-          data: {
+        const account = await tx.user.findFirst({
+          where: {
             tenantId,
-            email: `guest+${randomUUID()}@tombstone.invalid`,
-            passwordHash: 'GUEST_CHECKOUT_NO_LOGIN',
-            firstName: input.guest.firstName,
-            lastName: input.guest.lastName,
-            phone: input.guest.phone,
-            active: false,
-            tombstonedAt: new Date(),
+            email: { equals: input.guest.email, mode: 'insensitive' },
+            active: true,
+            tombstonedAt: null,
           },
+          select: { id: true },
         });
-        guestUserId = guest.id;
+        if (account) {
+          guestUserId = account.id;
+        } else {
+          const guest = await tx.user.create({
+            data: {
+              tenantId,
+              email: `guest+${randomUUID()}@tombstone.invalid`,
+              passwordHash: 'GUEST_CHECKOUT_NO_LOGIN',
+              firstName: input.guest.firstName,
+              lastName: input.guest.lastName,
+              phone: input.guest.phone,
+              active: false,
+              tombstonedAt: new Date(),
+            },
+          });
+          guestUserId = guest.id;
+        }
       }
       const session = await tx.checkoutSession.create({
         data: {
