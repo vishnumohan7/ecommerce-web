@@ -1169,6 +1169,12 @@ footer small {
   color: #708078;
   font-size: 0.85rem;
 }
+.wishlist-summary a {
+  color: #276d55;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
 .wishlist-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
@@ -1253,6 +1259,9 @@ footer small {
   border-radius: 1rem;
   box-shadow: 0 0.75rem 2rem rgb(6 39 30 / 5%);
 }
+.account-main .profile-form {
+  width: 100%;
+}
 .profile-form-heading {
   display: flex;
   gap: 1rem;
@@ -1313,6 +1322,21 @@ footer small {
 }
 .profile-form .account-links {
   margin: 0;
+}
+.profile-security-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.profile-security-row strong,
+.profile-security-row p {
+  margin: 0;
+}
+.profile-security-row p {
+  margin-top: 0.2rem;
+  color: #738078;
+  font-size: 0.85rem;
 }
 .form-success {
   color: #287251;

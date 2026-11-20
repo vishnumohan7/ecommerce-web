@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { browserApi, money } from '../../lib/store-api';
+import { AccountSidebar } from '../components/account-sidebar';
 
 interface Order {
   id: string;
@@ -148,16 +149,7 @@ export default function Orders() {
         <p>Review your live orders, invoices and fulfilment progress.</p>
       </section>
       <div className="account-dashboard">
-        <aside className="account-sidebar">
-          <strong>My account</strong>
-          <Link className="active" href="/orders">
-            My orders &amp; tracking
-          </Link>
-          <Link href="/wishlist">Saved favourites</Link>
-          <Link href="/addresses">Saved addresses</Link>
-          <Link href="/profile">Account settings</Link>
-          <Link href="/auth/login">Sign in / switch account</Link>
-        </aside>
+        <AccountSidebar active="orders" />
         <section className="account-main">
           {confirmation && <OrderConfirmation confirmation={confirmation} />}
           <div className="account-stats">

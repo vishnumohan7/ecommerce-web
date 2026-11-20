@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { SyntheticEvent, useEffect, useState } from 'react';
 import { browserApi } from '../../lib/store-api';
+import { AccountSidebar } from '../components/account-sidebar';
 interface ProfileData {
   id: string;
   email: string;
@@ -58,69 +59,75 @@ export default function Profile() {
       </main>
     );
   return (
-    <main className="account-page account-page-narrow">
-      <header className="account-page-header">
-        <div>
-          <p className="eyebrow">Your account</p>
-          <h1>Profile settings</h1>
-          <p>Keep your contact information up to date for order notifications and delivery.</p>
-        </div>
-      </header>
-      {!profile ? (
-        <div className="skeleton">Loading account…</div>
-      ) : (
-        <form className="form-card profile-form" onSubmit={(event) => void save(event)}>
-          <div className="profile-form-heading">
-            <span aria-hidden="true">
-              {profile.firstName.slice(0, 1)}
-              {profile.lastName.slice(0, 1)}
-            </span>
-            <div>
-              <h2>
-                {profile.firstName} {profile.lastName}
-              </h2>
-              <p>Customer account</p>
-            </div>
-          </div>
-          <label>
-            Email address
-            <input disabled value={profile.email} />
-          </label>
-          <div className="form-grid">
-            <label>
-              First name
-              <input required name="firstName" defaultValue={profile.firstName} />
-            </label>
-            <label>
-              Last name
-              <input required name="lastName" defaultValue={profile.lastName} />
-            </label>
-          </div>
-          <label>
-            Phone
-            <input name="phone" type="tel" defaultValue={profile.phone ?? ''} />
-          </label>
-          <div className="profile-save-row">
-            <button className="button">Save changes</button>
-            {message && (
-              <p className="form-success" role="status">
-                {message}
-              </p>
-            )}
-          </div>
-          <hr />
-          <p className="account-links-label">Manage your account</p>
-          <div className="account-links">
-            <Link href="/orders">Orders</Link>
-            <Link href="/addresses">Addresses</Link>
-            <Link href="/wishlist">Wishlist</Link>
-            <Link href="/privacy">Privacy</Link>
-            <button type="button" onClick={() => void logout()}>
-              Sign out
-            </button>
-          </div>
-        </form>
-      )}
+    <main className="account-page">
+      <div className="breadcrumbs">
+        <Link href="/">Home</Link>
+        <span>/</span>
+        <strong>Account settings</strong>
+      </div>
+      <section className="account-welcome">
+        <p className="eyebrow">My account</p>
+        <h1>{profile ? `Namaskaram, ${profile.firstName}` : 'Namaskaram'}</h1>
+        <p>Manage your profile and the contact details used for orders and delivery.</p>
+      </section>
+      <div className="account-dashboard">
+        <AccountSidebar active="profile" />
+        <section className="account-main">
+          {!profile ? (
+            <div className="skeleton">Loading account…</div>
+          ) : (
+            <form className="form-card profile-form" onSubmit={(event) => void save(event)}>
+              <div className="profile-form-heading">
+                <span aria-hidden="true">
+                  {profile.firstName.slice(0, 1)}
+                  {profile.lastName.slice(0, 1)}
+                </span>
+                <div>
+                  <p className="eyebrow">Account settings</p>
+                  <h2>Profile details</h2>
+                  <p>Update your contact information below.</p>
+                </div>
+              </div>
+              <label>
+                Email address
+                <input disabled value={profile.email} />
+              </label>
+              <div className="form-grid">
+                <label>
+                  First name
+                  <input required name="firstName" defaultValue={profile.firstName} />
+                </label>
+                <label>
+                  Last name
+                  <input required name="lastName" defaultValue={profile.lastName} />
+                </label>
+              </div>
+              <label>
+                Phone
+                <input name="phone" type="tel" defaultValue={profile.phone ?? ''} />
+              </label>
+              <div className="profile-save-row">
+                <button className="button">Save changes</button>
+                {message && (
+                  <p className="form-success" role="status">
+                    {message}
+                  </p>
+                )}
+              </div>
+              <hr />
+              <div className="profile-security-row">
+                <div>
+                  <strong>Account access</strong>
+                  <p>Sign out securely when using a shared device.</p>
+                </div>
+                <button className="button secondary" type="button" onClick={() => void logout()}>
+                  Sign out
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
