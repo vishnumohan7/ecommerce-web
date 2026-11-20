@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { browserApi } from '../../lib/store-api';
+import { AccountSidebar } from '../components/account-sidebar';
 
 interface Address {
   id: string;
@@ -77,111 +78,116 @@ export default function AddressesPage() {
 
   return (
     <main className="account-page">
-      <header className="account-page-header">
-        <div>
-          <p className="eyebrow">Your account</p>
-          <h1>Address book</h1>
-          <p>Manage the delivery addresses available during checkout.</p>
-        </div>
-        <Link className="button secondary" href="/profile">
-          Back to account
-        </Link>
-      </header>
-      <div className="address-book-layout">
-        <section className="account-panel">
-          <div className="account-panel-heading">
-            <div>
-              <p className="eyebrow">Delivery</p>
-              <h2>Saved addresses</h2>
-            </div>
-            <span>{items?.length ?? 0}</span>
-          </div>
-          {items === null ? (
-            <div className="skeleton">Loading addresses…</div>
-          ) : items.length === 0 ? (
-            <div className="empty-state account-empty compact-empty">
-              <h3>No saved addresses</h3>
-              <p>Add your first delivery address using the form.</p>
-            </div>
-          ) : (
-            <div className="address-cards">
-              {items.map((item) => (
-                <article key={item.id} className={item.isDefault ? 'is-default' : ''}>
-                  <div className="address-card-icon" aria-hidden="true">
-                    ⌂
-                  </div>
-                  <div className="address-card-copy">
-                    <div className="address-card-title">
-                      <h3>{item.label}</h3>
-                      {item.isDefault && <span className="status">Default</span>}
-                    </div>
-                    <address>
-                      {item.line1}
-                      {item.line2 ? (
-                        <>
+      <div className="breadcrumbs">
+        <Link href="/">Home</Link>
+        <span>/</span>
+        <strong>Saved addresses</strong>
+      </div>
+      <section className="account-welcome">
+        <p className="eyebrow">My account</p>
+        <h1>Saved addresses</h1>
+        <p>Manage the delivery addresses available during checkout.</p>
+      </section>
+      <div className="account-dashboard">
+        <AccountSidebar active="addresses" />
+        <section className="account-main">
+          <div className="address-book-layout">
+            <section className="account-panel">
+              <div className="account-panel-heading">
+                <div>
+                  <p className="eyebrow">Delivery</p>
+                  <h2>Your address book</h2>
+                </div>
+                <span>{items?.length ?? 0}</span>
+              </div>
+              {items === null ? (
+                <div className="skeleton">Loading addresses…</div>
+              ) : items.length === 0 ? (
+                <div className="empty-state account-empty compact-empty">
+                  <h3>No saved addresses</h3>
+                  <p>Add your first delivery address using the form.</p>
+                </div>
+              ) : (
+                <div className="address-cards">
+                  {items.map((item) => (
+                    <article key={item.id} className={item.isDefault ? 'is-default' : ''}>
+                      <div className="address-card-icon" aria-hidden="true">
+                        ⌂
+                      </div>
+                      <div className="address-card-copy">
+                        <div className="address-card-title">
+                          <h3>{item.label}</h3>
+                          {item.isDefault && <span className="status">Default</span>}
+                        </div>
+                        <address>
+                          {item.line1}
+                          {item.line2 ? (
+                            <>
+                              <br />
+                              {item.line2}
+                            </>
+                          ) : null}
                           <br />
-                          {item.line2}
-                        </>
-                      ) : null}
-                      <br />
-                      {item.city}, {item.postcode}
-                      <br />
-                      United Kingdom
-                    </address>
-                  </div>
-                  <div className="address-card-actions">
-                    {!item.isDefault && (
-                      <button onClick={() => void makeDefault(item.id)}>Make default</button>
-                    )}
-                    <button className="danger-link" onClick={() => void remove(item.id)}>
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+                          {item.city}, {item.postcode}
+                          <br />
+                          United Kingdom
+                        </address>
+                      </div>
+                      <div className="address-card-actions">
+                        {!item.isDefault && (
+                          <button onClick={() => void makeDefault(item.id)}>Make default</button>
+                        )}
+                        <button className="danger-link" onClick={() => void remove(item.id)}>
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+            <form className="form-card address-form" onSubmit={(event) => void create(event)}>
+              <div className="address-form-heading">
+                <p className="eyebrow">New address</p>
+                <h2>Add an address</h2>
+                <p>Fields marked with * are required.</p>
+              </div>
+              <label>
+                Address label *<input required name="label" placeholder="e.g. Home or Work" />
+              </label>
+              <label>
+                Address line 1 *<input required name="line1" autoComplete="address-line1" />
+              </label>
+              <label>
+                Address line 2 <span>(optional)</span>
+                <input name="line2" autoComplete="address-line2" />
+              </label>
+              <div className="form-grid">
+                <label>
+                  Town or city *<input required name="city" autoComplete="address-level2" />
+                </label>
+                <label>
+                  Postcode *<input required name="postcode" autoComplete="postal-code" />
+                </label>
+              </div>
+              <label className="check-row">
+                <input type="checkbox" name="isDefault" />
+                <span>Use as my default delivery address</span>
+              </label>
+              <button className="button">Save address</button>
+              {message && (
+                <p className="form-success" role="status">
+                  {message}
+                </p>
+              )}
+              {error && (
+                <p className="form-error" role="alert">
+                  {error}
+                </p>
+              )}
+            </form>
+          </div>
         </section>
-        <form className="form-card address-form" onSubmit={(event) => void create(event)}>
-          <div>
-            <p className="eyebrow">New address</p>
-            <h2>Add an address</h2>
-            <p>Fields marked with * are required.</p>
-          </div>
-          <label>
-            Address label *<input required name="label" placeholder="e.g. Home or Work" />
-          </label>
-          <label>
-            Address line 1 *<input required name="line1" autoComplete="address-line1" />
-          </label>
-          <label>
-            Address line 2 <span>(optional)</span>
-            <input name="line2" autoComplete="address-line2" />
-          </label>
-          <div className="form-grid">
-            <label>
-              Town or city *<input required name="city" autoComplete="address-level2" />
-            </label>
-            <label>
-              Postcode *<input required name="postcode" autoComplete="postal-code" />
-            </label>
-          </div>
-          <label className="check-row">
-            <input type="checkbox" name="isDefault" />
-            <span>Use as my default delivery address</span>
-          </label>
-          <button className="button">Save address</button>
-          {message && (
-            <p className="form-success" role="status">
-              {message}
-            </p>
-          )}
-          {error && (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
-        </form>
       </div>
     </main>
   );

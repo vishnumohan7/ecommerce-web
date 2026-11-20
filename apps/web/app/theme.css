@@ -1045,9 +1045,12 @@ footer small {
 }
 .address-book-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(22rem, 0.75fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(19rem, 0.85fr);
   gap: 1.5rem;
   align-items: start;
+}
+.account-main .address-book-layout {
+  width: 100%;
 }
 .address-cards {
   display: grid;
@@ -1108,10 +1111,21 @@ footer small {
   color: #b04444;
 }
 .address-form {
+  min-width: 0;
   position: sticky;
   top: 1.5rem;
   border-radius: 1rem;
   box-shadow: 0 0.75rem 2rem rgb(6 39 30 / 5%);
+}
+.address-form input,
+.address-form label,
+.address-form .form-grid {
+  min-width: 0;
+  width: 100%;
+}
+.address-form-heading {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5ece7;
 }
 .address-form h2 {
   margin: 0.15rem 0 0.35rem;
@@ -1342,7 +1356,7 @@ footer small {
   color: #287251;
   font-weight: 700;
 }
-@media (max-width: 850px) {
+@media (max-width: 1080px) {
   .address-book-layout {
     grid-template-columns: 1fr;
   }
