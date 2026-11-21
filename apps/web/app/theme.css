@@ -157,14 +157,14 @@ main {
 .section h1 {
   margin: 0.35rem 0 1rem;
   font-family: Georgia, serif;
-  font-size: clamp(2.2rem, 5vw, 4.5rem);
-  line-height: 1.02;
+  font-size: clamp(2rem, 3.5vw, 3.25rem);
+  line-height: 1.08;
   color: var(--green-dark);
   text-transform: capitalize;
 }
 .section h2 {
   font-family: Georgia, serif;
-  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-size: clamp(1.3rem, 2.25vw, 1.8rem);
 }
 .hero {
   display: grid;
@@ -508,6 +508,48 @@ main {
   border-top: 1px solid var(--paper);
   font-size: 1.2rem;
   font-weight: 900;
+}
+.order-detail-page {
+  width: min(76rem, calc(100% - 2rem));
+  padding-block: clamp(2rem, 4vw, 3.5rem);
+}
+.order-detail-heading {
+  align-items: flex-end;
+  margin-bottom: 1.75rem;
+}
+.order-detail-heading h1 {
+  max-width: 48rem;
+  margin-bottom: 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.08;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.order-detail-heading .hero-actions {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+.order-detail-page .cart-group {
+  overflow: hidden;
+}
+.order-detail-page .cart-group > h2 {
+  margin: 0;
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+.order-detail-page .order-summary h2 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+.order-detail-page .order-summary h3 {
+  margin-top: 1.35rem;
+  font-size: 1rem;
+}
+.order-detail-page .order-summary address {
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 .coupon-row {
   display: flex;
@@ -942,6 +984,18 @@ footer small {
   .order-summary {
     position: static;
   }
+  .order-detail-heading {
+    align-items: flex-start;
+  }
+  .order-detail-heading h1 {
+    font-size: clamp(1.8rem, 9vw, 2.35rem);
+  }
+  .order-detail-heading .hero-actions {
+    width: 100%;
+  }
+  .order-detail-heading .button {
+    flex: 1;
+  }
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -990,7 +1044,7 @@ footer small {
   margin: 0.25rem 0 0.6rem;
   color: var(--angadi-deep);
   font:
-    700 clamp(2.5rem, 5vw, 4.25rem)/1 Georgia,
+    700 clamp(2rem, 3.5vw, 3.25rem)/1.08 Georgia,
     serif;
 }
 .account-page-header p {
@@ -3850,7 +3904,7 @@ body.basket-drawer-visible {
 .account-welcome h1 {
   margin: 0.25rem 0;
   font:
-    600 clamp(2.2rem, 5vw, 3.5rem) Georgia,
+    600 clamp(2rem, 3.2vw, 3rem)/1.08 Georgia,
     serif;
 }
 .account-welcome p:last-child {
