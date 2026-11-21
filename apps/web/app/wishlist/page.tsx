@@ -21,15 +21,21 @@ interface WishlistItem {
   };
 }
 
+const ITEMS_PER_PAGE = 8;
+
 export default function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[] | null>(null);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState('');
+  const [page, setPage] = useState(1);
   const load = useCallback(
     () =>
       browserApi<{ items: WishlistItem[] }>('/api/v1/wishlist')
         .then((data) => {
           setItems(data.items);
+          setPage((currentPage) =>
+            Math.min(currentPage, Math.max(1, Math.ceil(data.items.length / ITEMS_PER_PAGE))),
+          );
           setError('');
         })
         .catch((reason: unknown) => {
@@ -75,6 +81,10 @@ export default function WishlistPage() {
       </main>
     );
 
+  const pageCount = Math.max(1, Math.ceil((items?.length ?? 0) / ITEMS_PER_PAGE));
+  const pageStart = (page - 1) * ITEMS_PER_PAGE;
+  const visibleItems = items?.slice(pageStart, pageStart + ITEMS_PER_PAGE) ?? [];
+
   return (
     <main className="account-page">
       <div className="breadcrumbs">
@@ -112,7 +122,7 @@ export default function WishlistPage() {
                 <Link href="/search">Continue shopping</Link>
               </div>
               <div className="wishlist-grid">
-                {items.map((item) => {
+                {visibleItems.map((item) => {
                   const product = item.product;
                   const href = product ? `/product/${product.slug || product.id}` : '#';
                   return (
@@ -165,6 +175,46 @@ export default function WishlistPage() {
                   );
                 })}
               </div>
+              {pageCount > 1 && (
+                <nav className="wishlist-pagination" aria-label="Saved favourites pages">
+                  <span>
+                    Showing {pageStart + 1}–{Math.min(pageStart + ITEMS_PER_PAGE, items.length)} of{' '}
+                    {items.length}
+                  </span>
+                  <div>
+                    <button
+                      disabled={page === 1}
+                      onClick={() => {
+                        setPage((currentPage) => currentPage - 1);
+                      }}
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: pageCount }, (_, index) => index + 1).map(
+                      (pageNumber) => (
+                        <button
+                          aria-current={pageNumber === page ? 'page' : undefined}
+                          className={pageNumber === page ? 'active' : ''}
+                          key={pageNumber}
+                          onClick={() => {
+                            setPage(pageNumber);
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      disabled={page === pageCount}
+                      onClick={() => {
+                        setPage((currentPage) => currentPage + 1);
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </nav>
+              )}
             </section>
           )}
         </section>
