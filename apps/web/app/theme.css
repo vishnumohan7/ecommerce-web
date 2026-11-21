@@ -509,10 +509,6 @@ main {
   font-size: 1.2rem;
   font-weight: 900;
 }
-.order-detail-page {
-  width: min(76rem, calc(100% - 2rem));
-  padding-block: clamp(2rem, 4vw, 3.5rem);
-}
 .order-detail-heading {
   align-items: flex-end;
   margin-bottom: 1.75rem;
@@ -529,27 +525,51 @@ main {
   flex-shrink: 0;
   margin-top: 0;
 }
-.order-detail-page .cart-group {
+.order-detail-layout .cart-group {
   overflow: hidden;
 }
-.order-detail-page .cart-group > h2 {
+.order-detail-layout .cart-group > h2 {
   margin: 0;
   padding: 1.15rem 1.25rem;
   border-bottom: 1px solid var(--line);
   font-size: 1.45rem;
   line-height: 1.2;
 }
-.order-detail-page .order-summary h2 {
+.order-detail-layout .order-summary h2 {
   font-size: 1.5rem;
   line-height: 1.2;
 }
-.order-detail-page .order-summary h3 {
+.order-detail-layout .order-summary h3 {
   margin-top: 1.35rem;
   font-size: 1rem;
 }
-.order-detail-page .order-summary address {
+.order-detail-layout .order-summary address {
   font-size: 0.95rem;
   line-height: 1.55;
+}
+.order-tracking-panel {
+  margin-top: 1rem;
+  scroll-margin-top: 2rem;
+}
+.order-tracking-panel .section-heading {
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.order-tracking-panel .section-heading h2 {
+  margin: 0.15rem 0 0;
+}
+.order-tracking-panel .timeline {
+  margin: 0;
+  padding-top: 0.5rem;
+}
+.order-tracking-panel .timeline li:last-child {
+  min-height: 2rem;
+}
+.order-tracking-panel .timeline p {
+  max-width: 38rem;
+  margin: 0.35rem 0 0;
+  color: #62736b;
+  font-size: 0.75rem;
 }
 .coupon-row {
   display: flex;
