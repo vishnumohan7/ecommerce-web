@@ -55,6 +55,7 @@ export default async function ProductPage({
         <ProductGallery
           images={gallery}
           productName={product.name}
+          productId={product.id}
           onOffer={Boolean(liveStatus?.onOffer)}
         />
         <div className="pdp-copy">

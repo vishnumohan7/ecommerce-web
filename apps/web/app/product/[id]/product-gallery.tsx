@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { WishlistButton } from '../../../components/wishlist-button';
 
 interface GalleryImage {
   id: string;
@@ -12,8 +13,14 @@ interface GalleryImage {
 export function ProductGallery({
   images,
   productName,
+  productId,
   onOffer,
-}: Readonly<{ images: GalleryImage[]; productName: string; onOffer: boolean }>) {
+}: Readonly<{
+  images: GalleryImage[];
+  productName: string;
+  productId: string;
+  onOffer: boolean;
+}>) {
   const [selected, setSelected] = useState(0);
   const current = images[selected];
 
@@ -26,9 +33,7 @@ export function ProductGallery({
         aria-label={current?.altText || productName}
       >
         {onOffer && <span className="pdp-sale-badge">On sale</span>}
-        <span className="pdp-wishlist" aria-hidden="true">
-          ♡
-        </span>
+        <WishlistButton productId={productId} className="pdp-wishlist" />
         {!current && <b>{productName.slice(0, 1)}</b>}
         {current && <small>⌕ Roll to zoom</small>}
       </div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { notifyBasketChanged } from '../lib/basket-events';
 import { browserApi, money, productImage, type Product } from '../lib/store-api';
+import { WishlistButton } from './wishlist-button';
 
 export function ProductCard({ product }: Readonly<{ product: Product }>) {
   const [state, setState] = useState('');
@@ -25,20 +26,21 @@ export function ProductCard({ product }: Readonly<{ product: Product }>) {
 
   return (
     <article className="product-card">
-      <Link
+      <div
         className={`product-art${image ? ' has-image' : ''}`}
-        href={`/product/${product.id}`}
-        aria-label={product.name}
         style={image ? { backgroundImage: `url(${image})` } : undefined}
       >
+        <Link
+          className="product-art-link"
+          href={`/product/${product.id}`}
+          aria-label={`View ${product.name}`}
+        />
         <span className={product.isAlcohol ? 'age-pill' : 'category-pill'}>
           {product.isAlcohol ? '18+' : (product.categoryName ?? 'Grocery')}
         </span>
-        <span className="save-mark" aria-hidden="true">
-          {'\u2661'}
-        </span>
+        <WishlistButton productId={product.id} className="save-mark" />
         {!image && <b>{product.name.slice(0, 1)}</b>}
-      </Link>
+      </div>
       <div className="product-copy">
         <p className="product-meta">{product.brandName ?? product.sku}</p>
         <h3>
