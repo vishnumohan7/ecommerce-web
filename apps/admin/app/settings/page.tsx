@@ -2,7 +2,7 @@
 import {
   saveIntegrations,
   savePaymentSettings,
-  saveSettings,
+  saveStoreProfile,
   testPaymentConnection,
 } from '../actions';
 import { ActionMessage } from '../components/action-message';
@@ -18,6 +18,50 @@ function SecretHint({ configured }: { configured: boolean }) {
     </small>
   );
 }
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : {};
+}
+
+function value(source: Record<string, unknown>, key: string, fallback = '') {
+  const item = source[key];
+  return typeof item === 'string' ? item : fallback;
+}
+
+type FooterLink = { label: string; href: string };
+
+function links(value: unknown, fallback: FooterLink[]) {
+  if (!Array.isArray(value)) return fallback;
+  const parsed = value.flatMap((item) => {
+    const link = record(item);
+    const label = valueFromUnknown(link.label);
+    const href = valueFromUnknown(link.href);
+    return label && href ? [{ label, href }] : [];
+  });
+  return parsed.length ? parsed : fallback;
+}
+
+function valueFromUnknown(item: unknown) {
+  return typeof item === 'string' ? item : '';
+}
+
+const defaultShopLinks: FooterLink[] = [
+  { label: 'All Categories', href: '/category/all' },
+  { label: 'Groceries', href: '/category/groceries' },
+  { label: 'Fresh Food', href: '/category/fresh-food' },
+  { label: 'Frozen', href: '/category/frozen' },
+  { label: 'Alcohol', href: '/alcohol' },
+  { label: 'Offers', href: '/offers' },
+];
+
+const defaultServiceLinks: FooterLink[] = [
+  { label: 'Contact Us', href: '/help/contact' },
+  { label: 'Delivery Information', href: '/help/delivery' },
+  { label: 'Returns & Refunds', href: '/legal/returns' },
+  { label: 'Terms & Conditions', href: '/legal/terms' },
+  { label: 'Privacy Policy', href: '/legal/privacy' },
+  { label: 'Responsible Drinking', href: '/help/responsible-drinking' },
+];
 
 export default async function SettingsPage({
   searchParams,
@@ -39,73 +83,323 @@ export default async function SettingsPage({
         <ApiNotice message={result.error} />
       ) : (
         <>
-          <section className="settings-grid settings-summary-grid">
-            <article className="panel brand-profile">
-              <header className="panel-header">
-                <div>
-                  <p className="eyebrow">Company identity</p>
-                  <h2>Brand profile</h2>
-                </div>
-                <span className="status-badge success">Single store</span>
-              </header>
-              {result.data.branding ? (
-                <>
-                  <div className="brand-identity">
-                    <span className="brand-profile-mark">
-                      {result.data.branding.brandName.charAt(0).toUpperCase()}
-                    </span>
+          {(() => {
+            const storefront = record(result.data.settings.storefront);
+            const seo = record(result.data.settings.seo);
+            const footer = record(result.data.settings.footer);
+            const social = record(footer.social);
+            const shopLinks = links(footer.shopLinks, defaultShopLinks);
+            const serviceLinks = links(footer.serviceLinks, defaultServiceLinks);
+            const branding = result.data.branding;
+            const address = record(branding?.registeredAddress);
+            const assets = record(branding?.assets);
+            const logoUrl = value(assets, 'logoUrl');
+            const storeName = value(
+              storefront,
+              'storeName',
+              branding?.brandName ?? 'Denes Commerce',
+            );
+            return (
+              <form action={saveStoreProfile} className="store-settings-form">
+                <input type="hidden" name="currentLogoUrl" value={logoUrl} />
+                <input
+                  type="hidden"
+                  name="colours"
+                  value={JSON.stringify(branding?.colours ?? {})}
+                />
+                <input
+                  type="hidden"
+                  name="typography"
+                  value={JSON.stringify(branding?.typography ?? {})}
+                />
+                <input
+                  type="hidden"
+                  name="emailBranding"
+                  value={JSON.stringify(branding?.emailBranding ?? {})}
+                />
+
+                <section className="panel store-settings-section">
+                  <header className="panel-header">
                     <div>
-                      <strong>{result.data.branding.brandName}</strong>
-                      <small>{result.data.branding.legalEntityName}</small>
+                      <p className="eyebrow">Store identity</p>
+                      <h2>Store details</h2>
+                      <small>The name and logo customers see across the storefront.</small>
+                    </div>
+                    <span className="status-badge success">Live store</span>
+                  </header>
+                  <div className="integration-body store-identity-layout">
+                    <div className="store-logo-control">
+                      <div className="store-logo-preview">
+                        {logoUrl ? (
+                          <img src={logoUrl} alt={`${storeName} logo`} />
+                        ) : (
+                          <span>{storeName.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <label className="form-field">
+                        <span>Storefront logo</span>
+                        <input
+                          name="storeLogo"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/avif"
+                        />
+                        <small>PNG, JPEG, WebP or AVIF. Maximum 10 MB.</small>
+                      </label>
+                    </div>
+                    <div className="form-grid two-column-form">
+                      <label className="form-field">
+                        <span>Store name</span>
+                        <input name="storeName" required defaultValue={storeName} />
+                      </label>
+                      <label className="form-field">
+                        <span>Store tagline</span>
+                        <input
+                          name="tagline"
+                          defaultValue={value(storefront, 'tagline')}
+                          placeholder="A little bit of Kerala in every home"
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Customer support email</span>
+                        <input
+                          name="supportEmail"
+                          type="email"
+                          defaultValue={value(storefront, 'supportEmail')}
+                          placeholder="support@example.com"
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Customer support phone</span>
+                        <input
+                          name="supportPhone"
+                          defaultValue={value(storefront, 'supportPhone')}
+                          placeholder="+44 20 0000 0000"
+                        />
+                      </label>
                     </div>
                   </div>
-                  <dl className="detail-list">
-                    <div>
-                      <dt>Legal entity</dt>
-                      <dd>{result.data.branding.legalEntityName}</dd>
+                </section>
+
+                <section className="settings-grid store-settings-grid">
+                  <article className="panel store-settings-section">
+                    <header className="panel-header">
+                      <div>
+                        <p className="eyebrow">Search appearance</p>
+                        <h2>Homepage SEO</h2>
+                        <small>Control how the homepage appears in search results.</small>
+                      </div>
+                    </header>
+                    <div className="integration-body form-grid">
+                      <label className="form-field">
+                        <span>Homepage title</span>
+                        <input
+                          name="homepageTitle"
+                          required
+                          maxLength={70}
+                          defaultValue={value(seo, 'homepageTitle', storeName)}
+                        />
+                        <small>Recommended length: 50–60 characters.</small>
+                      </label>
+                      <label className="form-field">
+                        <span>Homepage meta description</span>
+                        <textarea
+                          name="homepageMetaDescription"
+                          required
+                          maxLength={170}
+                          rows={4}
+                          defaultValue={value(seo, 'homepageMetaDescription')}
+                          placeholder="Describe the store for search engines and social sharing."
+                        />
+                        <small>Recommended length: 140–160 characters.</small>
+                      </label>
                     </div>
-                    <div>
-                      <dt>Company number</dt>
-                      <dd>{result.data.branding.companyNumber ?? 'Not set'}</dd>
+                  </article>
+
+                  <article className="panel store-settings-section">
+                    <header className="panel-header">
+                      <div>
+                        <p className="eyebrow">Company information</p>
+                        <h2>Business details</h2>
+                        <small>Used on invoices, customer emails and legal documents.</small>
+                      </div>
+                    </header>
+                    <div className="integration-body form-grid two-column-form">
+                      <label className="form-field full-field">
+                        <span>Legal business name</span>
+                        <input
+                          name="legalEntityName"
+                          required
+                          defaultValue={branding?.legalEntityName ?? storeName}
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Company number</span>
+                        <input name="companyNumber" defaultValue={branding?.companyNumber ?? ''} />
+                      </label>
+                      <label className="form-field">
+                        <span>VAT number</span>
+                        <input name="vatNumber" defaultValue={branding?.vatNumber ?? ''} />
+                      </label>
+                      <label className="form-field full-field">
+                        <span>Registered address</span>
+                        <input
+                          name="addressLine1"
+                          required
+                          defaultValue={value(address, 'line1')}
+                        />
+                      </label>
+                      <label className="form-field full-field">
+                        <span>Address line 2</span>
+                        <input name="addressLine2" defaultValue={value(address, 'line2')} />
+                      </label>
+                      <label className="form-field">
+                        <span>Town or city</span>
+                        <input name="city" required defaultValue={value(address, 'city')} />
+                      </label>
+                      <label className="form-field">
+                        <span>County</span>
+                        <input name="county" defaultValue={value(address, 'county')} />
+                      </label>
+                      <label className="form-field">
+                        <span>Postcode</span>
+                        <input name="postcode" required defaultValue={value(address, 'postcode')} />
+                      </label>
+                      <label className="form-field">
+                        <span>Country</span>
+                        <input
+                          name="country"
+                          required
+                          defaultValue={value(address, 'country', 'United Kingdom')}
+                        />
+                      </label>
                     </div>
+                  </article>
+                </section>
+
+                <section className="panel store-settings-section">
+                  <header className="panel-header">
                     <div>
-                      <dt>VAT number</dt>
-                      <dd>{result.data.branding.vatNumber ?? 'Not set'}</dd>
+                      <p className="eyebrow">Storefront footer</p>
+                      <h2>Footer links & social profiles</h2>
+                      <small>
+                        Manage footer copy, navigation destinations and social media icons.
+                      </small>
                     </div>
-                  </dl>
-                </>
-              ) : (
-                <p className="panel-empty">No branding profile is configured.</p>
-              )}
-            </article>
-            <form action={saveSettings} className="panel settings-editor compact-settings-editor">
-              <header className="panel-header">
-                <div>
-                  <p className="eyebrow">Advanced</p>
-                  <h2>Business rules</h2>
-                </div>
-                <span className="count-pill">Version {result.data.settingsVersion}</span>
-              </header>
-              <div className="editor-body">
-                <label className="form-field">
-                  <span>Configuration JSON</span>
-                  <small>
-                    Checkout, pricing and operational rules. Integration secrets are stored
-                    separately.
-                  </small>
-                  <textarea
-                    name="settings"
-                    rows={10}
-                    defaultValue={JSON.stringify(result.data.settings, null, 2)}
-                    spellCheck={false}
-                  />
-                </label>
-              </div>
-              <footer className="panel-actions">
-                <button className="button button-secondary">Save business rules</button>
-              </footer>
-            </form>
-          </section>
+                  </header>
+                  <div className="integration-body footer-settings-stack">
+                    <div className="form-grid two-column-form">
+                      <label className="form-field full-field">
+                        <span>Footer description</span>
+                        <textarea
+                          name="footerDescription"
+                          rows={3}
+                          defaultValue={value(footer, 'description')}
+                          placeholder="A short description of the store"
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Copyright line</span>
+                        <input
+                          name="footerCopyright"
+                          defaultValue={value(footer, 'copyright')}
+                          placeholder="© 2026 Angadi. All rights reserved."
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Footer closing text</span>
+                        <input
+                          name="footerBottomText"
+                          defaultValue={value(footer, 'bottomText')}
+                          placeholder="Kerala & Indian groceries delivered across the UK"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="field-divider">
+                      <span>Social profiles</span>
+                    </div>
+                    <div className="form-grid three-column-form">
+                      <label className="form-field">
+                        <span>Instagram URL</span>
+                        <input
+                          name="instagramUrl"
+                          type="url"
+                          defaultValue={value(social, 'instagram')}
+                          placeholder="https://instagram.com/..."
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Facebook URL</span>
+                        <input
+                          name="facebookUrl"
+                          type="url"
+                          defaultValue={value(social, 'facebook')}
+                          placeholder="https://facebook.com/..."
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>YouTube URL</span>
+                        <input
+                          name="youtubeUrl"
+                          type="url"
+                          defaultValue={value(social, 'youtube')}
+                          placeholder="https://youtube.com/@..."
+                        />
+                      </label>
+                    </div>
+
+                    <div className="footer-link-columns">
+                      <FooterLinkEditor title="Shop links" name="shop" links={shopLinks} />
+                      <FooterLinkEditor
+                        title="Customer service links"
+                        name="service"
+                        links={serviceLinks}
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="panel store-settings-section">
+                  <header className="panel-header">
+                    <div>
+                      <p className="eyebrow">Regional standards</p>
+                      <h2>Store format</h2>
+                      <small>Defaults used for dates, prices and operational timestamps.</small>
+                    </div>
+                  </header>
+                  <div className="integration-body form-grid three-column-form">
+                    <label className="form-field">
+                      <span>Locale</span>
+                      <select name="locale" defaultValue={value(storefront, 'locale', 'en-GB')}>
+                        <option value="en-GB">English (United Kingdom)</option>
+                      </select>
+                    </label>
+                    <label className="form-field">
+                      <span>Currency</span>
+                      <select name="currency" defaultValue={value(storefront, 'currency', 'GBP')}>
+                        <option value="GBP">GBP — British Pound</option>
+                      </select>
+                    </label>
+                    <label className="form-field">
+                      <span>Timezone</span>
+                      <select
+                        name="timezone"
+                        defaultValue={value(storefront, 'timezone', 'Europe/London')}
+                      >
+                        <option value="Europe/London">Europe/London</option>
+                      </select>
+                    </label>
+                  </div>
+                  <footer className="panel-actions">
+                    <span className="settings-version">
+                      Configuration version {result.data.settingsVersion}
+                    </span>
+                    <button className="button button-primary">Save store settings</button>
+                  </footer>
+                </section>
+              </form>
+            );
+          })()}
 
           <section className="panel payment-settings-panel">
             <header className="panel-header">
@@ -446,5 +740,44 @@ export default async function SettingsPage({
         </>
       )}
     </>
+  );
+}
+
+function FooterLinkEditor({
+  title,
+  name,
+  links,
+}: {
+  title: string;
+  name: 'shop' | 'service';
+  links: FooterLink[];
+}) {
+  return (
+    <fieldset className="footer-link-editor">
+      <legend>{title}</legend>
+      {Array.from({ length: 6 }, (_, index) => {
+        const link = links[index];
+        return (
+          <div className="footer-link-row" key={`${name}-${String(index)}`}>
+            <label className="form-field">
+              <span>Label {String(index + 1)}</span>
+              <input
+                name={`${name}LinkLabel${String(index)}`}
+                defaultValue={link?.label ?? ''}
+                placeholder="Link label"
+              />
+            </label>
+            <label className="form-field">
+              <span>Destination</span>
+              <input
+                name={`${name}LinkHref${String(index)}`}
+                defaultValue={link?.href ?? ''}
+                placeholder="/page or https://..."
+              />
+            </label>
+          </div>
+        );
+      })}
+    </fieldset>
   );
 }

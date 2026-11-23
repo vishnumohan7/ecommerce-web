@@ -872,6 +872,77 @@ export async function saveSettings(data: FormData) {
   }
 }
 
+export async function saveStoreProfile(data: FormData) {
+  const logo = data.get('storeLogo');
+  let logoUrl = textValue(data, 'currentLogoUrl');
+  if (logo instanceof File && logo.size > 0) {
+    const upload = new FormData();
+    upload.set('file', logo);
+    const uploaded = await adminFormMutation<{ imageUrl: string }>(
+      '/api/v1/admin/content/banner-assets',
+      upload,
+    );
+    if (!uploaded.ok) finish('/settings', uploaded, '');
+    logoUrl = uploaded.data.imageUrl;
+  }
+
+  const result = await adminMutation('/api/v1/admin/settings', 'PATCH', {
+    settings: {
+      storefront: {
+        storeName: textValue(data, 'storeName'),
+        tagline: textValue(data, 'tagline'),
+        supportEmail: textValue(data, 'supportEmail'),
+        supportPhone: textValue(data, 'supportPhone'),
+        locale: textValue(data, 'locale') || 'en-GB',
+        currency: textValue(data, 'currency') || 'GBP',
+        timezone: textValue(data, 'timezone') || 'Europe/London',
+      },
+      seo: {
+        homepageTitle: textValue(data, 'homepageTitle'),
+        homepageMetaDescription: textValue(data, 'homepageMetaDescription'),
+      },
+      footer: {
+        description: textValue(data, 'footerDescription'),
+        copyright: textValue(data, 'footerCopyright'),
+        bottomText: textValue(data, 'footerBottomText'),
+        social: {
+          instagram: textValue(data, 'instagramUrl'),
+          facebook: textValue(data, 'facebookUrl'),
+          youtube: textValue(data, 'youtubeUrl'),
+        },
+        shopLinks: footerLinks(data, 'shop'),
+        serviceLinks: footerLinks(data, 'service'),
+      },
+    },
+    branding: {
+      brandName: textValue(data, 'storeName'),
+      legalEntityName: textValue(data, 'legalEntityName'),
+      companyNumber: textValue(data, 'companyNumber') || null,
+      vatNumber: textValue(data, 'vatNumber') || null,
+      registeredAddress: {
+        line1: textValue(data, 'addressLine1'),
+        line2: textValue(data, 'addressLine2'),
+        city: textValue(data, 'city'),
+        county: textValue(data, 'county'),
+        postcode: textValue(data, 'postcode'),
+        country: textValue(data, 'country') || 'United Kingdom',
+      },
+      assets: logoUrl ? { logoUrl } : {},
+      colours: jsonValue(data, 'colours'),
+      typography: jsonValue(data, 'typography'),
+      emailBranding: jsonValue(data, 'emailBranding'),
+    },
+  });
+  finish('/settings', result, 'Store settings updated.');
+}
+
+function footerLinks(data: FormData, group: 'shop' | 'service') {
+  return Array.from({ length: 6 }, (_, index) => ({
+    label: textValue(data, `${group}LinkLabel${String(index)}`),
+    href: textValue(data, `${group}LinkHref${String(index)}`),
+  })).filter((link) => link.label && link.href);
+}
+
 export async function saveIntegrations(data: FormData) {
   const result = await adminMutation('/api/v1/admin/settings', 'PATCH', {
     integrations: {

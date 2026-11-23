@@ -52,6 +52,31 @@ export interface Brand {
   imageUrl?: string | null;
 }
 
+export interface StorefrontSettings {
+  storeName: string;
+  tagline: string;
+  supportEmail: string;
+  supportPhone: string;
+  locale: string;
+  currency: string;
+  timezone: string;
+  logoUrl: string;
+  homepageTitle: string;
+  homepageMetaDescription: string;
+  footer: {
+    description: string;
+    copyright: string;
+    bottomText: string;
+    social: {
+      instagram: string;
+      facebook: string;
+      youtube: string;
+    };
+    shopLinks: Array<{ label: string; href: string }>;
+    serviceLinks: Array<{ label: string; href: string }>;
+  };
+}
+
 export function productImage(product: Pick<Product, 'imageUrl' | 'images'>) {
   return (
     product.imageUrl ?? product.images?.find((image) => /^https?:\/\//.test(image.url))?.url ?? null

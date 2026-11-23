@@ -802,6 +802,7 @@ export class AdminService {
       const currentSettings = this.record(current?.settings);
       if (input.settings) {
         const settings = {
+          ...currentSettings,
           ...input.settings,
           ...(currentSettings.integrations ? { integrations: currentSettings.integrations } : {}),
         } as Prisma.InputJsonValue;

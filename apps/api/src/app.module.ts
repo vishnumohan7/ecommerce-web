@@ -27,6 +27,7 @@ import { CustomerModule } from './modules/customer/customer.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
+import { StorefrontSettingsModule } from './modules/storefront-settings/storefront-settings.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { PrivacyModule } from './modules/privacy/privacy.module';
     NotificationModule,
     AdminModule,
     PrivacyModule,
+    StorefrontSettingsModule,
   ],
   controllers: [HealthController],
   providers: [
