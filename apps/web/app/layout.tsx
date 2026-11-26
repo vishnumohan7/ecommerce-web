@@ -14,7 +14,12 @@ export default async function Layout({ children }: Readonly<{ children: React.Re
   return (
     <html lang="en-GB">
       <body id="top">
-        <SiteHeader />
+        <SiteHeader
+          branding={{
+            logoUrl: settings?.logoUrl ?? '',
+            storeName: settings?.storeName ?? 'Angadi',
+          }}
+        />
         {children}
         <section className="service-promises" aria-label="Service promises">
           <div>
@@ -48,13 +53,15 @@ export default async function Layout({ children }: Readonly<{ children: React.Re
         </section>
         <footer className="site-footer">
           <div className="footer-brand">
-            <div className="footer-logo">
+            <div className={`footer-logo${settings?.logoUrl ? ' has-brand-image' : ''}`}>
               {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt="" aria-hidden="true" />
+                <img src={settings.logoUrl} alt={`${settings.storeName || 'Store'} logo`} />
               ) : (
-                <span aria-hidden="true" />
+                <>
+                  <span aria-hidden="true" />
+                  <strong>{settings?.storeName ?? 'ANGADI'}</strong>
+                </>
               )}
-              <strong>{settings?.storeName ?? 'ANGADI'}</strong>
             </div>
             <em>{settings?.tagline ?? 'A little bit of Kerala in every home'}</em>
             <p>{footer?.description ?? defaultDescription}</p>

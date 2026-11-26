@@ -24,7 +24,14 @@ interface BasketHeader {
   totals: { subtotalMinor: string; grandTotalMinor: string };
 }
 
-export function SiteHeader() {
+interface SiteHeaderProps {
+  branding: {
+    logoUrl: string;
+    storeName: string;
+  };
+}
+
+export function SiteHeader({ branding }: SiteHeaderProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mobileNavView, setMobileNavView] = useState<'menu' | 'categories'>('menu');
@@ -152,10 +159,20 @@ export function SiteHeader() {
         >
           ☰
         </button>
-        <Link className="brand" href="/" aria-label="Angadi home">
-          <span aria-hidden="true" />
-          <strong>ANGADI</strong>
-          <small>Kerala &amp; Indian groceries · drinks</small>
+        <Link
+          className={`brand${branding.logoUrl ? ' has-brand-image' : ''}`}
+          href="/"
+          aria-label={`${branding.storeName} home`}
+        >
+          {branding.logoUrl ? (
+            <img src={branding.logoUrl} alt={`${branding.storeName} logo`} />
+          ) : (
+            <>
+              <span aria-hidden="true" />
+              <strong>{branding.storeName}</strong>
+              <small>Kerala &amp; Indian groceries · drinks</small>
+            </>
+          )}
         </Link>
         <form className="header-search" action="/search">
           <label className="sr-only" htmlFor="site-search">
@@ -289,12 +306,20 @@ export function SiteHeader() {
         className={`mobile-nav-backdrop${open ? ' open' : ''}`}
         type="button"
         aria-label="Close navigation"
-        onClick={() => { setOpen(false); }}
+        onClick={() => {
+          setOpen(false);
+        }}
       />
       <aside className={`mobile-nav-drawer${open ? ' open' : ''}`} aria-hidden={!open}>
         <header>
           <strong>Navigation</strong>
-          <button type="button" aria-label="Close navigation" onClick={() => { setOpen(false); }}>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
             ×
           </button>
         </header>
@@ -303,7 +328,9 @@ export function SiteHeader() {
             type="button"
             role="tab"
             aria-selected={mobileNavView === 'menu'}
-            onClick={() => { setMobileNavView('menu'); }}
+            onClick={() => {
+              setMobileNavView('menu');
+            }}
           >
             Menu
           </button>
@@ -311,7 +338,9 @@ export function SiteHeader() {
             type="button"
             role="tab"
             aria-selected={mobileNavView === 'categories'}
-            onClick={() => { setMobileNavView('categories'); }}
+            onClick={() => {
+              setMobileNavView('categories');
+            }}
           >
             Categories
           </button>
@@ -324,7 +353,12 @@ export function SiteHeader() {
             <Link href="/category/all">
               Shop all products <span aria-hidden="true">›</span>
             </Link>
-            <button type="button" onClick={() => { setMobileNavView('categories'); }}>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileNavView('categories');
+              }}
+            >
               Browse categories <span aria-hidden="true">›</span>
             </button>
             <Link href="/offers">

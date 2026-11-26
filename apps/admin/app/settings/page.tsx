@@ -123,7 +123,10 @@ export default async function SettingsPage({
                     <div>
                       <p className="eyebrow">Store identity</p>
                       <h2>Store details</h2>
-                      <small>The name and logo customers see across the storefront.</small>
+                      <small>
+                        Upload one complete logo used consistently in the storefront header and
+                        footer.
+                      </small>
                     </div>
                     <span className="status-badge success">Live store</span>
                   </header>
@@ -137,13 +140,16 @@ export default async function SettingsPage({
                         )}
                       </div>
                       <label className="form-field">
-                        <span>Storefront logo</span>
+                        <span>Header and footer logo</span>
                         <input
                           name="storeLogo"
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/avif"
                         />
-                        <small>PNG, JPEG, WebP or AVIF. Maximum 10 MB.</small>
+                        <small>
+                          Upload the complete logo lock-up, including its wordmark or strapline.
+                          PNG, JPEG, WebP or AVIF. Maximum 10 MB.
+                        </small>
                       </label>
                     </div>
                     <div className="form-grid two-column-form">

@@ -1622,6 +1622,19 @@ body {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.brand.has-brand-image {
+  display: flex;
+  width: min(100%, 19rem);
+  height: 64px;
+  letter-spacing: normal;
+}
+.brand.has-brand-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
 .header-search {
   height: 50px;
   border: 2px solid #72c9a3;
@@ -3406,10 +3419,13 @@ body.basket-drawer-visible {
   gap: 12px;
 }
 .footer-logo img {
-  border-radius: 50%;
-  height: 32px;
+  height: 54px;
   object-fit: contain;
-  width: 32px;
+  object-position: left center;
+  width: min(100%, 340px);
+}
+.footer-logo.has-brand-image {
+  width: 100%;
 }
 .footer-logo > span {
   width: 32px;
@@ -4855,6 +4871,10 @@ body.basket-drawer-visible {
   .brand > span {
     width: 2rem;
     height: 2rem;
+  }
+  .brand.has-brand-image {
+    width: min(100%, 12rem);
+    height: 46px;
   }
   .account-nav a:first-child,
   .account-nav .cart-link {
