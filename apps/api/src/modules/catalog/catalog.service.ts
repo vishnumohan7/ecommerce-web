@@ -106,8 +106,14 @@ export class CatalogService {
     const product = await this.db.client.product.findFirst({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
     const [variants, images] = await Promise.all([
-      this.db.client.productVariant.findMany({ where: { productId: id }, orderBy: { createdAt: 'asc' } }),
-      this.db.client.productImage.findMany({ where: { productId: id }, orderBy: { position: 'asc' } }),
+      this.db.client.productVariant.findMany({
+        where: { productId: id },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.db.client.productImage.findMany({
+        where: { productId: id },
+        orderBy: { position: 'asc' },
+      }),
     ]);
     return { ...product, variants, images };
   }
@@ -146,6 +152,7 @@ export class CatalogService {
           sku: input.sku,
           name: input.name,
           priceMinor: BigInt(input.priceMinor),
+          costPriceMinor: input.costPriceMinor ? BigInt(input.costPriceMinor) : null,
           currency: input.currency,
           packSize: input.packSize ?? null,
           weightGrams: input.weightGrams ?? null,
@@ -188,6 +195,9 @@ export class CatalogService {
           ...(input.sku === undefined ? {} : { sku: input.sku }),
           ...(input.name === undefined ? {} : { name: input.name }),
           ...(input.priceMinor === undefined ? {} : { priceMinor: BigInt(input.priceMinor) }),
+          ...(input.costPriceMinor === undefined
+            ? {}
+            : { costPriceMinor: input.costPriceMinor ? BigInt(input.costPriceMinor) : null }),
           ...(input.currency === undefined ? {} : { currency: input.currency }),
           ...(input.packSize === undefined ? {} : { packSize: input.packSize }),
           ...(input.weightGrams === undefined ? {} : { weightGrams: input.weightGrams }),
@@ -278,7 +288,9 @@ export class CatalogService {
         });
         const inventoryIds = inventory.map((item) => item.id);
         if (inventoryIds.length)
-          await tx.inventoryTransaction.deleteMany({ where: { tenantId, inventoryId: { in: inventoryIds } } });
+          await tx.inventoryTransaction.deleteMany({
+            where: { tenantId, inventoryId: { in: inventoryIds } },
+          });
         await Promise.all([
           tx.stockReservation.deleteMany({ where: { tenantId, productId: id } }),
           tx.cartItem.deleteMany({ where: { tenantId, productId: id } }),
@@ -310,11 +322,7 @@ export class CatalogService {
       };
     });
   }
-  private async ensureProductIdentityIsAvailable(
-    sku: string,
-    slug: string,
-    excludingId?: string,
-  ) {
+  private async ensureProductIdentityIsAvailable(sku: string, slug: string, excludingId?: string) {
     const existing = await this.db.client.product.findFirst({
       where: {
         ...(excludingId ? { id: { not: excludingId } } : {}),
@@ -336,6 +344,7 @@ export class CatalogService {
       ...input,
       isAlcohol: input.restrictionReason === 'ALCOHOL',
       priceMinor: BigInt(input.priceMinor),
+      costPriceMinor: input.costPriceMinor ? BigInt(input.costPriceMinor) : null,
       pricePerKgMinor: input.pricePerKgMinor ? BigInt(input.pricePerKgMinor) : null,
       brandId: input.brandId ?? null,
       abv: input.abv ? new Prisma.Decimal(input.abv) : null,

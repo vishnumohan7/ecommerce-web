@@ -13,6 +13,7 @@ export const reportFilterSchema = z.object({
   customerId: z.string().uuid().optional(),
   couponId: z.string().uuid().optional(),
   basketType: z.enum(['GROCERY', 'ALCOHOL', 'MIXED']).optional(),
+  department: z.enum(['GROCERY', 'ALCOHOL']).optional(),
   paymentStatus: z
     .enum([
       'PENDING',

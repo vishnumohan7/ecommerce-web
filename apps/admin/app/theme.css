@@ -5107,6 +5107,48 @@ td code {
   padding: 14px 20px;
 }
 
+.compact-heading {
+  margin-bottom: 18px;
+}
+
+.compact-heading h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.65rem, 2vw, 2.1rem);
+}
+
+.profit-coverage-notice {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border: 1px solid #e9c878;
+  border-radius: 10px;
+  background: #fff9e9;
+  color: #704f00;
+}
+
+.profit-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: 24px;
+}
+
+.profit-report-table th:not(:first-child),
+.profit-report-table td:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cost-warning {
+  display: block;
+  margin-top: 4px;
+  color: #a05b00;
+}
+
+@media (max-width: 980px) {
+  .profit-report-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 1250px) {
   .coupon-form {
     grid-template-columns: repeat(3, minmax(0, 1fr));

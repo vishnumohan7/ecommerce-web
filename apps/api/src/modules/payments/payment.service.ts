@@ -468,15 +468,24 @@ export class PaymentService implements OnModuleInit, OnModuleDestroy {
       for (const line of lines) {
         const productId = String(line['productId']);
         const product = await tx.product.findFirstOrThrow({ where: { tenantId, id: productId } });
+        const sku = String(line['sku']);
+        const variant =
+          sku === product.sku
+            ? null
+            : await tx.productVariant.findFirst({
+                where: { tenantId, productId, sku },
+                select: { costPriceMinor: true },
+              });
         await tx.orderItem.create({
           data: {
             tenantId,
             orderId: order.id,
             productId,
             productName: String(line['name']),
-            sku: String(line['sku']),
+            sku,
             quantity: Number(line['quantity']),
             unitPriceMinor: BigInt(String(line['unitPriceMinor'])),
+            unitCostMinor: variant ? variant.costPriceMinor : product.costPriceMinor,
             currency: intent.currency,
             vatRateBps: Number(line['taxRateBps']),
             vatAmountMinor: BigInt(String(line['vatMinor'])),

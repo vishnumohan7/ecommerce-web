@@ -279,6 +279,16 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                         />
                       </label>
                       <label>
+                        Cost price (GBP)
+                        <input
+                          name="costPriceGbp"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          defaultValue={minorToGbp(variant.costPriceMinor)}
+                        />
+                      </label>
+                      <label>
                         Pack size
                         <input name="packSize" defaultValue={variant.packSize ?? ''} />
                       </label>
@@ -354,6 +364,10 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                   placeholder="0.00"
                   required
                 />
+              </label>
+              <label>
+                Cost price (GBP)
+                <input name="costPriceGbp" type="number" min="0" step="0.01" placeholder="0.00" />
               </label>
               <label>
                 Pack size

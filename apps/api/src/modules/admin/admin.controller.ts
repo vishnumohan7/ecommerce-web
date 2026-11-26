@@ -36,6 +36,11 @@ export class AdminController {
   ) {
     return this.admin.salesReport(query);
   }
+  @Get('reports/profit') @RequirePermissions('reports.read') profit(
+    @Query() query: Record<string, string | undefined>,
+  ) {
+    return this.admin.profitReport(query);
+  }
   @Get('reports/customers') @RequirePermissions('reports.read') customerReport(
     @Query() query: Record<string, string | undefined>,
   ) {

@@ -16,6 +16,7 @@ export interface Product {
   description: string;
   status: string;
   priceMinor: string;
+  costPriceMinor: string | null;
   currency: string;
   vatRateBps: number;
   taxCategory: 'STANDARD_20' | 'REDUCED_5' | 'ZERO' | 'EXEMPT';
@@ -46,6 +47,7 @@ export interface Product {
     sku: string;
     name: string;
     priceMinor: string;
+    costPriceMinor: string | null;
     currency: string;
     packSize: string | null;
     weightGrams: number | null;
@@ -319,6 +321,23 @@ export interface SalesReport {
   units: { grocery: number; alcohol: number };
   basketCounts: { grocery: number; alcohol: number; mixed: number };
 }
+export interface ProfitReportRow {
+  id: string;
+  name: string;
+  sku?: string;
+  revenueMinor: string;
+  coveredRevenueMinor: string;
+  costOfGoodsMinor: string;
+  grossProfitMinor: string;
+  grossMarginBps: number | null;
+  missingCostLines: number;
+}
+export interface ProfitReport {
+  totals: Omit<ProfitReportRow, 'id' | 'name' | 'sku'> & { costCoverageBps: number };
+  byDepartment: ProfitReportRow[];
+  byCategory: ProfitReportRow[];
+  byProduct: ProfitReportRow[];
+}
 export interface ReportFilters {
   from?: string;
   to?: string;
@@ -327,6 +346,7 @@ export interface ReportFilters {
   customerId?: string;
   couponId?: string;
   basketType?: string;
+  department?: string;
   paymentStatus?: string;
   fulfilmentStatus?: string;
 }
@@ -801,6 +821,7 @@ function reportQuery(filters: ReportFilters = {}) {
     ['customerId', filters.customerId],
     ['couponId', filters.couponId],
     ['basketType', filters.basketType],
+    ['department', filters.department],
     ['paymentStatus', filters.paymentStatus],
     ['fulfilmentStatus', filters.fulfilmentStatus],
   ];
@@ -811,6 +832,9 @@ function reportQuery(filters: ReportFilters = {}) {
 }
 export function fetchSalesReport(filters: ReportFilters = {}) {
   return get<SalesReport>(`/api/v1/admin/reports/sales${reportQuery(filters)}`, true);
+}
+export function fetchProfitReport(filters: ReportFilters = {}) {
+  return get<ProfitReport>(`/api/v1/admin/reports/profit${reportQuery(filters)}`, true);
 }
 export function fetchCustomerReport(filters: ReportFilters = {}) {
   return get<{

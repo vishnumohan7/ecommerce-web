@@ -97,12 +97,13 @@ export class AdminService {
     return {
       range: this.serialiseRange(scope.range),
       orders: scope.orders.length,
-      totalRevenueMinor: scope.productIds
-        ? (
-            BigInt(byCategory.grocery?.revenueMinor ?? '0') +
-            BigInt(byCategory.alcohol?.revenueMinor ?? '0')
-          ).toString()
-        : scope.orders.reduce((sum, order) => sum + order.totalMinor, 0n).toString(),
+      totalRevenueMinor:
+        scope.productIds || scope.filters.department
+          ? (
+              BigInt(byCategory.grocery?.revenueMinor ?? '0') +
+              BigInt(byCategory.alcohol?.revenueMinor ?? '0')
+            ).toString()
+          : scope.orders.reduce((sum, order) => sum + order.totalMinor, 0n).toString(),
       groceryRevenueMinor: byCategory.grocery?.revenueMinor ?? '0',
       alcoholRevenueMinor: byCategory.alcohol?.revenueMinor ?? '0',
       units: { grocery: byCategory.grocery?.units ?? 0, alcohol: byCategory.alcohol?.units ?? 0 },
@@ -111,6 +112,127 @@ export class AdminService {
         alcohol: scope.orders.filter((order) => order.basketType === 'ALCOHOL').length,
         mixed: scope.orders.filter((order) => order.basketType === 'MIXED').length,
       },
+    };
+  }
+
+  async profitReport(input: Record<string, string | undefined>) {
+    const scope = await this.reportScope(input);
+    const lines = await this.db.client.orderItem.findMany({
+      where: this.reportLineWhere(scope),
+      select: {
+        productId: true,
+        productName: true,
+        sku: true,
+        orderCategory: true,
+        quantity: true,
+        lineTotalMinor: true,
+        unitCostMinor: true,
+      },
+    });
+    const products = await this.db.client.product.findMany({
+      where: { id: { in: [...new Set(lines.map((line) => line.productId))] } },
+      select: { id: true, categoryId: true },
+    });
+    const categories = await this.db.client.category.findMany({
+      where: { id: { in: [...new Set(products.map((product) => product.categoryId))] } },
+      select: { id: true, name: true },
+    });
+    const productCategory = new Map(products.map((product) => [product.id, product.categoryId]));
+    const categoryName = new Map(categories.map((category) => [category.id, category.name]));
+    type ProfitTotal = {
+      revenueMinor: bigint;
+      coveredRevenueMinor: bigint;
+      costOfGoodsMinor: bigint;
+      grossProfitMinor: bigint;
+      missingCostLines: number;
+    };
+    const emptyTotal = (): ProfitTotal => ({
+      revenueMinor: 0n,
+      coveredRevenueMinor: 0n,
+      costOfGoodsMinor: 0n,
+      grossProfitMinor: 0n,
+      missingCostLines: 0,
+    });
+    const total = emptyTotal();
+    const departments = new Map<string, { name: string; total: ProfitTotal }>();
+    const categoryTotals = new Map<string, { name: string; total: ProfitTotal }>();
+    const productTotals = new Map<string, { name: string; sku: string; total: ProfitTotal }>();
+    const applyLine = (target: ProfitTotal, line: (typeof lines)[number]) => {
+      target.revenueMinor += line.lineTotalMinor;
+      if (line.unitCostMinor === null) {
+        target.missingCostLines += 1;
+        return;
+      }
+      const cost = line.unitCostMinor * BigInt(line.quantity);
+      target.coveredRevenueMinor += line.lineTotalMinor;
+      target.costOfGoodsMinor += cost;
+      target.grossProfitMinor += line.lineTotalMinor - cost;
+    };
+    for (const line of lines) {
+      const departmentId = line.orderCategory;
+      const department = departments.get(departmentId) ?? {
+        name: departmentId === 'ALCOHOL' ? 'Alcohol' : 'Grocery',
+        total: emptyTotal(),
+      };
+      departments.set(departmentId, department);
+      const categoryId = productCategory.get(line.productId) ?? 'uncategorised';
+      const category = categoryTotals.get(categoryId) ?? {
+        name: categoryName.get(categoryId) ?? 'Uncategorised',
+        total: emptyTotal(),
+      };
+      categoryTotals.set(categoryId, category);
+      const product = productTotals.get(line.productId) ?? {
+        name: line.productName,
+        sku: line.sku,
+        total: emptyTotal(),
+      };
+      productTotals.set(line.productId, product);
+      applyLine(total, line);
+      applyLine(department.total, line);
+      applyLine(category.total, line);
+      applyLine(product.total, line);
+    }
+    const serialiseTotal = (value: ProfitTotal) => ({
+      revenueMinor: value.revenueMinor.toString(),
+      coveredRevenueMinor: value.coveredRevenueMinor.toString(),
+      costOfGoodsMinor: value.costOfGoodsMinor.toString(),
+      grossProfitMinor: value.grossProfitMinor.toString(),
+      grossMarginBps:
+        value.coveredRevenueMinor > 0n
+          ? Number((value.grossProfitMinor * 10_000n) / value.coveredRevenueMinor)
+          : null,
+      missingCostLines: value.missingCostLines,
+    });
+    const serialiseRows = (rows: Array<[string, { name: string; total: ProfitTotal }]>) =>
+      rows
+        .sort(([, a], [, b]) =>
+          a.total.grossProfitMinor === b.total.grossProfitMinor
+            ? 0
+            : a.total.grossProfitMinor > b.total.grossProfitMinor
+              ? -1
+              : 1,
+        )
+        .map(([id, row]) => ({ id, name: row.name, ...serialiseTotal(row.total) }));
+    return {
+      range: this.serialiseRange(scope.range),
+      totals: {
+        ...serialiseTotal(total),
+        costCoverageBps:
+          total.revenueMinor > 0n
+            ? Number((total.coveredRevenueMinor * 10_000n) / total.revenueMinor)
+            : 0,
+      },
+      byDepartment: serialiseRows([...departments.entries()]),
+      byCategory: serialiseRows([...categoryTotals.entries()]),
+      byProduct: [...productTotals.entries()]
+        .sort(([, a], [, b]) =>
+          a.total.grossProfitMinor === b.total.grossProfitMinor
+            ? 0
+            : a.total.grossProfitMinor > b.total.grossProfitMinor
+              ? -1
+              : 1,
+        )
+        .map(([id, row]) => ({ id, name: row.name, sku: row.sku, ...serialiseTotal(row.total) })),
     };
   }
 
@@ -1023,6 +1145,7 @@ export class AdminService {
     return {
       orderId: { in: scope.orderIds },
       ...(scope.productIds ? { productId: { in: scope.productIds } } : {}),
+      ...(scope.filters.department ? { orderCategory: scope.filters.department } : {}),
     };
   }
 

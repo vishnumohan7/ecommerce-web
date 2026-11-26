@@ -70,6 +70,16 @@ export function ProductVariantFields({ warehouses }: Readonly<Props>) {
                 />
               </label>
               <label>
+                Cost price (GBP)
+                <input
+                  name="variantCostPriceGbp"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                />
+              </label>
+              <label>
                 Pack size
                 <input name="variantPackSize" placeholder="6 × 330 ml" />
               </label>

@@ -69,6 +69,17 @@ export function ProductForm({
         />
       </label>
       <label>
+        Cost price (GBP)
+        <input
+          name="costPriceGbp"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          defaultValue={minorToGbp(product?.costPriceMinor)}
+        />
+      </label>
+      <label>
         Unit price display
         <input
           name="unitPriceDisplay"

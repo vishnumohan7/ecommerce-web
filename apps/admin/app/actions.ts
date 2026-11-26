@@ -76,6 +76,9 @@ function productInput(data: FormData) {
     name: textValue(data, 'name'),
     description: textValue(data, 'description'),
     priceMinor: gbpToMinor(textValue(data, 'priceGbp')),
+    costPriceMinor: textValue(data, 'costPriceGbp')
+      ? gbpToMinor(textValue(data, 'costPriceGbp'))
+      : null,
     currency: 'GBP',
     vatRateBps: alcohol ? 2000 : Number(textValue(data, 'vatRateBps')),
     taxCategory: alcohol ? 'STANDARD_20' : textValue(data, 'taxCategory'),
@@ -157,6 +160,9 @@ export async function createProduct(data: FormData) {
   const names = textValues(data, 'variantName');
   const skus = textValues(data, 'variantSku');
   const prices = textValues(data, 'variantPriceGbp').map(gbpToMinor);
+  const costPrices = textValues(data, 'variantCostPriceGbp').map((value) =>
+    value ? gbpToMinor(value) : null,
+  );
   const packSizes = textValues(data, 'variantPackSize');
   const weights = textValues(data, 'variantWeightGrams');
   const flavours = textValues(data, 'variantFlavour');
@@ -172,6 +178,7 @@ export async function createProduct(data: FormData) {
         sku: skus[index],
         name: names[index],
         priceMinor: prices[index],
+        costPriceMinor: costPrices[index] ?? null,
         currency: 'GBP',
         packSize: packSizes[index] || null,
         weightGrams: weights[index] ? Number(weights[index]) : null,
@@ -295,6 +302,9 @@ export async function createProductVariant(data: FormData) {
       sku: textValue(data, 'sku'),
       name: textValue(data, 'name'),
       priceMinor: gbpToMinor(textValue(data, 'priceGbp')),
+      costPriceMinor: textValue(data, 'costPriceGbp')
+        ? gbpToMinor(textValue(data, 'costPriceGbp'))
+        : null,
       currency: 'GBP',
       packSize: textValue(data, 'packSize') || null,
       weightGrams: optionalNumber(data, 'weightGrams'),
@@ -331,6 +341,9 @@ export async function updateProductVariant(data: FormData) {
       sku: textValue(data, 'sku'),
       name: textValue(data, 'name'),
       priceMinor: gbpToMinor(textValue(data, 'priceGbp')),
+      costPriceMinor: textValue(data, 'costPriceGbp')
+        ? gbpToMinor(textValue(data, 'costPriceGbp'))
+        : null,
       currency: 'GBP',
       packSize: textValue(data, 'packSize') || null,
       weightGrams: optionalNumber(data, 'weightGrams'),
