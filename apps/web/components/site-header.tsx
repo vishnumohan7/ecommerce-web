@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { basketChangedEvent } from '../lib/basket-events';
 import { browserApi, money, type Category } from '../lib/store-api';
 
@@ -33,6 +33,7 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ branding }: SiteHeaderProps) {
   const pathname = usePathname();
+  const categoriesMenuRef = useRef<HTMLDetailsElement>(null);
   const [open, setOpen] = useState(false);
   const [mobileNavView, setMobileNavView] = useState<'menu' | 'categories'>('menu');
   const [basketOpen, setBasketOpen] = useState(false);
@@ -51,6 +52,10 @@ export function SiteHeader({ branding }: SiteHeaderProps) {
 
   const basketItems = basket?.groups.flatMap((group) => group.items) ?? [];
   const basketCount = basketItems.reduce((total, item) => total + item.quantity, 0);
+
+  const closeCategoriesMenu = useCallback(() => {
+    categoriesMenuRef.current?.removeAttribute('open');
+  }, []);
 
   async function changeBasketItem(item: BasketItem, quantity: number) {
     try {
@@ -113,7 +118,8 @@ export function SiteHeader({ branding }: SiteHeaderProps) {
 
   useEffect(() => {
     setOpen(false);
-  }, [pathname]);
+    closeCategoriesMenu();
+  }, [closeCategoriesMenu, pathname]);
 
   useEffect(() => {
     void browserApi<{ items: Category[] }>('/api/v1/categories?limit=50')
@@ -221,7 +227,7 @@ export function SiteHeader({ branding }: SiteHeaderProps) {
         </nav>
       </header>
       <nav className="category-nav" aria-label="Main navigation">
-        <details className="categories-menu">
+        <details ref={categoriesMenuRef} className="categories-menu">
           <summary className="all-categories">
             <span aria-hidden="true">☰</span> All categories{' '}
             <span className="menu-chevron" aria-hidden="true">
@@ -230,7 +236,11 @@ export function SiteHeader({ branding }: SiteHeaderProps) {
           </summary>
           <div className="categories-dropdown">
             {categories.map((category) => (
-              <Link key={category.id} href={`/category/${category.slug}?id=${category.id}`}>
+              <Link
+                key={category.id}
+                href={`/category/${category.slug}?id=${category.id}`}
+                onClick={closeCategoriesMenu}
+              >
                 {category.imageUrl ? (
                   <span
                     className="category-thumb"
@@ -245,7 +255,11 @@ export function SiteHeader({ branding }: SiteHeaderProps) {
                 {category.name}
               </Link>
             ))}
-            <Link className="view-all-categories" href="/category/all">
+            <Link
+              className="view-all-categories"
+              href="/category/all"
+              onClick={closeCategoriesMenu}
+            >
               <span className="category-initial" aria-hidden="true">
                 ▦
               </span>
